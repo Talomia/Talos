@@ -1,6 +1,10 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
 
-// Rate limiting store (in-memory for serverless environments)
+/*
+ * ⚠️ LIMITATION: In-memory rate limiting resets on every Cloudflare Worker cold start.
+ * For production-grade rate limiting, migrate to Cloudflare KV or Durable Objects.
+ * See: https://developers.cloudflare.com/workers/runtime-apis/kv/
+ */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
 // Rate limit configuration
@@ -91,16 +95,37 @@ export function createSecurityHeaders() {
     // Enable XSS protection
     'X-XSS-Protection': '1; mode=block',
 
-    // Content Security Policy - restrict to same origin and trusted sources
+    /*
+     * Content Security Policy
+     * NOTE: unsafe-eval is required by WebContainers (StackBlitz runtime).
+     * NOTE: unsafe-inline is required by React's runtime and inline styles.
+     * TODO: Replace unsafe-inline with nonce-based CSP when Remix supports it.
+     */
     'Content-Security-Policy': [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Allow inline scripts for React
-      "style-src 'self' 'unsafe-inline'", // Allow inline styles
-      "img-src 'self' data: https: blob:", // Allow images from same origin, data URLs, and HTTPS
-      "font-src 'self' data:", // Allow fonts from same origin and data URLs
-      "connect-src 'self' https://api.github.com https://api.netlify.com", // Allow connections to GitHub and Netlify APIs
-      "frame-src 'none'", // Prevent iframe embedding
-      "object-src 'none'", // Prevent object embedding
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "img-src 'self' data: https: blob:",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      [
+        "connect-src 'self'",
+        'https://api.github.com',
+        'https://api.netlify.com',
+        'https://api.vercel.com',
+        'https://gitlab.com',
+        'https://*.supabase.co',
+        'https://generativelanguage.googleapis.com',
+        'https://api.openai.com',
+        'https://api.anthropic.com',
+        'https://api.groq.com',
+        'https://openrouter.ai',
+        'https://*.stackblitz.io',
+        'wss://*.stackblitz.io',
+        'https://registry.npmjs.org',
+      ].join(' '),
+      "frame-src 'self' https://*.stackblitz.io https://*.webcontainer.io",
+      "worker-src 'self' blob:",
+      "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
     ].join('; '),
