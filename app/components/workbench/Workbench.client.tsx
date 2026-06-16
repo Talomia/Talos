@@ -36,7 +36,7 @@ interface WorkspaceProps {
   metadata?: {
     gitUrl?: string;
   };
-  updateChatMestaData?: (metadata: any) => void;
+  updateChatMetadata?: (metadata: any) => void;
   setSelectedElement?: (element: ElementInfo | null) => void;
 }
 
@@ -285,7 +285,7 @@ export const Workbench = memo(
     chatStarted,
     isStreaming,
     metadata: _metadata,
-    updateChatMestaData: _updateChatMestaData,
+    updateChatMetadata: _updateChatMetadata,
     setSelectedElement,
   }: WorkspaceProps) => {
     renderLogger.trace('Workbench');

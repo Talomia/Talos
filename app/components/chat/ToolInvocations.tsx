@@ -116,7 +116,7 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
             <div className="w-full text-bolt-elements-textPrimary font-medium leading-5 text-sm">
               MCP Tool Invocations{' '}
               {hasToolResults && (
-                <span className="w-full w-full text-bolt-elements-textSecondary text-xs mt-0.5">
+                <span className="w-full text-bolt-elements-textSecondary text-xs mt-0.5">
                   ({toolResults.length} tool{hasToolResults ? 's' : ''} used)
                 </span>
               )}

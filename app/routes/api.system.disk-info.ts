@@ -1,5 +1,8 @@
 import type { ActionFunctionArgs, LoaderFunction } from '@remix-run/cloudflare';
 import { json } from '@remix-run/cloudflare';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('disk-info');
 
 // Only import child_process if we're not in a Cloudflare environment
 let execSync: any;
@@ -13,7 +16,7 @@ try {
   }
 } catch {
   // In Cloudflare environment, this will fail, which is expected
-  console.log('Running in Cloudflare environment, child_process not available');
+  logger.debug('Running in Cloudflare environment, child_process not available');
 }
 
 // For development environments, we'll always provide mock data if real data isn't available

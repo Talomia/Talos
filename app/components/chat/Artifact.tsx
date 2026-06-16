@@ -93,9 +93,7 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
                 {/* Use the dynamic title here */}
                 {dynamicTitle}
               </div>
-              <div className="w-full w-full text-bolt-elements-textSecondary text-xs mt-0.5">
-                Click to open Workbench
-              </div>
+              <div className="w-full text-bolt-elements-textSecondary text-xs mt-0.5">Click to open Workbench</div>
             </div>
           </button>
           {artifact.type !== 'bundled' && <div className="bg-bolt-elements-artifacts-borderColor w-[1px]" />}
@@ -158,14 +156,14 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
 });
 
 interface ShellCodeBlockProps {
-  classsName?: string;
+  className?: string;
   code: string;
 }
 
-function ShellCodeBlock({ classsName, code }: ShellCodeBlockProps) {
+function ShellCodeBlock({ className: shellClassName, code }: ShellCodeBlockProps) {
   return (
     <div
-      className={classNames('text-xs', classsName)}
+      className={classNames('text-xs', shellClassName)}
       dangerouslySetInnerHTML={{
         __html: shellHighlighter.codeToHtml(code, {
           lang: 'shell',
@@ -258,7 +256,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
               </div>
               {(type === 'shell' || type === 'start') && (
                 <ShellCodeBlock
-                  classsName={classNames('mt-1', {
+                  className={classNames('mt-1', {
                     'mb-3.5': !isLast,
                   })}
                   code={content}

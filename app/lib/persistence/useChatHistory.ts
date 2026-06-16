@@ -258,7 +258,7 @@ ${value.content}
   return {
     ready: !mixedId || ready,
     initialMessages,
-    updateChatMestaData: async (metadata: IChatMetadata) => {
+    updateChatMetadata: async (metadata: IChatMetadata) => {
       const id = chatId.get();
 
       if (!db || !id) {

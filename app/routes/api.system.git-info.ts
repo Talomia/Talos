@@ -1,4 +1,7 @@
 import { json, type LoaderFunction, type LoaderFunctionArgs } from '@remix-run/cloudflare';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('git-info');
 
 interface GitInfo {
   local: {
@@ -62,7 +65,7 @@ declare const __GIT_REPO_NAME: string;
  */
 
 export const loader: LoaderFunction = async ({ request, context }: LoaderFunctionArgs & { context: AppContext }) => {
-  console.log('Git info API called with URL:', request.url);
+  logger.debug('Git info API called with URL:', request.url);
 
   // Handle CORS preflight requests
   if (request.method === 'OPTIONS') {
@@ -78,7 +81,7 @@ export const loader: LoaderFunction = async ({ request, context }: LoaderFunctio
   const { searchParams } = new URL(request.url);
   const action = searchParams.get('action');
 
-  console.log('Git info action:', action);
+  logger.debug('Git info action:', action);
 
   if (action === 'getUser' || action === 'getRepos' || action === 'getOrgs' || action === 'getActivity') {
     // Use server-side token instead of client-side token
@@ -95,7 +98,7 @@ export const loader: LoaderFunction = async ({ request, context }: LoaderFunctio
 
     const token = serverGithubToken || headerToken || cookieToken;
 
-    console.log(
+    logger.debug(
       'Using GitHub token from:',
       serverGithubToken ? 'server env' : headerToken ? 'auth header' : cookieToken ? 'cookie' : 'none',
     );

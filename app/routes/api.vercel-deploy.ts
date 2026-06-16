@@ -1,5 +1,8 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from '@remix-run/cloudflare';
 import type { VercelProjectInfo } from '~/types/vercel';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('vercel-deploy');
 
 // Function to detect framework from project files
 const detectFramework = (files: Record<string, string>): string => {
@@ -258,7 +261,7 @@ export async function action({ request }: ActionFunctionArgs) {
 
     if (!detectedFramework && sourceFiles) {
       detectedFramework = detectFramework(sourceFiles);
-      console.log('Detected framework from source files:', detectedFramework);
+      logger.debug('Detected framework from source files:', detectedFramework);
     }
 
     // If no projectId provided, create a new project
