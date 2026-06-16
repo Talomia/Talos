@@ -1,0 +1,24 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "recurrsive"
+compatibility_flags = ["nodejs_compat"]
+compatibility_date = "2025-03-28"
+pages_build_output_dir = "./build/client"
+send_metrics = false
+
+# ==========================================
+# Environment: Staging
+# ==========================================
+[env.staging]
+name = "recurrsive-staging"
+
+[env.staging.vars]
+NODE_ENV = "staging"
+
+# ==========================================
+# Environment: Production
+# ==========================================
+[env.production]
+name = "recurrsive"
+
+[env.production.vars]
+NODE_ENV = "production"

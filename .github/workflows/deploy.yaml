@@ -1,0 +1,86 @@
+name: Deploy to Cloudflare Pages
+
+on:
+  push:
+    branches:
+      - main
+      - stable
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel deploys mid-flight
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    # Map branch → environment
+    environment: ${{ github.ref == 'refs/heads/stable' && 'production' || github.event.inputs.environment || 'staging' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup and Build
+        uses: ./.github/actions/setup-and-build
+
+      - name: Run tests
+        run: pnpm run test
+
+      - name: Build for production
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+          VITE_APP_VERSION: ${{ github.sha }}
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build/client --project-name=recurrsive --branch=${{ github.ref_name }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Smoke test deployment
+        if: success()
+        run: |
+          DEPLOY_URL="${{ steps.deploy.outputs.deployment-url || 'https://recurrsive.pages.dev' }}"
+          echo "Smoke testing: ${DEPLOY_URL}/api/health"
+          
+          for i in 1 2 3 4 5; do
+            if curl -sf "${DEPLOY_URL}/api/health" | grep -q '"status":"ok"'; then
+              echo "✅ Deployment is healthy"
+              exit 0
+            fi
+            echo "Attempt ${i}/5 failed, waiting 10s..."
+            sleep 10
+          done
+          
+          echo "⚠️ Health check failed after 5 attempts"
+          exit 1
+        continue-on-error: true  # Don't fail deploy on smoke test failure
+
+      - name: Post deployment summary
+        if: always()
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | ${{ github.ref == 'refs/heads/stable' && 'production' || 'staging' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | ${{ github.ref_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
