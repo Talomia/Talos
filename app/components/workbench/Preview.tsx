@@ -7,50 +7,11 @@ import { ScreenshotSelector } from './ScreenshotSelector';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
 import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
 import type { ElementInfo } from './Inspector';
-
-type ResizeSide = 'left' | 'right' | null;
+import { WINDOW_SIZES, openDeviceFramePopup, type ResizeSide, type WindowSize } from './previewUtils';
 
 interface PreviewProps {
   setSelectedElement?: (element: ElementInfo | null) => void;
 }
-
-interface WindowSize {
-  name: string;
-  width: number;
-  height: number;
-  icon: string;
-  hasFrame?: boolean;
-  frameType?: 'mobile' | 'tablet' | 'laptop' | 'desktop';
-}
-
-const WINDOW_SIZES: WindowSize[] = [
-  { name: 'iPhone SE', width: 375, height: 667, icon: 'i-ph:device-mobile', hasFrame: true, frameType: 'mobile' },
-  { name: 'iPhone 12/13', width: 390, height: 844, icon: 'i-ph:device-mobile', hasFrame: true, frameType: 'mobile' },
-  {
-    name: 'iPhone 12/13 Pro Max',
-    width: 428,
-    height: 926,
-    icon: 'i-ph:device-mobile',
-    hasFrame: true,
-    frameType: 'mobile',
-  },
-  { name: 'iPad Mini', width: 768, height: 1024, icon: 'i-ph:device-tablet', hasFrame: true, frameType: 'tablet' },
-  { name: 'iPad Air', width: 820, height: 1180, icon: 'i-ph:device-tablet', hasFrame: true, frameType: 'tablet' },
-  { name: 'iPad Pro 11"', width: 834, height: 1194, icon: 'i-ph:device-tablet', hasFrame: true, frameType: 'tablet' },
-  {
-    name: 'iPad Pro 12.9"',
-    width: 1024,
-    height: 1366,
-    icon: 'i-ph:device-tablet',
-    hasFrame: true,
-    frameType: 'tablet',
-  },
-  { name: 'Small Laptop', width: 1280, height: 800, icon: 'i-ph:laptop', hasFrame: true, frameType: 'laptop' },
-  { name: 'Laptop', width: 1366, height: 768, icon: 'i-ph:laptop', hasFrame: true, frameType: 'laptop' },
-  { name: 'Large Laptop', width: 1440, height: 900, icon: 'i-ph:laptop', hasFrame: true, frameType: 'laptop' },
-  { name: 'Desktop', width: 1920, height: 1080, icon: 'i-ph:monitor', hasFrame: true, frameType: 'desktop' },
-  { name: '4K Display', width: 3840, height: 2160, icon: 'i-ph:monitor', hasFrame: true, frameType: 'desktop' },
-];
 
 export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -377,175 +338,13 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   const openInNewWindow = (size: WindowSize) => {
     if (activePreview?.baseUrl) {
-      const match = activePreview.baseUrl.match(/^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/);
-
-      if (match) {
-        const previewId = match[1];
-        const previewUrl = `/webcontainer/preview/${previewId}`;
-
-        // Adjust dimensions for landscape mode if applicable
-        let width = size.width;
-        let height = size.height;
-
-        if (isLandscape && (size.frameType === 'mobile' || size.frameType === 'tablet')) {
-          // Swap width and height for landscape mode
-          width = size.height;
-          height = size.width;
-        }
-
-        // Create a window with device frame if enabled
-        if (showDeviceFrame && size.hasFrame) {
-          // Calculate frame dimensions
-          const frameWidth = size.frameType === 'mobile' ? (isLandscape ? 120 : 40) : 60; // Width padding on each side
-          const frameHeight = size.frameType === 'mobile' ? (isLandscape ? 80 : 80) : isLandscape ? 60 : 100; // Height padding on top and bottom
-
-          // Create a window with the correct dimensions first
-          const newWindow = window.open(
-            '',
-            '_blank',
-            `width=${width + frameWidth},height=${height + frameHeight + 40},menubar=no,toolbar=no,location=no,status=no`,
-          );
-
-          if (!newWindow) {
-            console.error('Failed to open new window');
-            return;
-          }
-
-          // Create the HTML content for the frame
-          const frameColor = getFrameColor();
-          const frameRadius = size.frameType === 'mobile' ? '36px' : '20px';
-          const framePadding =
-            size.frameType === 'mobile'
-              ? isLandscape
-                ? '40px 60px'
-                : '40px 20px'
-              : isLandscape
-                ? '30px 50px'
-                : '50px 30px';
-
-          // Position notch and home button based on orientation
-          const notchTop = isLandscape ? '50%' : '20px';
-          const notchLeft = isLandscape ? '30px' : '50%';
-          const notchTransform = isLandscape ? 'translateY(-50%)' : 'translateX(-50%)';
-          const notchWidth = isLandscape ? '8px' : size.frameType === 'mobile' ? '60px' : '80px';
-          const notchHeight = isLandscape ? (size.frameType === 'mobile' ? '60px' : '80px') : '8px';
-
-          const homeBottom = isLandscape ? '50%' : '15px';
-          const homeRight = isLandscape ? '30px' : '50%';
-          const homeTransform = isLandscape ? 'translateY(50%)' : 'translateX(50%)';
-          const homeWidth = isLandscape ? '4px' : '40px';
-          const homeHeight = isLandscape ? '40px' : '4px';
-
-          // Create HTML content for the wrapper page
-          const htmlContent = `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <title>${size.name} Preview</title>
-              <style>
-                body {
-                  margin: 0;
-                  padding: 0;
-                  display: flex;
-                  justify-content: center;
-                  align-items: center;
-                  height: 100vh;
-                  background: #f0f0f0;
-                  overflow: hidden;
-                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                }
-                
-                .device-container {
-                  position: relative;
-                }
-                
-                .device-name {
-                  position: absolute;
-                  top: -30px;
-                  left: 0;
-                  right: 0;
-                  text-align: center;
-                  font-size: 14px;
-                  color: #333;
-                }
-                
-                .device-frame {
-                  position: relative;
-                  border-radius: ${frameRadius};
-                  background: ${frameColor};
-                  padding: ${framePadding};
-                  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                  overflow: hidden;
-                }
-                
-                /* Notch */
-                .device-frame:before {
-                  content: '';
-                  position: absolute;
-                  top: ${notchTop};
-                  left: ${notchLeft};
-                  transform: ${notchTransform};
-                  width: ${notchWidth};
-                  height: ${notchHeight};
-                  background: #333;
-                  border-radius: 4px;
-                  z-index: 2;
-                }
-                
-                /* Home button */
-                .device-frame:after {
-                  content: '';
-                  position: absolute;
-                  bottom: ${homeBottom};
-                  right: ${homeRight};
-                  transform: ${homeTransform};
-                  width: ${homeWidth};
-                  height: ${homeHeight};
-                  background: #333;
-                  border-radius: 50%;
-                  z-index: 2;
-                }
-                
-                iframe {
-                  border: none;
-                  width: ${width}px;
-                  height: ${height}px;
-                  background: white;
-                  display: block;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="device-container">
-                <div class="device-name">${size.name} ${isLandscape ? '(Landscape)' : '(Portrait)'}</div>
-                <div class="device-frame">
-                  <iframe src="${previewUrl}" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-storage-access-by-user-activation allow-same-origin" allow="cross-origin-isolated"></iframe>
-                </div>
-              </div>
-            </body>
-            </html>
-          `;
-
-          // Write the HTML content to the new window
-          newWindow.document.open();
-          newWindow.document.write(htmlContent);
-          newWindow.document.close();
-        } else {
-          // Standard window without frame
-          const newWindow = window.open(
-            previewUrl,
-            '_blank',
-            `width=${width},height=${height},menubar=no,toolbar=no,location=no,status=no`,
-          );
-
-          if (newWindow) {
-            newWindow.focus();
-          }
-        }
-      } else {
-        console.warn('[Preview] Invalid WebContainer URL:', activePreview.baseUrl);
-      }
+      openDeviceFramePopup({
+        baseUrl: activePreview.baseUrl,
+        size,
+        isLandscape,
+        showDeviceFrame,
+        getFrameColor,
+      });
     }
   };
 
