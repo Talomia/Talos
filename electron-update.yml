@@ -1,4 +1,4 @@
-owner: stackblitz-labs
-repo: bolt.diy
+owner: h-khalid-h
+repo: recurrsive-app
 provider: github
-private: false
+private: true
