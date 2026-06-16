@@ -1,5 +1,16 @@
 import { useState, useEffect } from 'react';
-import { getFeatureFlags, markFeatureViewed, type Feature } from '~/lib/api/features';
+
+// TODO: Replace with real feature flags backend when available
+interface Feature {
+  id: string;
+  name: string;
+  description: string;
+  viewed: boolean;
+  releaseDate: string;
+}
+
+const getFeatureFlags = async (): Promise<Feature[]> => [];
+const markFeatureViewed = async (_featureId: string): Promise<void> => {};
 
 const VIEWED_FEATURES_KEY = 'bolt_viewed_features';
 
