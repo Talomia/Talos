@@ -1,11 +1,11 @@
 services:
   app-prod:
-    image: bolt-ai:production
+    image: recurrsive:production
     restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
-      target: bolt-ai-production
+      target: recurrsive-production
     ports:
       - '5173:5173'
     env_file: 
@@ -37,7 +37,7 @@ services:
       - production
 
   app-dev:
-    image: bolt-ai:development
+    image: recurrsive:development
     restart: unless-stopped
     build:
       context: .

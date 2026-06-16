@@ -1141,7 +1141,7 @@ export async function downloadDebugLog(filename?: string): Promise<void> {
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename || `bolt-debug-${new Date().toISOString().split('T')[0]}.txt`;
+    link.download = filename || `recurrsive-debug-${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
