@@ -22,23 +22,16 @@ export function useSupabaseConnection() {
 
   useEffect(() => {
     const initConnection = async () => {
-      console.log('useSupabaseConnection: Initializing connection...');
-
       // First, try to initialize from server-side token
       try {
         await initializeSupabaseConnection();
-        console.log('useSupabaseConnection: Server-side initialization completed');
-      } catch {
-        console.log('useSupabaseConnection: Server-side initialization failed, trying localStorage');
-      }
+      } catch {}
 
       // Then check localStorage for additional data
       const savedConnection = localStorage.getItem('supabase_connection');
       const savedCredentials = localStorage.getItem('supabaseCredentials');
 
       if (savedConnection) {
-        console.log('useSupabaseConnection: Loading from localStorage');
-
         const parsed = JSON.parse(savedConnection);
 
         if (savedCredentials && !parsed.credentials) {

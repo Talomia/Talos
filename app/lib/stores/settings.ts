@@ -5,6 +5,9 @@ import type { TabVisibilityConfig, TabWindowConfig, UserTabConfig } from '~/comp
 import { DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
 import { toggleTheme } from './theme';
 import { create } from 'zustand';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('SettingsStore');
 
 export interface Shortcut {
   key: string;
@@ -176,7 +179,7 @@ const autoEnableConfiguredProviders = async () => {
       const allAutoEnabled = [...new Set([...previouslyAutoEnabled, ...newlyAutoEnabled])];
       localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(allAutoEnabled));
 
-      console.log(`Auto-enabled providers: ${newlyAutoEnabled.join(', ')}`);
+      logger.info(`Auto-enabled providers: ${newlyAutoEnabled.join(', ')}`);
     }
   } catch (error) {
     console.error('Error auto-enabling configured providers:', error);

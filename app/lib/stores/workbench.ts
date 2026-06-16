@@ -18,8 +18,11 @@ import { description } from '~/lib/persistence';
 import Cookies from 'js-cookie';
 import { createSampler } from '~/utils/sampler';
 import type { ActionAlert, DeployAlert, SupabaseAlert } from '~/types/actions';
+import { createScopedLogger } from '~/utils/logger';
 
 const { saveAs } = fileSaver;
+
+const logger = createScopedLogger('WorkbenchStore');
 
 export interface ArtifactState {
   id: string;
@@ -715,11 +718,11 @@ export class WorkbenchStore {
         try {
           const resp = await octokit.repos.get({ owner, repo: repoName });
           repo = resp.data;
-          console.log('Repository already exists, using existing repo');
+          logger.debug('Repository already exists, using existing repo');
 
           // Check if we need to update visibility of existing repo
           if (repo.private !== isPrivate) {
-            console.log(
+            logger.debug(
               `Updating repository visibility from ${repo.private ? 'private' : 'public'} to ${isPrivate ? 'private' : 'public'}`,
             );
 
@@ -731,12 +734,12 @@ export class WorkbenchStore {
                 private: isPrivate,
               });
 
-              console.log('Repository visibility updated successfully');
+              logger.debug('Repository visibility updated successfully');
               repo = updatedRepo;
               visibilityJustChanged = true;
 
               // Add a delay after changing visibility to allow GitHub to fully process the change
-              console.log('Waiting for visibility change to propagate...');
+              logger.trace('Waiting for visibility change to propagate...');
               await new Promise((resolve) => setTimeout(resolve, 3000)); // 3 second delay
             } catch (visibilityError) {
               console.error('Failed to update repository visibility:', visibilityError);
@@ -747,7 +750,7 @@ export class WorkbenchStore {
         } catch (error) {
           if (error instanceof Error && 'status' in error && error.status === 404) {
             // Repository doesn't exist, so create a new one
-            console.log(`Creating new repository with private=${isPrivate}`);
+            logger.debug(`Creating new repository with private=${isPrivate}`);
 
             // Create new repository with specified privacy setting
             const createRepoOptions = {
@@ -756,15 +759,15 @@ export class WorkbenchStore {
               auto_init: true,
             };
 
-            console.log('Create repo options:', createRepoOptions);
+            logger.trace('Create repo options:', createRepoOptions);
 
             const { data: newRepo } = await octokit.repos.createForAuthenticatedUser(createRepoOptions);
 
-            console.log('Repository created:', newRepo.html_url, 'Private:', newRepo.private);
+            logger.debug('Repository created:', newRepo.html_url, 'Private:', newRepo.private);
             repo = newRepo;
 
             // Add a small delay after creating a repository to allow GitHub to fully initialize it
-            console.log('Waiting for repository to initialize...');
+            logger.trace('Waiting for repository to initialize...');
             await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
           } else {
             console.error('Cannot create repo:', error);
@@ -784,7 +787,7 @@ export class WorkbenchStore {
           const maxAttempts = 3;
 
           try {
-            console.log(`Pushing files to repository (attempt ${attempt}/${maxAttempts})...`);
+            logger.trace(`Pushing files to repository (attempt ${attempt}/${maxAttempts})...`);
 
             // Create blobs for each file
             const blobs = await Promise.all(
@@ -851,7 +854,7 @@ export class WorkbenchStore {
               sha: newCommit.sha,
             });
 
-            console.log('Files successfully pushed to repository');
+            logger.debug('Files successfully pushed to repository');
 
             return repo.html_url;
           } catch (error) {
@@ -860,7 +863,7 @@ export class WorkbenchStore {
             // If we've just changed visibility and this is not our last attempt, wait and retry
             if ((visibilityJustChanged || attempt === 1) && attempt < maxAttempts) {
               const delayMs = attempt * 2000; // Increasing delay with each attempt
-              console.log(`Waiting ${delayMs}ms before retry...`);
+              logger.trace(`Waiting ${delayMs}ms before retry...`);
               await new Promise((resolve) => setTimeout(resolve, delayMs));
 
               return pushFilesToRepo(attempt + 1);

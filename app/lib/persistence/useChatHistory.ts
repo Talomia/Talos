@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { atom } from 'nanostores';
 import { generateId, type JSONValue, type Message } from 'ai';
 import { toast } from 'react-toastify';
+import { createScopedLogger } from '~/utils/logger';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { logStore } from '~/lib/stores/logs'; // Import logStore
 import {
@@ -22,6 +23,8 @@ import type { Snapshot } from './types';
 import { webcontainer } from '~/lib/webcontainer';
 import { detectProjectCommands, createCommandActionsString } from '~/utils/projectCommands';
 import type { ContextAnnotation } from '~/types/context';
+
+const logger = createScopedLogger('ChatHistory');
 
 export interface ChatHistoryItem {
   id: string;
@@ -326,7 +329,7 @@ ${value.content}
       const finalChatId = chatId.get();
 
       if (!finalChatId) {
-        console.error('Cannot save messages, chat ID is not set.');
+        logger.error('Cannot save messages, chat ID is not set.');
         toast.error('Failed to save chat messages: Chat ID missing.');
 
         return;
@@ -353,7 +356,7 @@ ${value.content}
         toast.success('Chat duplicated successfully');
       } catch (error) {
         toast.error('Failed to duplicate chat');
-        console.log(error);
+        logger.error('Failed to duplicate chat', error);
       }
     },
     importChat: async (description: string, messages: Message[], metadata?: IChatMetadata) => {

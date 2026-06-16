@@ -1,6 +1,9 @@
 import Cookies from 'js-cookie';
 import { type Message } from 'ai';
 import { getAllChats, deleteChat } from '~/lib/persistence/db';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('ImportExportService');
 
 interface ExtendedMessage extends Message {
   name?: string;
@@ -43,7 +46,7 @@ export class ImportExportService {
         metadata: chat.metadata || null,
       }));
 
-      console.log(`Successfully prepared ${sanitizedChats.length} chats for export`);
+      logger.debug(`Successfully prepared ${sanitizedChats.length} chats for export`);
 
       return {
         chats: sanitizedChats,

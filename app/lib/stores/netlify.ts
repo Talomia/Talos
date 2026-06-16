@@ -2,11 +2,14 @@ import { atom } from 'nanostores';
 import type { NetlifyConnection, NetlifyUser } from '~/types/netlify';
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('NetlifyStore');
 
 // Initialize with stored connection or environment variable
 const storedConnection = typeof window !== 'undefined' ? localStorage.getItem('netlify_connection') : null;
 const envToken = import.meta.env.VITE_NETLIFY_ACCESS_TOKEN;
-console.log('Netlify store: envToken loaded:', envToken ? '[TOKEN_EXISTS]' : '[NO_TOKEN]');
+logger.trace('envToken loaded:', envToken ? '[TOKEN_EXISTS]' : '[NO_TOKEN]');
 
 // If we have an environment token but no stored connection, initialize with the env token
 const initialConnection: NetlifyConnection = storedConnection
@@ -27,11 +30,11 @@ export async function initializeNetlifyConnection() {
 
   // If we already have a connection or no token, don't try to connect
   if (currentState.user || !envToken) {
-    console.log('Netlify: Skipping auto-connect - user exists or no env token');
+    logger.trace('Skipping auto-connect - user exists or no env token');
     return;
   }
 
-  console.log('Netlify: Attempting auto-connection with env token');
+  logger.trace('Attempting auto-connection with env token');
 
   try {
     isConnecting.set(true);

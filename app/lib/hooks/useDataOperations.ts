@@ -253,12 +253,6 @@ export function useDataOperations({
       return;
     }
 
-    console.log('Export: Using database', {
-      name: db.name,
-      version: db.version,
-      objectStoreNames: Array.from(db.objectStoreNames),
-    });
-
     setIsExporting(true);
     setProgressPercent(0);
 
@@ -275,23 +269,14 @@ export function useDataOperations({
       // Step 1: Export chats
       showProgress('Retrieving chats from database', 25);
 
-      console.log('Database details:', {
-        name: db.name,
-        version: db.version,
-        objectStoreNames: Array.from(db.objectStoreNames),
-      });
-
       // Direct database query approach for more reliable access
       const directChats = await new Promise<any[]>((resolve, reject) => {
         try {
-          console.log(`Creating transaction on '${db.name}' database, objectStore 'chats'`);
-
           const transaction = db.transaction(['chats'], 'readonly');
           const store = transaction.objectStore('chats');
           const request = store.getAll();
 
           request.onsuccess = () => {
-            console.log(`Found ${request.result ? request.result.length : 0} chats directly from database`);
             resolve(request.result || []);
           };
 
@@ -310,8 +295,6 @@ export function useDataOperations({
         chats: directChats,
         exportDate: new Date().toISOString(),
       };
-
-      console.log(`Preparing to export ${exportData.chats.length} chats`);
 
       // Step 2: Create blob
       showProgress('Creating file', 50);
@@ -415,8 +398,6 @@ export function useDataOperations({
         // Wait for all promises to resolve
         const chats = await Promise.all(chatPromises);
         const filteredChats = chats.filter(Boolean); // Remove any null/undefined results
-
-        console.log(`Retrieved ${filteredChats.length} chats for export`);
 
         // Create export data
         const exportData = {

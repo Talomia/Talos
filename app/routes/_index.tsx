@@ -4,6 +4,7 @@ import { BaseChat } from '~/components/chat/BaseChat';
 import { Chat } from '~/components/chat/Chat.client';
 import { Header } from '~/components/header/Header';
 import BackgroundRays from '~/components/ui/BackgroundRays';
+import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 
 export const meta: MetaFunction = () => {
   return [
@@ -25,7 +26,9 @@ export default function Index() {
     <div className="flex flex-col h-full w-full bg-bolt-elements-background-depth-1">
       <BackgroundRays />
       <Header />
-      <ClientOnly fallback={<BaseChat />}>{() => <Chat />}</ClientOnly>
+      <ErrorBoundary panelName="the chat panel">
+        <ClientOnly fallback={<BaseChat />}>{() => <Chat />}</ClientOnly>
+      </ErrorBoundary>
     </div>
   );
 }

@@ -6,6 +6,9 @@ import type {
   GitLabProjectResponse,
   GitLabCommitRequest,
 } from '~/types/GitLab';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('GitLabApiService');
 
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
@@ -104,7 +107,7 @@ export class GitLabApiService {
 
   private get _headers() {
     // Log token format for debugging
-    console.log('GitLab API token info:', {
+    logger.trace('GitLab API token info:', {
       tokenLength: this._token.length,
       tokenPrefix: this._token.substring(0, 10) + '...',
       tokenType: this._token.startsWith('glpat-') ? 'personal-access-token' : 'unknown',
@@ -395,7 +398,7 @@ export class GitLabApiService {
       }
 
       if (response.status === 404) {
-        console.log(`Project not found: ${projectPath}`);
+        logger.debug(`Project not found: ${projectPath}`);
         return null;
       }
 

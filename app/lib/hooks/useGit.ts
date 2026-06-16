@@ -5,6 +5,9 @@ import git, { type GitAuth, type PromiseFsClient } from 'isomorphic-git';
 import http from 'isomorphic-git/http/web';
 import Cookies from 'js-cookie';
 import { toast } from 'react-toastify';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('UseGit');
 
 const lookupSavedPassword = (url: string) => {
   const domain = url.split('/')[2];
@@ -18,7 +21,7 @@ const lookupSavedPassword = (url: string) => {
     const { username, password } = JSON.parse(gitCreds || '{}');
     return { username, password };
   } catch (error) {
-    console.log(`Failed to parse Git Cookie ${error}`);
+    logger.debug(`Failed to parse Git Cookie ${error}`);
     return null;
   }
 };
@@ -78,7 +81,7 @@ export function useGit() {
         // Add a small delay before retrying to allow for network recovery
         if (retryCount > 0) {
           await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
-          console.log(`Retrying git clone (attempt ${retryCount + 1})...`);
+          logger.debug(`Retrying git clone (attempt ${retryCount + 1})...`);
         }
 
         await git.clone({
@@ -92,17 +95,17 @@ export function useGit() {
           corsProxy: '/api/git-proxy',
           headers,
           onProgress: (event) => {
-            console.log('Git clone progress:', event);
+            logger.trace('Git clone progress:', event);
           },
           onAuth: (baseUrl) => {
             let auth = lookupSavedPassword(baseUrl);
 
             if (auth) {
-              console.log('Using saved authentication for', baseUrl);
+              logger.debug('Using saved authentication for', baseUrl);
               return auth;
             }
 
-            console.log('Repository requires authentication:', baseUrl);
+            logger.debug('Repository requires authentication:', baseUrl);
 
             if (confirm('This repository requires authentication. Would you like to enter your GitHub credentials?')) {
               auth = {
@@ -124,7 +127,7 @@ export function useGit() {
             );
           },
           onAuthSuccess: (baseUrl, auth) => {
-            console.log(`Authentication successful for ${baseUrl}`);
+            logger.debug(`Authentication successful for ${baseUrl}`);
             saveGitAuth(baseUrl, auth);
           },
         });

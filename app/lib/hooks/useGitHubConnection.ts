@@ -98,22 +98,16 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
   }, []);
 
   const connect = useCallback(async (token: string, tokenType: 'classic' | 'fine-grained') => {
-    console.log('useGitHubConnection.connect called with tokenType:', tokenType);
-
     if (!token.trim()) {
-      console.log('Token validation failed - empty token');
       setError('Token is required');
 
       return;
     }
 
-    console.log('Setting isConnecting to true');
     isConnecting.set(true);
     setError(null);
 
     try {
-      console.log('Making API request to GitHub...');
-
       // Test the token by fetching user info
       const response = await fetch('https://api.github.com/user', {
         headers: {
@@ -122,8 +116,6 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
           'User-Agent': 'recurrsive',
         },
       });
-
-      console.log('GitHub API response status:', response.status, response.statusText);
 
       if (!response.ok) {
         throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);

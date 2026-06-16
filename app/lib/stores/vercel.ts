@@ -2,6 +2,9 @@ import { atom } from 'nanostores';
 import type { VercelConnection } from '~/types/vercel';
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('VercelStore');
 
 // Auto-connect using environment variable
 const envToken = import.meta.env?.VITE_VERCEL_ACCESS_TOKEN;
@@ -16,7 +19,7 @@ if (storedConnection) {
 
     // If we have a stored connection but no user and no token, clear it and use env token
     if (!parsed.user && !parsed.token && envToken) {
-      console.log('Vercel store: Clearing incomplete saved connection, using env token');
+      logger.trace('Clearing incomplete saved connection, using env token');
 
       if (typeof window !== 'undefined') {
         localStorage.removeItem('vercel_connection');
@@ -63,7 +66,7 @@ export const updateVercelConnection = (updates: Partial<VercelConnection>) => {
 
 // Auto-connect using environment token
 export async function autoConnectVercel() {
-  console.log('autoConnectVercel called, envToken exists:', !!envToken);
+  logger.trace('autoConnectVercel called, envToken exists:', !!envToken);
 
   if (!envToken) {
     console.error('No Vercel token found in environment');
@@ -71,11 +74,7 @@ export async function autoConnectVercel() {
   }
 
   try {
-    console.log('Setting isConnecting to true');
     isConnecting.set(true);
-
-    // Test the connection
-    console.log('Making API call to Vercel');
 
     const response = await fetch('https://api.vercel.com/v2/user', {
       headers: {
@@ -84,17 +83,15 @@ export async function autoConnectVercel() {
       },
     });
 
-    console.log('Vercel API response status:', response.status);
+    logger.trace('API response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`Vercel API error: ${response.status}`);
     }
 
     const userData = (await response.json()) as any;
-    console.log('Vercel API response userData:', userData);
 
     // Update connection
-    console.log('Updating Vercel connection');
     updateVercelConnection({
       user: userData.user || userData,
       token: envToken,
@@ -106,10 +103,9 @@ export async function autoConnectVercel() {
     });
 
     // Fetch stats
-    console.log('Fetching Vercel stats');
     await fetchVercelStats(envToken);
 
-    console.log('Vercel auto-connection successful');
+    logger.trace('Auto-connection successful');
 
     return { success: true };
   } catch (error) {
@@ -124,7 +120,6 @@ export async function autoConnectVercel() {
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   } finally {
-    console.log('Setting isConnecting to false');
     isConnecting.set(false);
   }
 }

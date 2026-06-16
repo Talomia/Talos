@@ -11,6 +11,9 @@ import { chatId } from '~/lib/persistence/useChatHistory';
 import { useStore } from '@nanostores/react';
 import { GitHubAuthDialog } from '~/components/@settings/tabs/github/components/GitHubAuthDialog';
 import { SearchInput, EmptyState, StatusIndicator, Badge } from '~/components/ui';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('GitHubDeploymentDialog');
 
 interface GitHubDeploymentDialogProps {
   isOpen: boolean;
@@ -288,7 +291,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         setCreatedRepoUrl(newRepo.html_url);
 
         // Since we created the repo with auto_init, we need to wait for GitHub to initialize it
-        console.log('Created new repository with auto_init, waiting for GitHub to initialize it...');
+        logger.debug('Created new repository with auto_init, waiting for GitHub to initialize it...');
 
         // Wait a moment for GitHub to set up the initial commit
         await new Promise((resolve) => setTimeout(resolve, 2000));
@@ -327,7 +330,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           repo: sanitizedRepoName,
         });
         defaultBranch = repo.default_branch || 'main';
-        console.log(`Repository default branch: ${defaultBranch}`);
+        logger.trace(`Repository default branch: ${defaultBranch}`);
 
         // For a newly created repo (or existing one), get the reference to the default branch
         try {
@@ -338,7 +341,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           });
 
           baseSha = refData.object.sha;
-          console.log(`Found existing reference with SHA: ${baseSha}`);
+          logger.trace(`Found existing reference with SHA: ${baseSha}`);
 
           // Get the latest commit to use as a base for our tree
           const { data: commitData } = await octokit.git.getCommit({
@@ -349,7 +352,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
           // Store the base tree SHA for tree creation
           baseSha = commitData.tree.sha;
-          console.log(`Using base tree SHA: ${baseSha}`);
+          logger.trace(`Using base tree SHA: ${baseSha}`);
         } catch (refError) {
           console.error('Error getting reference:', refError);
           baseSha = null;
@@ -513,21 +516,13 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
         // GitHub API errors
         if ('documentation_url' in error) {
-          console.log('GitHub API documentation:', error.documentation_url);
+          logger.trace('GitHub API documentation:', error.documentation_url);
         }
       }
 
       // Show error with retry suggestion if applicable
       const finalMessage = isRetryable ? `${errorMessage} Click to retry.` : errorMessage;
       toast.error(finalMessage);
-
-      // Log detailed error for debugging
-      console.error('Detailed GitHub deployment error:', {
-        error,
-        repoName: sanitizeRepoName(repoName),
-        user: connection?.user?.login,
-        isRetryable,
-      });
     } finally {
       setIsLoading(false);
     }
