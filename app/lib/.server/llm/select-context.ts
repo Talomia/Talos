@@ -167,7 +167,7 @@ export async function selectContext(props: {
         CRITICAL RULES:
         * Only include relevant files in the context buffer.
         * context buffer should not include any file that is not in the list of files above.
-        * context buffer is extremlly expensive, so only include files that are absolutely necessary.
+        * context buffer is extremely expensive, so only include files that are absolutely necessary.
         * If no changes are needed, you can leave the response empty updateContextBuffer tag.
         * Only 5 files can be placed in the context buffer at a time.
         * if the buffer is full, you need to exclude files that is not needed and include files that is relevent.

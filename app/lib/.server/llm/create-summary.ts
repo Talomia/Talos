@@ -156,7 +156,7 @@ Note:
         RULES:
         * Only provide the whole summary of the chat till now.
         * Do not provide any new information.
-        * DO not need to think too much just start writing imidiately
+        * DO not need to think too much just start writing immediately
         * do not write any thing other that the summary with with the provided structure
         `,
     prompt: `
@@ -177,7 +177,7 @@ ${slicedMessages
 </new_chats>
 ---
 
-Please provide a summary of the chat till now including the hitorical summary of the chat.
+Please provide a summary of the chat till now including the historical summary of the chat.
 `,
     model: provider.getModelInstance({
       model: currentModel,
