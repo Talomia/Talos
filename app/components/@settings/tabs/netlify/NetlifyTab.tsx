@@ -4,11 +4,15 @@ import { toast } from 'react-toastify';
 import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { netlifyConnection, updateNetlifyConnection, initializeNetlifyConnection } from '~/lib/stores/netlify';
-import type { NetlifySite, NetlifyDeploy, NetlifyBuild, NetlifyUser } from '~/types/netlify';
+import type { NetlifySite, NetlifyDeploy, NetlifyUser } from '~/types/netlify';
 import { Button } from '~/components/ui/Button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/components/ui/Collapsible';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '~/components/ui/Badge';
+import { createScopedLogger } from '~/utils/logger';
+import { fetchNetlifyUser, fetchAllStats, triggerSiteBuild, deleteSite, manageDeploy } from './netlifyApi';
+
+const logger = createScopedLogger('NetlifyTab');
 
 interface ConnectionTestResult {
   status: 'success' | 'error' | 'testing';
@@ -67,26 +71,12 @@ export default function NetlifyTab() {
     });
 
     try {
-      const response = await fetch('https://api.netlify.com/api/v1/user', {
-        headers: {
-          Authorization: `Bearer ${connection.token}`,
-        },
+      const data = await fetchNetlifyUser(connection.token);
+      setConnectionTest({
+        status: 'success',
+        message: `Connected successfully as ${(data as any).email}`,
+        timestamp: Date.now(),
       });
-
-      if (response.ok) {
-        const data = (await response.json()) as any;
-        setConnectionTest({
-          status: 'success',
-          message: `Connected successfully as ${data.email}`,
-          timestamp: Date.now(),
-        });
-      } else {
-        setConnectionTest({
-          status: 'error',
-          message: `Connection failed: ${response.status} ${response.statusText}`,
-          timestamp: Date.now(),
-        });
-      }
     } catch (error) {
       setConnectionTest({
         status: 'error',
@@ -240,20 +230,8 @@ export default function NetlifyTab() {
         try {
           setIsActionLoading(true);
 
-          const buildResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/builds`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${connection.token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (!buildResponse.ok) {
-            throw new Error('Failed to trigger build');
-          }
-
-          const buildData = (await buildResponse.json()) as any;
-          toast.success(`Build triggered successfully! ID: ${buildData.id}`);
+          const buildData = await triggerSiteBuild(connection.token, siteId);
+          toast.success(`Build triggered successfully! ID: ${(buildData as any).id}`);
         } catch (err: unknown) {
           const error = err instanceof Error ? err.message : 'Unknown error';
           toast.error(`Failed to trigger build: ${error}`);
@@ -373,17 +351,7 @@ export default function NetlifyTab() {
       icon: 'i-ph:trash',
       action: async (siteId: string) => {
         try {
-          const response = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
-            method: 'DELETE',
-            headers: {
-              Authorization: `Bearer ${connection.token}`,
-            },
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to delete site');
-          }
-
+          await deleteSite(connection.token, siteId);
           toast.success('Site deleted successfully');
           fetchNetlifyStats(connection.token);
         } catch (err: unknown) {
@@ -400,22 +368,7 @@ export default function NetlifyTab() {
   const handleDeploy = async (siteId: string, deployId: string, action: 'lock' | 'unlock' | 'publish') => {
     try {
       setIsActionLoading(true);
-
-      const endpoint =
-        action === 'publish'
-          ? `https://api.netlify.com/api/v1/sites/${siteId}/deploys/${deployId}/restore`
-          : `https://api.netlify.com/api/v1/deploys/${deployId}/${action}`;
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${connection.token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${action} deploy`);
-      }
+      await manageDeploy(connection.token, siteId, deployId, action);
 
       toast.success(`Deploy ${action}ed successfully`);
       fetchNetlifyStats(connection.token);
@@ -456,30 +409,17 @@ export default function NetlifyTab() {
     setIsConnecting(true);
 
     try {
-      const response = await fetch('https://api.netlify.com/api/v1/user', {
-        headers: {
-          Authorization: `Bearer ${tokenInput}`,
-        },
-      });
+      const userData = (await fetchNetlifyUser(tokenInput)) as NetlifyUser;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-
-      const userData = (await response.json()) as NetlifyUser;
-
-      // Update the connection store
       updateNetlifyConnection({
         user: userData,
         token: tokenInput,
       });
 
       toast.success('Connected to Netlify successfully');
-
-      // Fetch stats after successful connection
       fetchNetlifyStats(tokenInput);
     } catch (error) {
-      console.error('Error connecting to Netlify:', error);
+      logger.error('Error connecting to Netlify:', error);
       toast.error(`Failed to connect to Netlify: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsConnecting(false);
@@ -504,117 +444,20 @@ export default function NetlifyTab() {
     setFetchingStats(true);
 
     try {
-      // Fetch sites
-      const sitesResponse = await fetch('https://api.netlify.com/api/v1/sites', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const stats = await fetchAllStats(token);
 
-      if (!sitesResponse.ok) {
-        throw new Error(`Failed to fetch sites: ${sitesResponse.statusText}`);
+      setSites(stats.sites);
+      setDeploys(stats.deploys);
+      setDeploymentCount(stats.totalDeploys);
+
+      if (stats.lastDeployTime) {
+        setLastUpdated(stats.lastDeployTime);
       }
 
-      const sitesData = (await sitesResponse.json()) as NetlifySite[];
-      setSites(sitesData);
-
-      // Fetch deploys and builds for ALL sites
-      const allDeploysData: NetlifyDeploy[] = [];
-      const allBuildsData: NetlifyBuild[] = [];
-      let lastDeployTime = '';
-      let totalDeploymentCount = 0;
-
-      if (sitesData && sitesData.length > 0) {
-        // Process sites in batches to avoid overwhelming the API
-        const batchSize = 3;
-        const siteBatches = [];
-
-        for (let i = 0; i < sitesData.length; i += batchSize) {
-          siteBatches.push(sitesData.slice(i, i + batchSize));
-        }
-
-        for (const batch of siteBatches) {
-          const batchPromises = batch.map(async (site) => {
-            try {
-              // Fetch deploys for this site
-              const deploysResponse = await fetch(
-                `https://api.netlify.com/api/v1/sites/${site.id}/deploys?per_page=20`,
-                {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                },
-              );
-
-              let siteDeploys: NetlifyDeploy[] = [];
-
-              if (deploysResponse.ok) {
-                siteDeploys = (await deploysResponse.json()) as NetlifyDeploy[];
-              }
-
-              // Fetch builds for this site
-              const buildsResponse = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/builds?per_page=10`, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              });
-
-              let siteBuilds: NetlifyBuild[] = [];
-
-              if (buildsResponse.ok) {
-                siteBuilds = (await buildsResponse.json()) as NetlifyBuild[];
-              }
-
-              return { site, deploys: siteDeploys, builds: siteBuilds };
-            } catch (error) {
-              console.error(`Failed to fetch data for site ${site.name}:`, error);
-              return { site, deploys: [], builds: [] };
-            }
-          });
-
-          const batchResults = await Promise.all(batchPromises);
-
-          for (const result of batchResults) {
-            allDeploysData.push(...result.deploys);
-            allBuildsData.push(...result.builds);
-            totalDeploymentCount += result.deploys.length;
-          }
-
-          // Small delay between batches
-          if (batch !== siteBatches[siteBatches.length - 1]) {
-            await new Promise((resolve) => setTimeout(resolve, 200));
-          }
-        }
-
-        // Sort deploys by creation date (newest first)
-        allDeploysData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-        // Set the most recent deploy time
-        if (allDeploysData.length > 0) {
-          lastDeployTime = allDeploysData[0].created_at;
-          setLastUpdated(lastDeployTime);
-        }
-
-        setDeploys(allDeploysData);
-        setDeploymentCount(totalDeploymentCount);
-      }
-
-      // Update the stats in the store
-      updateNetlifyConnection({
-        stats: {
-          sites: sitesData,
-          deploys: allDeploysData,
-          builds: allBuildsData,
-          lastDeployTime,
-          totalSites: sitesData.length,
-          totalDeploys: totalDeploymentCount,
-          totalBuilds: allBuildsData.length,
-        },
-      });
-
+      updateNetlifyConnection({ stats });
       toast.success('Netlify stats updated');
     } catch (error) {
-      console.error('Error fetching Netlify stats:', error);
+      logger.error('Error fetching Netlify stats:', error);
       toast.error(`Failed to fetch Netlify stats: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setFetchingStats(false);

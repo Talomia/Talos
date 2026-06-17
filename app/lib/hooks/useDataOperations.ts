@@ -3,6 +3,9 @@ import { toast } from 'react-toastify';
 import { ImportExportService } from '~/lib/services/importExportService';
 import { useIndexedDB } from '~/lib/hooks/useIndexedDB';
 import { generateId } from 'ai';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('DataOperations');
 
 interface UseDataOperationsProps {
   /**
@@ -125,7 +128,7 @@ export function useDataOperations({
       // Save operation for potential undo
       setLastOperation({ type: 'export-settings', data: settingsData });
     } catch (error) {
-      console.error('Error exporting settings:', error);
+      logger.error('Error exporting settings:', error);
 
       // Dismiss progress toast before showing error toast
       toast.dismiss('progress-toast');
@@ -223,7 +226,7 @@ export function useDataOperations({
           data: { settings: filteredSettings, categories: categoryIds },
         });
       } catch (error) {
-        console.error('Error exporting selected settings:', error);
+        logger.error('Error exporting selected settings:', error);
 
         // Dismiss progress toast before showing error toast
         toast.dismiss('progress-toast');
@@ -281,11 +284,11 @@ export function useDataOperations({
           };
 
           request.onerror = () => {
-            console.error('Error querying chats store:', request.error);
+            logger.error('Error querying chats store:', request.error);
             reject(request.error);
           };
         } catch (err) {
-          console.error('Error creating transaction:', err);
+          logger.error('Error creating transaction:', err);
           reject(err);
         }
       });
@@ -329,7 +332,7 @@ export function useDataOperations({
       // Save operation for potential undo
       setLastOperation({ type: 'export-chats', data: exportData });
     } catch (error) {
-      console.error('Error exporting chats:', error);
+      logger.error('Error exporting chats:', error);
 
       // Dismiss progress toast before showing error toast
       toast.dismiss('progress-toast');
@@ -438,7 +441,7 @@ export function useDataOperations({
         // Save operation for potential undo
         setLastOperation({ type: 'export-selected-chats', data: { chatIds, chats: filteredChats } });
       } catch (error) {
-        console.error('Error exporting selected chats:', error);
+        logger.error('Error exporting selected chats:', error);
 
         // Dismiss progress toast before showing error toast
         toast.dismiss('progress-toast');
@@ -511,7 +514,7 @@ export function useDataOperations({
           onReloadSettings();
         }
       } catch (error) {
-        console.error('Error importing settings:', error);
+        logger.error('Error importing settings:', error);
 
         // Dismiss progress toast before showing error toast
         toast.dismiss('progress-toast');
@@ -650,7 +653,7 @@ export function useDataOperations({
           onReloadChats();
         }
       } catch (error) {
-        console.error('Error importing chats:', error);
+        logger.error('Error importing chats:', error);
 
         // Dismiss progress toast before showing error toast
         toast.dismiss('progress-toast');
@@ -734,7 +737,7 @@ export function useDataOperations({
           onReloadSettings();
         }
       } catch (error) {
-        console.error('Error importing API keys:', error);
+        logger.error('Error importing API keys:', error);
 
         // Dismiss progress toast before showing error toast
         toast.dismiss('progress-toast');
@@ -804,7 +807,7 @@ export function useDataOperations({
         });
       }
     } catch (error) {
-      console.error('Error resetting settings:', error);
+      logger.error('Error resetting settings:', error);
 
       // Dismiss progress toast before showing error toast
       toast.dismiss('progress-toast');
@@ -870,7 +873,7 @@ export function useDataOperations({
         onResetChats();
       }
     } catch (error) {
-      console.error('Error resetting chats:', error);
+      logger.error('Error resetting chats:', error);
 
       // Dismiss progress toast before showing error toast
       toast.dismiss('progress-toast');
@@ -934,7 +937,7 @@ export function useDataOperations({
         autoClose: 3000,
       });
     } catch (error) {
-      console.error('Error downloading template:', error);
+      logger.error('Error downloading template:', error);
 
       // Dismiss progress toast before showing error toast
       toast.dismiss('progress-toast');
@@ -1012,7 +1015,7 @@ export function useDataOperations({
       // Save operation for potential undo
       setLastOperation({ type: 'export-api-keys', data: apiKeys });
     } catch (error) {
-      console.error('Error exporting API keys:', error);
+      logger.error('Error exporting API keys:', error);
 
       // Dismiss progress toast before showing error toast
       toast.dismiss('progress-toast');
@@ -1185,7 +1188,7 @@ export function useDataOperations({
       // Clear the last operation after undoing
       setLastOperation(null);
     } catch (error) {
-      console.error('Error undoing operation:', error);
+      logger.error('Error undoing operation:', error);
 
       // Dismiss progress toast before showing error toast
       toast.dismiss('progress-toast');
