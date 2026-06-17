@@ -1,6 +1,9 @@
 interface Env {
-  RUNNING_IN_DOCKER: Settings;
-  DEFAULT_NUM_CTX: Settings;
+  // Runtime configuration
+  RUNNING_IN_DOCKER: string;
+  DEFAULT_NUM_CTX: string;
+
+  // LLM Provider API keys
   ANTHROPIC_API_KEY: string;
   OPENAI_API_KEY: string;
   GROQ_API_KEY: string;
@@ -19,4 +22,16 @@ interface Env {
   XAI_API_KEY: string;
   PERPLEXITY_API_KEY: string;
   AWS_BEDROCK_CONFIG: string;
+
+  // Cloudflare Pages environment
+  CF_PAGES?: string;
+  CF_PAGES_URL?: string;
+  CF_PAGES_COMMIT_SHA?: string;
+
+  // GitHub bug report integration
+  GITHUB_BUG_REPORT_TOKEN?: string;
+  BUG_REPORT_REPO?: string;
+
+  // Allow index access for dynamic env lookups
+  [key: string]: string | undefined;
 }

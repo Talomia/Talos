@@ -4,6 +4,31 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('vercel-deploy');
 
+interface VercelProjectResponse {
+  id: string;
+  name: string;
+}
+
+interface VercelDeploymentItem {
+  id: string;
+  state: string;
+  url?: string;
+}
+
+interface VercelDeploymentsResponse {
+  deployments?: VercelDeploymentItem[];
+}
+
+interface VercelDeployResponse {
+  id: string;
+  url?: string;
+  readyState?: string;
+}
+
+interface VercelErrorResponse {
+  error?: { message?: string };
+}
+
 // Function to detect framework from project files
 const detectFramework = (files: Record<string, string>): string => {
   // Check for package.json first
@@ -197,7 +222,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       return json({ error: 'Failed to fetch project' }, { status: 400 });
     }
 
-    const projectData = (await projectResponse.json()) as any;
+    const projectData = (await projectResponse.json()) as VercelProjectResponse;
 
     // Get latest deployment
     const deploymentsResponse = await fetch(`https://api.vercel.com/v6/deployments?projectId=${projectId}&limit=1`, {
@@ -210,7 +235,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       return json({ error: 'Failed to fetch deployments' }, { status: 400 });
     }
 
-    const deploymentsData = (await deploymentsResponse.json()) as any;
+    const deploymentsData = (await deploymentsResponse.json()) as VercelDeploymentsResponse;
 
     const latestDeployment = deploymentsData.deployments?.[0];
 
@@ -280,14 +305,14 @@ export async function action({ request }: ActionFunctionArgs) {
       });
 
       if (!createProjectResponse.ok) {
-        const errorData = (await createProjectResponse.json()) as any;
+        const errorData = (await createProjectResponse.json()) as VercelErrorResponse;
         return json(
           { error: `Failed to create project: ${errorData.error?.message || 'Unknown error'}` },
           { status: 400 },
         );
       }
 
-      const newProject = (await createProjectResponse.json()) as any;
+      const newProject = (await createProjectResponse.json()) as VercelProjectResponse;
       targetProjectId = newProject.id;
       projectInfo = {
         id: newProject.id,
@@ -304,7 +329,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
 
       if (projectResponse.ok) {
-        const existingProject = (await projectResponse.json()) as any;
+        const existingProject = (await projectResponse.json()) as VercelProjectResponse;
         projectInfo = {
           id: existingProject.id,
           name: existingProject.name,
@@ -327,14 +352,14 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         if (!createProjectResponse.ok) {
-          const errorData = (await createProjectResponse.json()) as any;
+          const errorData = (await createProjectResponse.json()) as VercelErrorResponse;
           return json(
             { error: `Failed to create project: ${errorData.error?.message || 'Unknown error'}` },
             { status: 400 },
           );
         }
 
-        const newProject = (await createProjectResponse.json()) as any;
+        const newProject = (await createProjectResponse.json()) as VercelProjectResponse;
         targetProjectId = newProject.id;
         projectInfo = {
           id: newProject.id,
@@ -427,14 +452,14 @@ export async function action({ request }: ActionFunctionArgs) {
     });
 
     if (!deployResponse.ok) {
-      const errorData = (await deployResponse.json()) as any;
+      const errorData = (await deployResponse.json()) as VercelErrorResponse;
       return json(
         { error: `Failed to create deployment: ${errorData.error?.message || 'Unknown error'}` },
         { status: 400 },
       );
     }
 
-    const deployData = (await deployResponse.json()) as any;
+    const deployData = (await deployResponse.json()) as VercelDeployResponse;
 
     // Poll for deployment status
     let retryCount = 0;
@@ -450,8 +475,8 @@ export async function action({ request }: ActionFunctionArgs) {
       });
 
       if (statusResponse.ok) {
-        const status = (await statusResponse.json()) as any;
-        deploymentState = status.readyState;
+        const status = (await statusResponse.json()) as VercelDeployResponse;
+        deploymentState = status.readyState ?? '';
         deploymentUrl = status.url ? `https://${status.url}` : '';
 
         if (status.readyState === 'READY' || status.readyState === 'ERROR') {

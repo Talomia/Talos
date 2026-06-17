@@ -1,5 +1,5 @@
 import { atom } from 'nanostores';
-import type { VercelConnection } from '~/types/vercel';
+import type { VercelConnection, VercelProject, VercelUser, VercelUserResponse } from '~/types/vercel';
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
@@ -89,11 +89,11 @@ export async function autoConnectVercel() {
       throw new Error(`Vercel API error: ${response.status}`);
     }
 
-    const userData = (await response.json()) as any;
+    const userData = (await response.json()) as VercelUserResponse;
 
-    // Update connection
+    // Update connection — API may return { user: {...} } or flat user object
     updateVercelConnection({
-      user: userData.user || userData,
+      user: (userData.user || userData) as VercelUser,
       token: envToken,
     });
 
@@ -151,12 +151,12 @@ export async function fetchVercelStats(token: string) {
       throw new Error(`Failed to fetch projects: ${projectsResponse.status}`);
     }
 
-    const projectsData = (await projectsResponse.json()) as any;
+    const projectsData = (await projectsResponse.json()) as { projects?: VercelProject[] };
     const projects = projectsData.projects || [];
 
     // Fetch latest deployment for each project
     const projectsWithDeployments = await Promise.all(
-      projects.map(async (project: any) => {
+      projects.map(async (project: VercelProject) => {
         try {
           const deploymentsResponse = await fetch(
             `https://api.vercel.com/v6/deployments?projectId=${project.id}&limit=1`,
@@ -169,7 +169,14 @@ export async function fetchVercelStats(token: string) {
           );
 
           if (deploymentsResponse.ok) {
-            const deploymentsData = (await deploymentsResponse.json()) as any;
+            const deploymentsData = (await deploymentsResponse.json()) as {
+              deployments?: Array<{
+                id: string;
+                url: string;
+                created: number;
+                state: 'READY' | 'ERROR' | 'BUILDING' | 'CANCELED';
+              }>;
+            };
             return {
               ...project,
               latestDeployments: deploymentsData.deployments || [],

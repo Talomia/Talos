@@ -85,10 +85,10 @@ async function githubUserAction({ request, context }: { request: Request; contex
     const contentType = request.headers.get('Content-Type') || '';
 
     if (contentType.includes('application/json')) {
-      const jsonData = (await request.json()) as any;
-      action = jsonData.action;
-      repoFullName = jsonData.repo;
-      searchQuery = jsonData.query;
+      const jsonData = (await request.json()) as { action?: string; repo?: string; query?: string; per_page?: number };
+      action = jsonData.action ?? null;
+      repoFullName = jsonData.repo ?? null;
+      searchQuery = jsonData.query ?? null;
       perPage = jsonData.per_page || 30;
     } else {
       const formData = await request.formData();

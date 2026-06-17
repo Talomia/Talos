@@ -22,7 +22,7 @@ interface ConfiguredProvidersResponse {
  */
 export const loader: LoaderFunction = async ({ context }) => {
   try {
-    const llmManager = LLMManager.getInstance(context?.cloudflare?.env as any);
+    const llmManager = LLMManager.getInstance((context?.cloudflare?.env as Record<string, string>) ?? {});
     const configuredProviders: ConfiguredProvider[] = [];
 
     // Check each local provider for environment configuration

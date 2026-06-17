@@ -81,7 +81,7 @@ export default function SupabaseTab() {
       });
 
       if (response.ok) {
-        const data = (await response.json()) as any;
+        const data = (await response.json()) as { projects?: unknown[] };
         setConnectionTest({
           status: 'success',
           message: `Connected successfully using environment token. Found ${data.projects?.length || 0} projects`,

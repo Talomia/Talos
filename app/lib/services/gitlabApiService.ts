@@ -150,7 +150,7 @@ export class GitLabApiService {
 
       // Try to get more details from response body
       try {
-        const errorData = (await response.json()) as any;
+        const errorData = (await response.json()) as { message?: string };
 
         if (errorData.message) {
           errorMessage += ` Details: ${errorData.message}`;
@@ -174,7 +174,11 @@ export class GitLabApiService {
     // Handle different avatar URL fields that GitLab might return
     const processedUser = {
       ...user,
-      avatar_url: user.avatar_url || (user as any).avatarUrl || (user as any).profile_image_url || null,
+      avatar_url:
+        user.avatar_url ||
+        (user as unknown as Record<string, string>).avatarUrl ||
+        (user as unknown as Record<string, string>).profile_image_url ||
+        null,
     };
 
     return { ...processedUser, rateLimit } as GitLabUserResponse & { rateLimit: typeof rateLimit };
@@ -307,12 +311,12 @@ export class GitLabApiService {
       let errorMessage = `Failed to create project: ${response.status} ${response.statusText}`;
 
       try {
-        const errorData = (await response.json()) as any;
+        const errorData = (await response.json()) as { message?: string | Record<string, string[]> };
 
         if (errorData.message) {
           if (typeof errorData.message === 'object') {
             // Handle validation errors
-            const messages = Object.entries(errorData.message as Record<string, any>)
+            const messages = Object.entries(errorData.message)
               .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
               .join('; ');
             errorMessage = `Failed to create project: ${messages}`;

@@ -69,10 +69,10 @@ export async function signUp(
       body: JSON.stringify({ action: 'signup', email, password }),
     });
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as { error?: string; confirmEmail?: boolean; user?: AuthUser | null };
 
     if (!response.ok) {
-      authStore.set({ ...authStore.get(), isLoading: false, error: data.error });
+      authStore.set({ ...authStore.get(), isLoading: false, error: data.error ?? null });
       return { success: false, error: data.error };
     }
 
@@ -82,7 +82,7 @@ export async function signUp(
     }
 
     // Auto-login on signup (if no email confirmation required)
-    authStore.set({ user: data.user, isLoading: false, error: null });
+    authStore.set({ user: data.user ?? null, isLoading: false, error: null });
 
     return { success: true };
   } catch {
@@ -106,14 +106,14 @@ export async function signIn(email: string, password: string): Promise<{ success
       body: JSON.stringify({ action: 'login', email, password }),
     });
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as { error?: string; user?: AuthUser | null };
 
     if (!response.ok) {
-      authStore.set({ ...authStore.get(), isLoading: false, error: data.error });
+      authStore.set({ ...authStore.get(), isLoading: false, error: data.error ?? null });
       return { success: false, error: data.error };
     }
 
-    authStore.set({ user: data.user, isLoading: false, error: null });
+    authStore.set({ user: data.user ?? null, isLoading: false, error: null });
 
     return { success: true };
   } catch {
@@ -135,7 +135,7 @@ export async function signInWithOAuth(provider: string): Promise<{ success: bool
       body: JSON.stringify({ action: 'oauth', provider }),
     });
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as { error?: string; url?: string };
 
     if (!response.ok) {
       return { success: false, error: data.error };

@@ -23,7 +23,7 @@ interface GitHubContentResponse {
 }
 
 // Function to detect if we're running in Cloudflare
-function isCloudflareEnvironment(context: any): boolean {
+function isCloudflareEnvironment(context: { cloudflare?: { env?: Partial<Env> } }): boolean {
   // Check if we're in production AND have Cloudflare Pages specific env vars
   const isProduction = process.env.NODE_ENV === 'production';
   const hasCfPagesVars = !!(
@@ -158,7 +158,7 @@ async function fetchRepoContentsZip(repo: string, githubToken?: string) {
     throw new Error(`GitHub API error: ${releaseResponse.status} - ${releaseResponse.statusText}`);
   }
 
-  const releaseData = (await releaseResponse.json()) as any;
+  const releaseData = (await releaseResponse.json()) as { zipball_url: string };
   const zipballUrl = releaseData.zipball_url;
 
   // Fetch the zipball

@@ -107,7 +107,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
             content: `${message}`,
           },
         ],
-        env: context.cloudflare?.env as any,
+        env: context.cloudflare?.env,
         apiKeys,
         providerSettings,
       });
@@ -152,7 +152,11 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
     }
   } else {
     try {
-      const models = await getModelList({ apiKeys, providerSettings, serverEnv: context.cloudflare?.env as any });
+      const models = await getModelList({
+        apiKeys,
+        providerSettings,
+        serverEnv: context.cloudflare?.env as Record<string, string>,
+      });
       const modelDetails = models.find((m: ModelInfo) => m.name === model);
 
       if (!modelDetails) {
@@ -197,7 +201,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         ],
         model: providerInfo.getModelInstance({
           model: modelDetails.name,
-          serverEnv: context.cloudflare?.env as any,
+          serverEnv: context.cloudflare?.env,
           apiKeys,
           providerSettings,
         }),
@@ -242,12 +246,13 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
     } catch (error: unknown) {
       logger.debug(error);
 
+      const errorRecord = error as Record<string, unknown>;
       const errorResponse = {
         error: true,
         message: error instanceof Error ? error.message : 'An unexpected error occurred',
-        statusCode: (error as any).statusCode || 500,
-        isRetryable: (error as any).isRetryable !== false,
-        provider: (error as any).provider || 'unknown',
+        statusCode: (typeof errorRecord.statusCode === 'number' ? errorRecord.statusCode : 500) as number,
+        isRetryable: errorRecord.isRetryable !== false,
+        provider: (typeof errorRecord.provider === 'string' ? errorRecord.provider : 'unknown') as string,
       };
 
       if (error instanceof Error && error.message?.includes('API key')) {
