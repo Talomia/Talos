@@ -1,6 +1,9 @@
 import { json, type ActionFunctionArgs } from '@remix-run/cloudflare';
 import { Octokit } from '@octokit/rest';
 import { z } from 'zod';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('api.bug-report');
 
 // Rate limiting store (in production, use Redis or similar)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -197,7 +200,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       (context?.cloudflare?.env as any)?.BUG_REPORT_REPO || process.env.BUG_REPORT_REPO || 'recurrsive/recurrsive';
 
     if (!githubToken) {
-      console.error('GitHub bug report token not configured');
+      logger.error('GitHub bug report token not configured');
       return json(
         { error: 'Bug reporting is not properly configured. Please contact the administrators.' },
         { status: 500 },
@@ -227,7 +230,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
       message: 'Bug report submitted successfully!',
     });
   } catch (error) {
-    console.error('Error creating bug report:', error);
+    logger.error('Error creating bug report:', error);
 
     // Handle validation errors
     if (error instanceof z.ZodError) {

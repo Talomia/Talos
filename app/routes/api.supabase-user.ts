@@ -1,6 +1,9 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('api.supabase-user');
 
 async function supabaseUserLoader({ request, context }: { request: Request; context: any }) {
   try {
@@ -66,7 +69,7 @@ async function supabaseUserLoader({ request, context }: { request: Request; cont
       })),
     });
   } catch (error) {
-    console.error('Error fetching Supabase user:', error);
+    logger.error('Error fetching Supabase user:', error);
     return json(
       {
         error: 'Failed to fetch Supabase user information',
@@ -184,7 +187,7 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
 
     return json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Error in Supabase user action:', error);
+    logger.error('Error in Supabase user action:', error);
     return json(
       {
         error: 'Failed to process Supabase request',

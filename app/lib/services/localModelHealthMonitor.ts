@@ -261,7 +261,7 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
         version,
       };
     } catch (error) {
-      console.error(`[Health Check] Ollama health check failed:`, error);
+      logger.error(`[Health Check] Ollama health check failed:`, error);
       return {
         isHealthy: false,
         responseTime: 0,

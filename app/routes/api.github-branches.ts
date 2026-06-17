@@ -1,6 +1,9 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('api.github-branches');
 
 interface GitHubBranch {
   name: string;
@@ -134,7 +137,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
       total: transformedBranches.length,
     });
   } catch (error) {
-    console.error('Failed to fetch GitHub branches:', error);
+    logger.error('Failed to fetch GitHub branches:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('fetch')) {

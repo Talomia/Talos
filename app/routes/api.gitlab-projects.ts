@@ -1,6 +1,9 @@
 import { json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
 import type { GitLabProjectInfo } from '~/types/GitLab';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('api.gitlab-projects');
 
 interface GitLabProject {
   id: number;
@@ -42,7 +45,7 @@ async function gitlabProjectsLoader({ request }: { request: Request }) {
       }
 
       const errorText = await response.text().catch(() => 'Unknown error');
-      console.error('GitLab API error:', response.status, errorText);
+      logger.error('GitLab API error:', response.status, errorText);
 
       return json(
         {
@@ -73,7 +76,7 @@ async function gitlabProjectsLoader({ request }: { request: Request }) {
       total: transformedProjects.length,
     });
   } catch (error) {
-    console.error('Failed to fetch GitLab projects:', error);
+    logger.error('Failed to fetch GitLab projects:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('fetch')) {

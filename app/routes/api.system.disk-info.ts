@@ -123,7 +123,7 @@ const getDiskInfo = (): DiskInfo[] => {
             disk.size > 0,
         );
       } catch (error) {
-        console.error('Failed to get macOS disk info:', error);
+        logger.error('Failed to get macOS disk info:', error);
         return [
           {
             filesystem: 'Unknown',
@@ -175,7 +175,7 @@ const getDiskInfo = (): DiskInfo[] => {
             disk.size > 0,
         );
       } catch (error) {
-        console.error('Failed to get Linux disk info:', error);
+        logger.error('Failed to get Linux disk info:', error);
         return [
           {
             filesystem: 'Unknown',
@@ -219,7 +219,7 @@ const getDiskInfo = (): DiskInfo[] => {
           };
         });
       } catch (error) {
-        console.error('Failed to get Windows disk info:', error);
+        logger.error('Failed to get Windows disk info:', error);
         return [
           {
             filesystem: 'Unknown',
@@ -234,7 +234,7 @@ const getDiskInfo = (): DiskInfo[] => {
         ];
       }
     } else {
-      console.warn(`Unsupported platform: ${platform}`);
+      logger.warn(`Unsupported platform: ${platform}`);
       return [
         {
           filesystem: 'Unknown',
@@ -251,7 +251,7 @@ const getDiskInfo = (): DiskInfo[] => {
 
     return disks;
   } catch (error) {
-    console.error('Failed to get disk info:', error);
+    logger.error('Failed to get disk info:', error);
     return [
       {
         filesystem: 'Unknown',
@@ -271,7 +271,7 @@ export const loader: LoaderFunction = async ({ request: _request }) => {
   try {
     return json(getDiskInfo());
   } catch (error) {
-    console.error('Failed to get disk info:', error);
+    logger.error('Failed to get disk info:', error);
     return json(
       [
         {
@@ -294,7 +294,7 @@ export const action = async ({ request: _request }: ActionFunctionArgs) => {
   try {
     return json(getDiskInfo());
   } catch (error) {
-    console.error('Failed to get disk info:', error);
+    logger.error('Failed to get disk info:', error);
     return json(
       [
         {

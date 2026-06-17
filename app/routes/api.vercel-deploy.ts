@@ -121,7 +121,7 @@ const detectFramework = (files: Record<string, string>): string => {
       // Default to Node.js if package.json exists
       return 'nodejs';
     } catch (error) {
-      console.error('Error parsing package.json:', error);
+      logger.error('Error parsing package.json:', error);
     }
   }
 
@@ -229,7 +229,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         : null,
     });
   } catch (error) {
-    console.error('Error fetching Vercel deployment:', error);
+    logger.error('Error fetching Vercel deployment:', error);
     return json({ error: 'Failed to fetch deployment' }, { status: 500 });
   }
 }
@@ -483,7 +483,7 @@ export async function action({ request }: ActionFunctionArgs) {
       project: projectInfo,
     });
   } catch (error) {
-    console.error('Vercel deploy error:', error);
+    logger.error('Vercel deploy error:', error);
     return json({ error: 'Deployment failed' }, { status: 500 });
   }
 }

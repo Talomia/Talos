@@ -168,7 +168,7 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
       headers: responseHeaders,
     });
   } catch (error) {
-    console.error('Proxy error:', error);
+    logger.error('Proxy error:', error);
     return json(
       {
         error: 'Proxy error',

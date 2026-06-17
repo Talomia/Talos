@@ -1,5 +1,8 @@
 import { json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('api.gitlab-branches');
 
 interface GitLabBranch {
   name: string;
@@ -54,7 +57,7 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
       }
 
       const errorText = await response.text().catch(() => 'Unknown error');
-      console.error('GitLab API error:', response.status, errorText);
+      logger.error('GitLab API error:', response.status, errorText);
 
       return json(
         {
@@ -111,7 +114,7 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
       total: transformedBranches.length,
     });
   } catch (error) {
-    console.error('Failed to fetch GitLab branches:', error);
+    logger.error('Failed to fetch GitLab branches:', error);
 
     if (error instanceof Error) {
       if (error.message.includes('fetch')) {
