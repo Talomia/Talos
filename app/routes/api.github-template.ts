@@ -4,6 +4,24 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('api.github-template');
 import JSZip from 'jszip';
 
+interface GitHubRepoResponse {
+  default_branch: string;
+}
+
+interface GitHubTreeItem {
+  path: string;
+  type: string;
+  size?: number;
+}
+
+interface GitHubTreeResponse {
+  tree: GitHubTreeItem[];
+}
+
+interface GitHubContentResponse {
+  content: string;
+}
+
 // Function to detect if we're running in Cloudflare
 function isCloudflareEnvironment(context: any): boolean {
   // Check if we're in production AND have Cloudflare Pages specific env vars
@@ -34,7 +52,7 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
     throw new Error(`Repository not found: ${repo}`);
   }
 
-  const repoData = (await repoResponse.json()) as any;
+  const repoData = (await repoResponse.json()) as GitHubRepoResponse;
   const defaultBranch = repoData.default_branch;
 
   // Get the tree recursively
@@ -50,10 +68,10 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
     throw new Error(`Failed to fetch repository tree: ${treeResponse.status}`);
   }
 
-  const treeData = (await treeResponse.json()) as any;
+  const treeData = (await treeResponse.json()) as GitHubTreeResponse;
 
   // Filter for files only (not directories) and limit size
-  const files = treeData.tree.filter((item: any) => {
+  const files = treeData.tree.filter((item) => {
     if (item.type !== 'blob') {
       return false;
     }
@@ -69,7 +87,7 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
       item.path.endsWith('pnpm-lock.yaml');
 
     // For non-lock files, limit size to 100KB
-    if (!isLockFile && item.size >= 100000) {
+    if (!isLockFile && (item.size ?? 0) >= 100000) {
       return false;
     }
 
@@ -97,7 +115,7 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
           return null;
         }
 
-        const contentData = (await contentResponse.json()) as any;
+        const contentData = (await contentResponse.json()) as GitHubContentResponse;
         const content = atob(contentData.content.replace(/\s/g, ''));
 
         return {

@@ -5,17 +5,23 @@ const logger = createScopedLogger('api.supabase.query');
 
 export async function action({ request }: ActionFunctionArgs) {
   if (request.method !== 'POST') {
-    return new Response('Method not allowed', { status: 405 });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   const authHeader = request.headers.get('Authorization');
 
   if (!authHeader) {
-    return new Response('No authorization token provided', { status: 401 });
+    return new Response(JSON.stringify({ error: 'No authorization token provided' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   try {
-    const { projectId, query } = (await request.json()) as any;
+    const { projectId, query } = (await request.json()) as { projectId: string; query: string };
     logger.debug('Executing query:', { projectId, query });
 
     const response = await fetch(`https://api.supabase.com/v1/projects/${projectId}/database/query`, {
@@ -78,7 +84,6 @@ export async function action({ request }: ActionFunctionArgs) {
       JSON.stringify({
         error: {
           message: error instanceof Error ? error.message : 'Query execution failed',
-          stack: error instanceof Error ? error.stack : undefined,
         },
       }),
       {

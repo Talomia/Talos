@@ -10,7 +10,7 @@ export const action: ActionFunction = async ({ request }) => {
   }
 
   try {
-    const { token } = (await request.json()) as any;
+    const { token } = (await request.json()) as { token: string };
 
     const projectsResponse = await fetch('https://api.supabase.com/v1/projects', {
       headers: {

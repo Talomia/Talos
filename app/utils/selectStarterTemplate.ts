@@ -153,15 +153,9 @@ export async function getTemplates(templateName: string, title?: string) {
   filteredFiles = filteredFiles.filter((x) => !x.path.startsWith('.git'));
 
   /*
-   * exclude    lock files
-   * WE NOW INCLUDE LOCK FILES FOR IMPROVED INSTALL TIMES
+   * NOTE: Lock files are now included for improved install times
+   * (previously excluded via comminLockFiles filter)
    */
-  {
-    /*
-     *const comminLockFiles = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'];
-     *filteredFiles = filteredFiles.filter((x) => comminLockFiles.includes(x.name) == false);
-     */
-  }
 
   // exclude    .bolt
   filteredFiles = filteredFiles.filter((x) => !x.path.startsWith('.bolt'));

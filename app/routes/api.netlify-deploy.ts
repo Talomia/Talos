@@ -11,6 +11,21 @@ interface DeployRequestBody {
   chatId: string;
 }
 
+interface NetlifySiteResponse {
+  id: string;
+  name: string;
+  url: string;
+}
+
+interface NetlifyDeployResponse {
+  id: string;
+  state: string;
+  ssl_url?: string;
+  url?: string;
+  error_message?: string;
+  required?: string[];
+}
+
 async function readNetlifyError(response: Response) {
   try {
     const contentType = response.headers.get('content-type') || '';
@@ -62,7 +77,7 @@ export async function action({ request }: ActionFunctionArgs) {
         );
       }
 
-      const newSite = (await createSiteResponse.json()) as any;
+      const newSite = (await createSiteResponse.json()) as NetlifySiteResponse;
       targetSiteId = newSite.id;
       siteInfo = {
         id: newSite.id,
@@ -80,7 +95,7 @@ export async function action({ request }: ActionFunctionArgs) {
         });
 
         if (siteResponse.ok) {
-          const existingSite = (await siteResponse.json()) as any;
+          const existingSite = (await siteResponse.json()) as NetlifySiteResponse;
           siteInfo = {
             id: existingSite.id,
             name: existingSite.name,
@@ -115,7 +130,7 @@ export async function action({ request }: ActionFunctionArgs) {
           );
         }
 
-        const newSite = (await createSiteResponse.json()) as any;
+        const newSite = (await createSiteResponse.json()) as NetlifySiteResponse;
         targetSiteId = newSite.id;
         siteInfo = {
           id: newSite.id,
@@ -161,7 +176,7 @@ export async function action({ request }: ActionFunctionArgs) {
       );
     }
 
-    const deploy = (await deployResponse.json()) as any;
+    const deploy = (await deployResponse.json()) as NetlifyDeployResponse;
     let retryCount = 0;
     const maxRetries = 60;
     let filesUploaded = false;
@@ -182,7 +197,7 @@ export async function action({ request }: ActionFunctionArgs) {
         );
       }
 
-      const status = (await statusResponse.json()) as any;
+      const status = (await statusResponse.json()) as NetlifyDeployResponse;
 
       if (!filesUploaded && (status.state === 'prepared' || status.state === 'uploaded')) {
         // Upload all files regardless of required array
