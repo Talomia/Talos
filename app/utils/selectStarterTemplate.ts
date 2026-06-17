@@ -164,10 +164,10 @@ export async function getTemplates(templateName: string, title?: string) {
   }
 
   // exclude    .bolt
-  filteredFiles = filteredFiles.filter((x) => x.path.startsWith('.bolt') == false);
+  filteredFiles = filteredFiles.filter((x) => !x.path.startsWith('.bolt'));
 
   // check for ignore file in .bolt folder
-  const templateIgnoreFile = files.find((x) => x.path.startsWith('.bolt') && x.name == 'ignore');
+  const templateIgnoreFile = files.find((x) => x.path.startsWith('.bolt') && x.name === 'ignore');
 
   const filesToImport = {
     files: filteredFiles,
@@ -200,7 +200,7 @@ ${file.content}
 </recurrsiveArtifact>
 `;
   let userMessage = ``;
-  const templatePromptFile = files.filter((x) => x.path.startsWith('.bolt')).find((x) => x.name == 'prompt');
+  const templatePromptFile = files.filter((x) => x.path.startsWith('.bolt')).find((x) => x.name === 'prompt');
 
   if (templatePromptFile) {
     userMessage = `
