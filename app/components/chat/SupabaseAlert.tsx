@@ -60,7 +60,7 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
       });
 
       if (!response.ok) {
-        const errorData = (await response.json()) as any;
+        const errorData = (await response.json()) as { error?: { message?: string } };
         throw new Error(`Supabase query failed: ${errorData.error?.message || response.statusText}`);
       }
 

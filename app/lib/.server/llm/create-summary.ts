@@ -49,7 +49,7 @@ export async function createSummary(props: {
       ...(await LLMManager.getInstance().getModelListFromProvider(provider, {
         apiKeys,
         providerSettings,
-        serverEnv: serverEnv as any,
+        serverEnv,
       })),
     ];
 

@@ -18,7 +18,7 @@ export function getSupabaseBrowserClient(): SupabaseClient | null {
     return browserClient;
   }
 
-  const env = (window as any).__RECURRSIVE_ENV;
+  const env = (window as unknown as Record<string, Record<string, string | undefined>>).__RECURRSIVE_ENV;
 
   if (!env?.SUPABASE_URL || !env?.SUPABASE_PUBLISHABLE_KEY) {
     return null;

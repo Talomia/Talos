@@ -156,7 +156,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     useEffect(() => {
       if (data) {
         const progressList = data.filter(
-          (x) => typeof x === 'object' && (x as any).type === 'progress',
+          (x) => typeof x === 'object' && (x as Record<string, unknown>).type === 'progress',
         ) as ProgressAnnotation[];
         setProgressAnnotations(progressList);
       }
@@ -395,7 +395,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       alert={deployAlert}
                       clearAlert={() => clearDeployAlert?.()}
                       postMessage={(message: string | undefined) => {
-                        sendMessage?.({} as any, message);
+                        sendMessage?.({} as React.UIEvent, message);
                         clearSupabaseAlert?.();
                       }}
                     />
@@ -405,7 +405,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       alert={supabaseAlert}
                       clearAlert={() => clearSupabaseAlert?.()}
                       postMessage={(message) => {
-                        sendMessage?.({} as any, message);
+                        sendMessage?.({} as React.UIEvent, message);
                         clearSupabaseAlert?.();
                       }}
                     />
@@ -415,7 +415,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       alert={actionAlert}
                       clearAlert={() => clearAlert?.()}
                       postMessage={(message) => {
-                        sendMessage?.({} as any, message);
+                        sendMessage?.({} as React.UIEvent, message);
                         clearAlert?.();
                       }}
                     />

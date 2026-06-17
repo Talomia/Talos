@@ -743,11 +743,13 @@ export const ModelSelector = ({
                           <span className="text-xs text-bolt-elements-textTertiary">
                             {formatContextSize(modelOption.maxTokenAllowed)} tokens
                           </span>
-                          {debouncedModelSearchQuery && (modelOption as any).searchScore > 70 && (
-                            <span className="text-xs text-green-500 font-medium">
-                              {(modelOption as any).searchScore.toFixed(0)}% match
-                            </span>
-                          )}
+                          {debouncedModelSearchQuery &&
+                            (modelOption as ModelInfo & { searchScore?: number }).searchScore !== undefined &&
+                            (modelOption as ModelInfo & { searchScore?: number }).searchScore! > 70 && (
+                              <span className="text-xs text-green-500 font-medium">
+                                {(modelOption as ModelInfo & { searchScore: number }).searchScore.toFixed(0)}% match
+                              </span>
+                            )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 ml-2">

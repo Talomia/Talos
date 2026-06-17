@@ -4,7 +4,14 @@ import { toast } from 'react-toastify';
 import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { netlifyConnection, updateNetlifyConnection, initializeNetlifyConnection } from '~/lib/stores/netlify';
-import type { NetlifySite, NetlifyDeploy, NetlifyUser } from '~/types/netlify';
+import type {
+  NetlifySite,
+  NetlifyDeploy,
+  NetlifyUser,
+  NetlifySiteDetails,
+  NetlifyEnvVar,
+  NetlifyFunction,
+} from '~/types/netlify';
 import { Button } from '~/components/ui/Button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/components/ui/Collapsible';
 import { formatDistanceToNow } from 'date-fns';
@@ -74,7 +81,7 @@ export default function NetlifyTab() {
       const data = await fetchNetlifyUser(connection.token);
       setConnectionTest({
         status: 'success',
-        message: `Connected successfully as ${(data as any).email}`,
+        message: `Connected successfully as ${data.email}`,
         timestamp: Date.now(),
       });
     } catch (error) {
@@ -113,7 +120,7 @@ export default function NetlifyTab() {
             throw new Error(`Failed to get site details: ${errorText}`);
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
 
           // Check if this looks like a free account (limited features)
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
@@ -192,7 +199,7 @@ export default function NetlifyTab() {
             throw new Error('Failed to get site details');
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
           // Get environment variables
@@ -203,7 +210,7 @@ export default function NetlifyTab() {
           });
 
           if (envResponse.ok) {
-            const envVars = (await envResponse.json()) as any[];
+            const envVars = (await envResponse.json()) as NetlifyEnvVar[];
             toast.success(`Environment variables loaded: ${envVars.length} variables`);
           } else if (envResponse.status === 404) {
             if (isFreeAccount) {
@@ -231,7 +238,7 @@ export default function NetlifyTab() {
           setIsActionLoading(true);
 
           const buildData = await triggerSiteBuild(connection.token, siteId);
-          toast.success(`Build triggered successfully! ID: ${(buildData as any).id}`);
+          toast.success(`Build triggered successfully! ID: ${buildData.id}`);
         } catch (err: unknown) {
           const error = err instanceof Error ? err.message : 'Unknown error';
           toast.error(`Failed to trigger build: ${error}`);
@@ -258,7 +265,7 @@ export default function NetlifyTab() {
             throw new Error('Failed to get site details');
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
           const functionsResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/functions`, {
@@ -268,7 +275,7 @@ export default function NetlifyTab() {
           });
 
           if (functionsResponse.ok) {
-            const functions = (await functionsResponse.json()) as any[];
+            const functions = (await functionsResponse.json()) as NetlifyFunction[];
             toast.success(`Site has ${functions.length} serverless functions`);
           } else if (functionsResponse.status === 404) {
             if (isFreeAccount) {
@@ -306,7 +313,7 @@ export default function NetlifyTab() {
             throw new Error('Failed to get site details');
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
           // Get site traffic data (if available)

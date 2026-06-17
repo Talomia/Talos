@@ -62,7 +62,7 @@ export async function selectContext(props: {
       ...(await LLMManager.getInstance().getModelListFromProvider(provider, {
         apiKeys,
         providerSettings,
-        serverEnv: serverEnv as any,
+        serverEnv,
       })),
     ];
 

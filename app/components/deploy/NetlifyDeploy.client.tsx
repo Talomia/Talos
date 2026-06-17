@@ -158,7 +158,11 @@ export function useNetlifyDeploy() {
         }),
       });
 
-      const data = (await response.json()) as any;
+      const data = (await response.json()) as {
+        deploy?: { id: string };
+        site?: { id: string; ssl_url?: string };
+        error?: string;
+      };
 
       if (!response.ok || !data.deploy || !data.site) {
         logger.error('Invalid deploy response:', data);
@@ -186,7 +190,12 @@ export function useNetlifyDeploy() {
             },
           );
 
-          deploymentStatus = (await statusResponse.json()) as any;
+          deploymentStatus = (await statusResponse.json()) as {
+            state?: string;
+            error_message?: string;
+            ssl_url?: string;
+            url?: string;
+          };
 
           if (deploymentStatus.state === 'ready' || deploymentStatus.state === 'uploaded') {
             break;
@@ -226,7 +235,7 @@ export function useNetlifyDeploy() {
 
       // Notify that deployment completed successfully
       deployArtifact.runner.handleDeployAction('complete', 'complete', {
-        url: deploymentStatus.ssl_url || deploymentStatus.url,
+        url: deploymentStatus?.ssl_url || deploymentStatus?.url,
         source: 'netlify',
       });
 

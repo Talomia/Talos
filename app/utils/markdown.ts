@@ -153,7 +153,7 @@ const limitedMarkdownPlugin: Plugin = () => {
       parent.children[index] = {
         type: 'text',
         value,
-      } as any;
+      } as unknown as (typeof parent.children)[number];
 
       return [SKIP, index] as const;
     });

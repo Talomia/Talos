@@ -1,5 +1,5 @@
 import { atom } from 'nanostores';
-import type { GitHubConnection, GitHubRepoInfo } from '~/types/GitHub';
+import type { GitHubConnection, GitHubRepoInfo, GitHubUserResponse } from '~/types/GitHub';
 import { logStore } from './logs';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -42,11 +42,11 @@ export async function initializeGitHubConnection() {
       throw new Error(`Failed to connect to GitHub: ${response.statusText}`);
     }
 
-    const userData = await response.json();
+    const userData = (await response.json()) as GitHubUserResponse;
 
     // Update the connection state (no token stored client-side)
     const connectionData: Partial<GitHubConnection> = {
-      user: userData as any,
+      user: userData,
       token: '', // Token stored server-side only
       tokenType: 'classic',
     };

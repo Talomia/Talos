@@ -42,7 +42,9 @@ export function VercelDeploymentLink() {
           throw new Error(`Failed to fetch projects: ${projectsResponse.status}`);
         }
 
-        const projectsData = (await projectsResponse.json()) as any;
+        const projectsData = (await projectsResponse.json()) as {
+          projects?: Array<{ id: string; name: string }>;
+        };
         const projects = projectsData.projects || [];
 
         // Extract the chat number from currentChatId
@@ -62,7 +64,9 @@ export function VercelDeploymentLink() {
           });
 
           if (projectDetailsResponse.ok) {
-            const projectDetails = (await projectDetailsResponse.json()) as any;
+            const projectDetails = (await projectDetailsResponse.json()) as {
+              targets?: { production?: { alias?: string[] } };
+            };
 
             // Try to get URL from production aliases first
             if (projectDetails.targets?.production?.alias && projectDetails.targets.production.alias.length > 0) {
@@ -95,7 +99,9 @@ export function VercelDeploymentLink() {
           );
 
           if (deploymentsResponse.ok) {
-            const deploymentsData = (await deploymentsResponse.json()) as any;
+            const deploymentsData = (await deploymentsResponse.json()) as {
+              deployments?: Array<{ url: string }>;
+            };
 
             if (deploymentsData.deployments && deploymentsData.deployments.length > 0) {
               setDeploymentUrl(`https://${deploymentsData.deployments[0].url}`);

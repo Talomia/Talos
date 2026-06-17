@@ -372,8 +372,7 @@ export class ActionRunner {
       type: 'file',
       filePath: historyPath,
       content: JSON.stringify(history),
-      changeSource: 'auto-save',
-    } as any);
+    } as ActionState);
   }
 
   #getHistoryPath(filePath: string) {
@@ -507,8 +506,7 @@ export class ActionRunner {
           type: 'file',
           filePath,
           content,
-          changeSource: 'supabase',
-        } as any);
+        } as ActionState);
         return { success: true };
 
       case 'query': {
@@ -563,10 +561,14 @@ export class ActionRunner {
             ? `${stage === 'building' ? 'Build' : 'Deployment'} completed successfully`
             : `Preparing to ${stage === 'building' ? 'build' : 'deploy'} your application`;
 
-    const buildStatus =
-      stage === 'building' ? status : stage === 'deploying' || stage === 'complete' ? 'complete' : 'pending';
+    type DeployStatusValue = 'pending' | 'running' | 'complete' | 'failed';
 
-    const deployStatus = stage === 'building' ? 'pending' : status;
+    const normalizedStatus: DeployStatusValue = status === 'aborted' ? 'failed' : status;
+
+    const buildStatus: DeployStatusValue =
+      stage === 'building' ? normalizedStatus : stage === 'deploying' || stage === 'complete' ? 'complete' : 'pending';
+
+    const deployStatus: DeployStatusValue = stage === 'building' ? 'pending' : normalizedStatus;
 
     this.onDeployAlert({
       type: alertType,
@@ -575,8 +577,8 @@ export class ActionRunner {
       content: details?.error || '',
       url: details?.url,
       stage,
-      buildStatus: buildStatus as any,
-      deployStatus: deployStatus as any,
+      buildStatus,
+      deployStatus,
       source: details?.source || 'netlify',
     });
   }

@@ -84,6 +84,24 @@ export interface NetlifyConnection {
   stats?: NetlifyStats;
 }
 
+/** Extended site details returned by the single-site endpoint. */
+export interface NetlifySiteDetails extends NetlifySite {
+  plan?: string;
+}
+
+/** Netlify environment variable entry. */
+export interface NetlifyEnvVar {
+  key: string;
+  values: { value: string; context: string }[];
+}
+
+/** Netlify serverless function metadata. */
+export interface NetlifyFunction {
+  id: string;
+  name: string;
+  sha: string;
+}
+
 export interface NetlifySiteInfo {
   id: string;
   name: string;

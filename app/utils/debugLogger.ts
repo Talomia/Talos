@@ -812,14 +812,29 @@ class DebugLogger {
     try {
       if (typeof window !== 'undefined') {
         // Access stores if available
-        const workbenchStore = (window as any).__bolt_workbench_store;
+        const workbenchStore = (
+          window as unknown as Record<
+            string,
+            {
+              get?: () => {
+                currentView?: string;
+                showWorkbench?: boolean;
+                showTerminal?: boolean | null;
+                artifacts?: Record<string, unknown>;
+                files?: Record<string, unknown>;
+                unsavedFiles?: { size: number };
+                previews?: unknown[];
+              };
+            }
+          >
+        ).__bolt_workbench_store;
 
         if (workbenchStore) {
           const state = workbenchStore.get?.() || {};
           workbenchInfo = {
             currentView: state.currentView || 'code',
             showWorkbench: state.showWorkbench || false,
-            showTerminal: state.showTerminal !== undefined ? state.showTerminal : true,
+            showTerminal: state.showTerminal ?? true,
             artifactsCount: Object.keys(state.artifacts || {}).length,
             filesCount: Object.keys(state.files || {}).length,
             unsavedFiles: state.unsavedFiles?.size || 0,
@@ -912,7 +927,7 @@ class DebugLogger {
         const gitInfo = await response.json();
 
         // Transform the API response to match our interface
-        const gitInfoTyped = gitInfo as any;
+        const gitInfoTyped = gitInfo as Record<string, Record<string, string | undefined> | undefined>;
 
         // Type assertion for API response
         return {
@@ -923,8 +938,8 @@ class DebugLogger {
           lastCommit: gitInfoTyped.local
             ? {
                 message: 'Latest commit',
-                date: gitInfoTyped.local.commitTime,
-                author: gitInfoTyped.local.author,
+                date: gitInfoTyped.local?.commitTime || 'unknown',
+                author: gitInfoTyped.local?.author || 'unknown',
               }
             : undefined,
         };
@@ -966,7 +981,7 @@ class DebugLogger {
   }
 
   private _collectPerformanceInfo(): PerformanceEntry {
-    const timing = performance.timing as any;
+    const timing = performance.timing as unknown as Record<string, number>;
     const paintEntries = performance.getEntriesByType('paint');
 
     return {
@@ -975,11 +990,15 @@ class DebugLogger {
       domContentLoaded: timing.domContentLoadedEventEnd - timing.navigationStart,
       firstPaint: paintEntries.find((entry) => entry.name === 'first-paint')?.startTime,
       firstContentfulPaint: paintEntries.find((entry) => entry.name === 'first-contentful-paint')?.startTime,
-      memoryUsage: (performance as any).memory
+      memoryUsage: (
+        performance as unknown as {
+          memory?: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number };
+        }
+      ).memory
         ? {
-            used: (performance as any).memory.usedJSHeapSize,
-            total: (performance as any).memory.totalJSHeapSize,
-            limit: (performance as any).memory.jsHeapSizeLimit,
+            used: (performance as unknown as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize,
+            total: (performance as unknown as { memory: { totalJSHeapSize: number } }).memory.totalJSHeapSize,
+            limit: (performance as unknown as { memory: { jsHeapSizeLimit: number } }).memory.jsHeapSizeLimit,
           }
         : undefined,
       timing,
@@ -1018,14 +1037,29 @@ class DebugLogger {
 
     try {
       if (typeof window !== 'undefined') {
-        const workbenchStore = (window as any).__bolt_workbench_store;
+        const workbenchStore = (
+          window as unknown as Record<
+            string,
+            {
+              get?: () => {
+                currentView?: string;
+                showWorkbench?: boolean;
+                showTerminal?: boolean | null;
+                artifacts?: Record<string, unknown>;
+                files?: Record<string, unknown>;
+                unsavedFiles?: { size: number };
+                previews?: unknown[];
+              };
+            }
+          >
+        ).__bolt_workbench_store;
 
         if (workbenchStore) {
           const state = workbenchStore.get?.() || {};
           workbenchState = {
             currentView: state.currentView || 'code',
             showWorkbench: state.showWorkbench || false,
-            showTerminal: state.showTerminal !== undefined ? state.showTerminal : true,
+            showTerminal: state.showTerminal ?? true,
             artifactsCount: Object.keys(state.artifacts || {}).length,
             filesCount: Object.keys(state.files || {}).length,
           };

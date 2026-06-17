@@ -117,7 +117,7 @@ export async function streamText(props: {
       ...(await LLMManager.getInstance().getModelListFromProvider(provider, {
         apiKeys,
         providerSettings,
-        serverEnv: serverEnv as any,
+        serverEnv,
       })),
     ];
 

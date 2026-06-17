@@ -125,7 +125,7 @@ const getGitHubRepoContent = async (repoName: string): Promise<{ name: string; p
     }
 
     // Our API will return the files in the format we need
-    const files = (await response.json()) as any;
+    const files = (await response.json()) as { name: string; path: string; content: string }[];
 
     return files;
   } catch (error) {

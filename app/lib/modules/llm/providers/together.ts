@@ -61,10 +61,16 @@ export default class TogetherProvider extends BaseProvider {
       },
     });
 
-    const res = (await response.json()) as any;
-    const data = (res || []).filter((model: any) => model.type === 'chat');
+    const res = (await response.json()) as Array<{
+      id: string;
+      type: string;
+      display_name: string;
+      context_length: number;
+      pricing: { input: number; output: number };
+    }>;
+    const data = (res || []).filter((model) => model.type === 'chat');
 
-    return data.map((m: any) => ({
+    return data.map((m) => ({
       name: m.id,
       label: `${m.display_name} - in:$${m.pricing.input.toFixed(2)} out:$${m.pricing.output.toFixed(2)} - context ${Math.floor(m.context_length / 1000)}k`,
       provider: this.name,

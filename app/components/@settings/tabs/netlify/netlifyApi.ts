@@ -1,5 +1,13 @@
 import { createScopedLogger } from '~/utils/logger';
-import type { NetlifySite, NetlifyDeploy, NetlifyBuild } from '~/types/netlify';
+import type {
+  NetlifySite,
+  NetlifyDeploy,
+  NetlifyBuild,
+  NetlifyUser,
+  NetlifySiteDetails,
+  NetlifyEnvVar,
+  NetlifyFunction,
+} from '~/types/netlify';
 
 const logger = createScopedLogger('netlify-api');
 
@@ -12,7 +20,7 @@ function authHeaders(token: string): HeadersInit {
 /**
  * Fetch the authenticated Netlify user.
  */
-export async function fetchNetlifyUser(token: string) {
+export async function fetchNetlifyUser(token: string): Promise<NetlifyUser> {
   const response = await fetch(`${NETLIFY_API_BASE}/user`, {
     headers: authHeaders(token),
   });
@@ -21,7 +29,7 @@ export async function fetchNetlifyUser(token: string) {
     throw new Error(`Connection failed: ${response.status} ${response.statusText}`);
   }
 
-  return response.json();
+  return (await response.json()) as NetlifyUser;
 }
 
 /**
@@ -74,7 +82,7 @@ export async function fetchSiteBuilds(token: string, siteId: string, perPage = 1
 /**
  * Fetch a single site's details.
  */
-export async function fetchSiteDetails(token: string, siteId: string): Promise<any> {
+export async function fetchSiteDetails(token: string, siteId: string): Promise<NetlifySiteDetails> {
   const response = await fetch(`${NETLIFY_API_BASE}/sites/${siteId}`, {
     headers: authHeaders(token),
   });
@@ -84,13 +92,13 @@ export async function fetchSiteDetails(token: string, siteId: string): Promise<a
     throw new Error(`Failed to fetch site details: ${errorText}`);
   }
 
-  return response.json();
+  return (await response.json()) as NetlifySiteDetails;
 }
 
 /**
  * Trigger a new build for a site.
  */
-export async function triggerSiteBuild(token: string, siteId: string): Promise<any> {
+export async function triggerSiteBuild(token: string, siteId: string): Promise<NetlifyBuild> {
   const response = await fetch(`${NETLIFY_API_BASE}/sites/${siteId}/builds`, {
     method: 'POST',
     headers: authHeaders(token),
@@ -100,7 +108,7 @@ export async function triggerSiteBuild(token: string, siteId: string): Promise<a
     throw new Error(`Failed to trigger build: ${response.statusText}`);
   }
 
-  return response.json();
+  return (await response.json()) as NetlifyBuild;
 }
 
 /**
@@ -121,7 +129,7 @@ export async function purgeSiteCache(token: string, siteId: string): Promise<voi
 /**
  * Fetch environment variables for a site.
  */
-export async function fetchSiteEnvVars(token: string, siteId: string): Promise<any[]> {
+export async function fetchSiteEnvVars(token: string, siteId: string): Promise<NetlifyEnvVar[]> {
   const response = await fetch(`${NETLIFY_API_BASE}/sites/${siteId}/env`, {
     headers: authHeaders(token),
   });
@@ -131,13 +139,13 @@ export async function fetchSiteEnvVars(token: string, siteId: string): Promise<a
     throw new Error(`Failed to fetch environment variables: ${errorText}`);
   }
 
-  return (await response.json()) as any[];
+  return (await response.json()) as NetlifyEnvVar[];
 }
 
 /**
  * Fetch functions deployed to a site.
  */
-export async function fetchSiteFunctions(token: string, siteId: string): Promise<any[]> {
+export async function fetchSiteFunctions(token: string, siteId: string): Promise<NetlifyFunction[]> {
   const response = await fetch(`${NETLIFY_API_BASE}/sites/${siteId}/functions`, {
     headers: authHeaders(token),
   });
@@ -147,13 +155,13 @@ export async function fetchSiteFunctions(token: string, siteId: string): Promise
     throw new Error(`Failed to fetch functions: ${errorText}`);
   }
 
-  return (await response.json()) as any[];
+  return (await response.json()) as NetlifyFunction[];
 }
 
 /**
  * Fetch traffic/analytics for a site.
  */
-export async function fetchSiteTraffic(token: string, siteId: string): Promise<any> {
+export async function fetchSiteTraffic(token: string, siteId: string): Promise<unknown> {
   const response = await fetch(`${NETLIFY_API_BASE}/sites/${siteId}/traffic`, {
     headers: authHeaders(token),
   });
@@ -163,7 +171,7 @@ export async function fetchSiteTraffic(token: string, siteId: string): Promise<a
     throw new Error(`Failed to load analytics: ${errorText}`);
   }
 
-  return response.json();
+  return (await response.json()) as unknown;
 }
 
 /**

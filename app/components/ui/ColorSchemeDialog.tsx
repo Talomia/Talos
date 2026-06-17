@@ -291,14 +291,16 @@ export const ColorSchemeDialog: React.FC<ColorSchemeDialogProps> = ({ setDesignS
 
             {/* Navigation Tabs */}
             <div className="flex gap-1 p-1 bg-bolt-elements-bg-depth-3 rounded-xl">
-              {[
-                { key: 'colors', label: 'Colors', icon: 'i-ph:palette' },
-                { key: 'typography', label: 'Typography', icon: 'i-ph:text-aa' },
-                { key: 'features', label: 'Features', icon: 'i-ph:magic-wand' },
-              ].map((tab) => (
+              {(
+                [
+                  { key: 'colors' as const, label: 'Colors', icon: 'i-ph:palette' },
+                  { key: 'typography' as const, label: 'Typography', icon: 'i-ph:text-aa' },
+                  { key: 'features' as const, label: 'Features', icon: 'i-ph:magic-wand' },
+                ] as const
+              ).map((tab) => (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveSection(tab.key as any)}
+                  onClick={() => setActiveSection(tab.key)}
                   className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
                     activeSection === tab.key
                       ? 'bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary shadow-md'

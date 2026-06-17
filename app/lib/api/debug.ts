@@ -41,7 +41,7 @@ export const getDebugStatus = async (): Promise<DebugStatus> => {
   try {
     // Check memory usage
     if (performance && 'memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = (performance as unknown as { memory: { usedJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
 
       if (memory.usedJSHeapSize > memory.jsHeapSizeLimit * 0.8) {
         issues.warnings.push({

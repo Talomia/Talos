@@ -15,17 +15,19 @@ export const ScreenshotStateManager = ({
 }: ScreenshotStateManagerProps) => {
   useEffect(() => {
     if (setUploadedFiles && setImageDataList) {
-      (window as any).__BOLT_SET_UPLOADED_FILES__ = setUploadedFiles;
-      (window as any).__BOLT_SET_IMAGE_DATA_LIST__ = setImageDataList;
-      (window as any).__BOLT_UPLOADED_FILES__ = uploadedFiles;
-      (window as any).__BOLT_IMAGE_DATA_LIST__ = imageDataList;
+      const win = window as unknown as Record<string, unknown>;
+      win.__BOLT_SET_UPLOADED_FILES__ = setUploadedFiles;
+      win.__BOLT_SET_IMAGE_DATA_LIST__ = setImageDataList;
+      win.__BOLT_UPLOADED_FILES__ = uploadedFiles;
+      win.__BOLT_IMAGE_DATA_LIST__ = imageDataList;
     }
 
     return () => {
-      delete (window as any).__BOLT_SET_UPLOADED_FILES__;
-      delete (window as any).__BOLT_SET_IMAGE_DATA_LIST__;
-      delete (window as any).__BOLT_UPLOADED_FILES__;
-      delete (window as any).__BOLT_IMAGE_DATA_LIST__;
+      const win = window as unknown as Record<string, unknown>;
+      delete win.__BOLT_SET_UPLOADED_FILES__;
+      delete win.__BOLT_SET_IMAGE_DATA_LIST__;
+      delete win.__BOLT_UPLOADED_FILES__;
+      delete win.__BOLT_IMAGE_DATA_LIST__;
     };
   }, [setUploadedFiles, setImageDataList, uploadedFiles, imageDataList]);
 

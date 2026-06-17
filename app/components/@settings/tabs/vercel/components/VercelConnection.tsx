@@ -13,6 +13,7 @@ import {
   fetchVercelStats,
   autoConnectVercel,
 } from '~/lib/stores/vercel';
+import type { VercelUser, VercelUserResponse } from '~/types/vercel';
 
 const logger = createScopedLogger('VercelConnection');
 
@@ -66,9 +67,9 @@ export default function VercelConnection() {
         throw new Error('Invalid token or unauthorized');
       }
 
-      const userData = (await response.json()) as any;
+      const userData = (await response.json()) as VercelUserResponse;
       updateVercelConnection({
-        user: userData.user || userData, // Handle both possible structures
+        user: (userData.user || userData) as VercelUser,
         token: connection.token,
       });
 

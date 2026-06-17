@@ -4,7 +4,15 @@ import { toast } from 'react-toastify';
 import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { netlifyConnection, updateNetlifyConnection, initializeNetlifyConnection } from '~/lib/stores/netlify';
-import type { NetlifySite, NetlifyDeploy, NetlifyBuild, NetlifyUser } from '~/types/netlify';
+import type {
+  NetlifySite,
+  NetlifyDeploy,
+  NetlifyBuild,
+  NetlifyUser,
+  NetlifySiteDetails,
+  NetlifyEnvVar,
+  NetlifyFunction,
+} from '~/types/netlify';
 import {
   CloudIcon,
   BuildingLibraryIcon,
@@ -86,7 +94,7 @@ export default function NetlifyConnection() {
             throw new Error(`Failed to get site details: ${errorText}`);
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
 
           // Check if this looks like a free account (limited features)
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
@@ -161,7 +169,7 @@ export default function NetlifyConnection() {
             throw new Error('Failed to get site details');
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
           // Get environment variables
@@ -172,7 +180,7 @@ export default function NetlifyConnection() {
           });
 
           if (envResponse.ok) {
-            const envVars = (await envResponse.json()) as any[];
+            const envVars = (await envResponse.json()) as NetlifyEnvVar[];
             toast.success(`Environment variables loaded: ${envVars.length} variables`);
           } else if (envResponse.status === 404) {
             if (isFreeAccount) {
@@ -207,7 +215,7 @@ export default function NetlifyConnection() {
             throw new Error('Failed to trigger build');
           }
 
-          const buildData = (await buildResponse.json()) as any;
+          const buildData = (await buildResponse.json()) as NetlifyBuild;
           toast.success(`Build triggered successfully! ID: ${buildData.id}`);
         } catch (err: unknown) {
           const error = err instanceof Error ? err.message : 'Unknown error';
@@ -231,7 +239,7 @@ export default function NetlifyConnection() {
             throw new Error('Failed to get site details');
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
           const functionsResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/functions`, {
@@ -241,7 +249,7 @@ export default function NetlifyConnection() {
           });
 
           if (functionsResponse.ok) {
-            const functions = (await functionsResponse.json()) as any[];
+            const functions = (await functionsResponse.json()) as NetlifyFunction[];
             toast.success(`Site has ${functions.length} serverless functions`);
           } else if (functionsResponse.status === 404) {
             if (isFreeAccount) {
@@ -275,7 +283,7 @@ export default function NetlifyConnection() {
             throw new Error('Failed to get site details');
           }
 
-          const siteData = (await siteResponse.json()) as any;
+          const siteData = (await siteResponse.json()) as NetlifySiteDetails;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
           // Get site traffic data (if available)

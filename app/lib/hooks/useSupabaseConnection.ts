@@ -14,6 +14,7 @@ import {
   fetchProjectApiKeys,
   initializeSupabaseConnection,
 } from '~/lib/stores/supabase';
+import type { SupabaseUser, SupabaseStats } from '~/types/supabase';
 
 export function useSupabaseConnection() {
   const connection = useStore(supabaseConnection);
@@ -73,7 +74,11 @@ export function useSupabaseConnection() {
         }),
       });
 
-      const data = (await response.json()) as any;
+      const data = (await response.json()) as {
+        user?: SupabaseUser | null;
+        stats?: SupabaseStats;
+        error?: string;
+      };
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to connect');

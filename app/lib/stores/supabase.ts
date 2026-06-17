@@ -175,7 +175,7 @@ export async function fetchSupabaseStats(token: string) {
       throw new Error('Failed to fetch projects');
     }
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as { user?: SupabaseUser | null; stats?: SupabaseStats };
 
     updateSupabaseConnection({
       user: data.user,
@@ -208,7 +208,7 @@ export async function fetchProjectApiKeys(projectId: string, token: string) {
       throw new Error('Failed to fetch API keys');
     }
 
-    const data = (await response.json()) as any;
+    const data = (await response.json()) as { apiKeys: SupabaseApiKey[] };
     const apiKeys = data.apiKeys;
 
     const anonKey = apiKeys.find((key: SupabaseApiKey) => key.name === 'anon' || key.name === 'public');

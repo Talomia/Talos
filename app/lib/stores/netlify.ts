@@ -1,5 +1,5 @@
 import { atom } from 'nanostores';
-import type { NetlifyConnection, NetlifyUser } from '~/types/netlify';
+import type { NetlifyConnection, NetlifySite, NetlifyUser } from '~/types/netlify';
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
@@ -99,7 +99,7 @@ export async function fetchNetlifyStats(token: string) {
       throw new Error(`Failed to fetch sites: ${sitesResponse.status}`);
     }
 
-    const sites = (await sitesResponse.json()) as any;
+    const sites = (await sitesResponse.json()) as NetlifySite[];
 
     const currentState = netlifyConnection.get();
     updateNetlifyConnection({
