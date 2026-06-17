@@ -23,7 +23,7 @@ export default class OpenAILikeProvider extends BaseProvider {
   async getDynamicModels(
     apiKeys?: Record<string, string>,
     settings?: IProviderSetting,
-    serverEnv: Record<string, string> = {},
+    serverEnv: Env = {} as Env,
   ): Promise<ModelInfo[]> {
     const { baseUrl, apiKey } = this.getProviderBaseUrlAndKey({
       apiKeys,
@@ -156,12 +156,10 @@ export default class OpenAILikeProvider extends BaseProvider {
     providerSettings?: Record<string, IProviderSetting>;
   }): LanguageModelV1 {
     const { model, serverEnv, apiKeys, providerSettings } = options;
-    const envRecord = this.convertEnvToRecord(serverEnv);
-
     const { baseUrl, apiKey } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: providerSettings?.[this.name],
-      serverEnv: envRecord,
+      serverEnv,
       defaultBaseUrlKey: 'OPENAI_LIKE_API_BASE_URL',
       defaultApiTokenKey: 'OPENAI_LIKE_API_KEY',
     });

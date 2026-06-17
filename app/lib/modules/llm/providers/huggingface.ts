@@ -92,7 +92,7 @@ export default class HuggingFaceProvider extends BaseProvider {
     const { apiKey } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: providerSettings?.[this.name],
-      serverEnv: serverEnv as any,
+      serverEnv,
       defaultBaseUrlKey: '',
       defaultApiTokenKey: 'HuggingFace_API_KEY',
     });

@@ -16,7 +16,7 @@ export async function action(args: ActionFunctionArgs) {
 async function getModelList(options: {
   apiKeys?: Record<string, string>;
   providerSettings?: Record<string, IProviderSetting>;
-  serverEnv?: Record<string, string>;
+  serverEnv?: Env;
 }) {
   const llmManager = LLMManager.getInstance(import.meta.env);
   return llmManager.updateModelList(options);
@@ -155,7 +155,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       const models = await getModelList({
         apiKeys,
         providerSettings,
-        serverEnv: context.cloudflare?.env as Record<string, string>,
+        serverEnv: context.cloudflare?.env,
       });
       const modelDetails = models.find((m: ModelInfo) => m.name === model);
 

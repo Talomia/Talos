@@ -18,11 +18,7 @@ export default class LMStudioProvider extends BaseProvider {
 
   staticModels: ModelInfo[] = [];
 
-  private _resolveBaseUrl(
-    apiKeys?: Record<string, string>,
-    settings?: IProviderSetting,
-    serverEnv?: Record<string, string>,
-  ): string {
+  private _resolveBaseUrl(apiKeys?: Record<string, string>, settings?: IProviderSetting, serverEnv?: Env): string {
     let { baseUrl } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: settings,
@@ -43,7 +39,7 @@ export default class LMStudioProvider extends BaseProvider {
   async getDynamicModels(
     apiKeys?: Record<string, string>,
     settings?: IProviderSetting,
-    serverEnv: Record<string, string> = {},
+    serverEnv: Env = {} as Env,
   ): Promise<ModelInfo[]> {
     const baseUrl = this._resolveBaseUrl(apiKeys, settings, serverEnv);
 
@@ -90,9 +86,7 @@ export default class LMStudioProvider extends BaseProvider {
     providerSettings?: Record<string, IProviderSetting>;
   }) => LanguageModelV1 = (options) => {
     const { apiKeys, providerSettings, serverEnv, model } = options;
-    const envRecord = this.convertEnvToRecord(serverEnv);
-
-    const baseUrl = this._resolveBaseUrl(apiKeys, providerSettings?.[this.name], envRecord);
+    const baseUrl = this._resolveBaseUrl(apiKeys, providerSettings?.[this.name], serverEnv);
 
     logger.debug('LMStudio Base Url used: ', baseUrl);
 

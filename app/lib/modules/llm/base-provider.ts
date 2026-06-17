@@ -44,7 +44,7 @@ export abstract class BaseProvider implements ProviderInfo {
    * Rewrite localhost / 127.0.0.1 URLs to host.docker.internal when
    * running inside Docker. Only applies on the server side.
    */
-  protected resolveDockerUrl(baseUrl: string, serverEnv?: Record<string, string>): string {
+  protected resolveDockerUrl(baseUrl: string, serverEnv?: Env): string {
     const isDocker = process?.env?.RUNNING_IN_DOCKER === 'true' || serverEnv?.RUNNING_IN_DOCKER === 'true';
 
     if (!isDocker) {
@@ -65,7 +65,7 @@ export abstract class BaseProvider implements ProviderInfo {
   getProviderBaseUrlAndKey(options: {
     apiKeys?: Record<string, string>;
     providerSettings?: IProviderSetting;
-    serverEnv?: Record<string, string>;
+    serverEnv?: Env;
     defaultBaseUrlKey: string;
     defaultApiTokenKey: string;
   }) {
@@ -101,7 +101,7 @@ export abstract class BaseProvider implements ProviderInfo {
   getModelsFromCache(options: {
     apiKeys?: Record<string, string>;
     providerSettings?: Record<string, IProviderSetting>;
-    serverEnv?: Record<string, string>;
+    serverEnv?: Env;
   }): ModelInfo[] | null {
     if (!this.cachedDynamicModels) {
       return null;
@@ -121,7 +121,7 @@ export abstract class BaseProvider implements ProviderInfo {
   getDynamicModelsCacheKey(options: {
     apiKeys?: Record<string, string>;
     providerSettings?: Record<string, IProviderSetting>;
-    serverEnv?: Record<string, string>;
+    serverEnv?: Env;
   }) {
     // Only include provider-relevant env keys, not the entire server environment
     const relevantEnvKeys = [this.config.baseUrlKey, this.config.apiTokenKey].filter(Boolean) as string[];
@@ -143,7 +143,7 @@ export abstract class BaseProvider implements ProviderInfo {
     options: {
       apiKeys?: Record<string, string>;
       providerSettings?: Record<string, IProviderSetting>;
-      serverEnv?: Record<string, string>;
+      serverEnv?: Env;
     },
     models: ModelInfo[],
   ) {
@@ -159,7 +159,7 @@ export abstract class BaseProvider implements ProviderInfo {
   getDynamicModels?(
     apiKeys?: Record<string, string>,
     settings?: IProviderSetting,
-    serverEnv?: Record<string, string>,
+    serverEnv?: Env,
   ): Promise<ModelInfo[]>;
 
   abstract getModelInstance(options: {

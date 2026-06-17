@@ -47,7 +47,7 @@ export async function loader({
   params: { provider?: string };
   context: {
     cloudflare?: {
-      env: Record<string, string>;
+      env: Env;
     };
   };
 }): Promise<Response> {

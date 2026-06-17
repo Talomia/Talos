@@ -9,14 +9,14 @@ export class LLMManager {
   private static _instance: LLMManager;
   private _providers: Map<string, BaseProvider> = new Map();
   private _modelList: ModelInfo[] = [];
-  private _env: Record<string, string> = {};
+  private _env: Record<string, string | undefined> = {};
 
-  private constructor(_env: Record<string, string>) {
+  private constructor(_env: Record<string, string | undefined>) {
     this._registerProvidersFromDirectory();
     this._env = _env;
   }
 
-  static getInstance(env: Record<string, string> = {}): LLMManager {
+  static getInstance(env: Record<string, string | undefined> = {}): LLMManager {
     if (!LLMManager._instance) {
       LLMManager._instance = new LLMManager(env);
     } else if (Object.keys(env).length > 0) {
@@ -44,8 +44,9 @@ export class LLMManager {
 
           try {
             this.registerProvider(provider);
-          } catch (error: any) {
-            logger.warn('Failed To Register Provider: ', provider.name, 'error:', error.message);
+          } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            logger.warn('Failed To Register Provider: ', provider.name, 'error:', message);
           }
         }
       }
@@ -80,7 +81,7 @@ export class LLMManager {
   async updateModelList(options: {
     apiKeys?: Record<string, string>;
     providerSettings?: Record<string, IProviderSetting>;
-    serverEnv?: Record<string, string>;
+    serverEnv?: Env;
   }): Promise<ModelInfo[]> {
     const { apiKeys, providerSettings, serverEnv } = options;
 
@@ -141,7 +142,7 @@ export class LLMManager {
     options: {
       apiKeys?: Record<string, string>;
       providerSettings?: Record<string, IProviderSetting>;
-      serverEnv?: Record<string, string>;
+      serverEnv?: Env;
     },
   ): Promise<ModelInfo[]> {
     const provider = this._providers.get(providerArg.name);
