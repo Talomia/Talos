@@ -1,23 +1,22 @@
-import * as Dialog from '@radix-ui/react-dialog';
-import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
 import { Octokit } from '@octokit/rest';
-import { classNames } from '~/utils/classNames';
 import { getLocalStorage } from '~/lib/persistence/localStorage';
 import type { GitHubUserResponse, GitHubRepoInfo } from '~/types/GitHub';
 import { logStore } from '~/lib/stores/logs';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import { useStore } from '@nanostores/react';
 import { GitHubAuthDialog } from '~/components/@settings/tabs/github/components/GitHubAuthDialog';
-import { SearchInput, EmptyState, StatusIndicator, Badge } from '~/components/ui';
+import { Badge } from '~/components/ui';
 import { createScopedLogger } from '~/utils/logger';
-import { sanitizeRepoName } from './deployUtils';
+import { sanitizeRepoName, classifyDeploymentError } from '~/components/deploy/deployUtils';
 import {
   DeploymentSuccessDialog,
   ConnectionRequiredDialog,
   type DeploymentProviderConfig,
-} from './DeploymentDialogComponents';
+} from '~/components/deploy/DeploymentDialogComponents';
+import { useDeploymentDialog } from '~/components/deploy/useDeploymentDialog';
+import { RepoListSection } from '~/components/deploy/RepoListSection';
+import { DeploymentFormShell } from '~/components/deploy/DeploymentFormShell';
 
 const GITHUB_PROVIDER: DeploymentProviderConfig = {
   name: 'GitHub',
@@ -34,149 +33,86 @@ interface GitHubDeploymentDialogProps {
   files: Record<string, string>;
 }
 
-export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: GitHubDeploymentDialogProps) {
-  const [repoName, setRepoName] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<GitHubUserResponse | null>(null);
-  const [recentRepos, setRecentRepos] = useState<GitHubRepoInfo[]>([]);
-  const [filteredRepos, setFilteredRepos] = useState<GitHubRepoInfo[]>([]);
-  const [repoSearchQuery, setRepoSearchQuery] = useState('');
-  const [isFetchingRepos, setIsFetchingRepos] = useState(false);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [createdRepoUrl, setCreatedRepoUrl] = useState('');
-  const [pushedFiles, setPushedFiles] = useState<{ path: string; size: number }[]>([]);
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
-  const currentChatId = useStore(chatId);
+/**
+ * Fetches ALL GitHub repos by paginating through all pages.
+ */
+async function fetchGitHubRepos(token: string): Promise<GitHubRepoInfo[]> {
+  let allRepos: GitHubRepoInfo[] = [];
+  let page = 1;
+  let hasMore = true;
 
-  useEffect(() => {
-    if (isOpen) {
-      const connection = getLocalStorage('github_connection');
+  while (hasMore) {
+    const requestUrl = `https://api.github.com/user/repos?sort=updated&per_page=100&page=${page}&affiliation=owner,organization_member`;
+    const response = await fetch(requestUrl, {
+      headers: {
+        Accept: 'application/vnd.github.v3+json',
+        Authorization: `Bearer ${token.trim()}`,
+      },
+    });
 
-      // Set a default repository name based on the project name with proper sanitization
-      setRepoName(sanitizeRepoName(projectName));
+    if (!response.ok) {
+      let errorData: { message?: string } = {};
 
-      if (connection?.user && connection?.token) {
-        setUser(connection.user);
-
-        // Only fetch if we have both user and token
-        if (connection.token.trim()) {
-          fetchRecentRepos(connection.token);
-        }
+      try {
+        errorData = await response.json();
+      } catch {
+        errorData = { message: 'Could not parse error response' };
       }
-    }
-  }, [isOpen, projectName]);
 
-  // Filter repositories based on search query
-  useEffect(() => {
-    if (recentRepos.length === 0) {
-      setFilteredRepos([]);
-      return;
-    }
+      if (response.status === 401) {
+        toast.error('GitHub token expired. Please reconnect your account.');
+        localStorage.removeItem('github_connection');
+      } else if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
+        // Rate limit exceeded
+        const resetTime = response.headers.get('x-ratelimit-reset');
+        const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000).toLocaleTimeString() : 'soon';
+        toast.error(`GitHub API rate limit exceeded. Limit resets at ${resetDate}`);
+      } else {
+        logStore.logError('Failed to fetch GitHub repositories', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        toast.error(`Failed to fetch repositories: ${errorData.message || response.statusText}`);
+      }
 
-    if (!repoSearchQuery.trim()) {
-      setFilteredRepos(recentRepos);
-      return;
-    }
-
-    const query = repoSearchQuery.toLowerCase().trim();
-    const filtered = recentRepos.filter(
-      (repo) =>
-        repo.name.toLowerCase().includes(query) ||
-        (repo.description && repo.description.toLowerCase().includes(query)) ||
-        (repo.language && repo.language.toLowerCase().includes(query)),
-    );
-
-    setFilteredRepos(filtered);
-  }, [recentRepos, repoSearchQuery]);
-
-  const fetchRecentRepos = async (token: string) => {
-    if (!token) {
-      logStore.logError('No GitHub token available');
-      toast.error('GitHub authentication required');
-
-      return;
+      return [];
     }
 
     try {
-      setIsFetchingRepos(true);
+      const repos = (await response.json()) as GitHubRepoInfo[];
+      allRepos = allRepos.concat(repos);
 
-      // Fetch ALL repos by paginating through all pages
-      let allRepos: GitHubRepoInfo[] = [];
-      let page = 1;
-      let hasMore = true;
-
-      while (hasMore) {
-        const requestUrl = `https://api.github.com/user/repos?sort=updated&per_page=100&page=${page}&affiliation=owner,organization_member`;
-        const response = await fetch(requestUrl, {
-          headers: {
-            Accept: 'application/vnd.github.v3+json',
-            Authorization: `Bearer ${token.trim()}`,
-          },
-        });
-
-        if (!response.ok) {
-          let errorData: { message?: string } = {};
-
-          try {
-            errorData = await response.json();
-          } catch {
-            errorData = { message: 'Could not parse error response' };
-          }
-
-          if (response.status === 401) {
-            toast.error('GitHub token expired. Please reconnect your account.');
-
-            // Clear invalid token
-            const connection = getLocalStorage('github_connection');
-
-            if (connection) {
-              localStorage.removeItem('github_connection');
-              setUser(null);
-            }
-          } else if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
-            // Rate limit exceeded
-            const resetTime = response.headers.get('x-ratelimit-reset');
-            const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000).toLocaleTimeString() : 'soon';
-            toast.error(`GitHub API rate limit exceeded. Limit resets at ${resetDate}`);
-          } else {
-            logStore.logError('Failed to fetch GitHub repositories', {
-              status: response.status,
-              statusText: response.statusText,
-              error: errorData,
-            });
-            toast.error(`Failed to fetch repositories: ${errorData.message || response.statusText}`);
-          }
-
-          return;
-        }
-
-        try {
-          const repos = (await response.json()) as GitHubRepoInfo[];
-          allRepos = allRepos.concat(repos);
-
-          if (repos.length < 100) {
-            hasMore = false;
-          } else {
-            page += 1;
-          }
-        } catch (parseError) {
-          logStore.logError('Failed to parse GitHub repositories response', { parseError });
-          toast.error('Failed to parse repository data');
-          setRecentRepos([]);
-
-          return;
-        }
+      if (repos.length < 100) {
+        hasMore = false;
+      } else {
+        page += 1;
       }
+    } catch (parseError) {
+      logStore.logError('Failed to parse GitHub repositories response', { parseError });
+      toast.error('Failed to parse repository data');
 
-      setRecentRepos(allRepos);
-    } catch (error) {
-      logStore.logError('Failed to fetch GitHub repositories', { error });
-      toast.error('Failed to fetch recent repositories');
-    } finally {
-      setIsFetchingRepos(false);
+      return [];
     }
-  };
+  }
+
+  return allRepos;
+}
+
+export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: GitHubDeploymentDialogProps) {
+  const currentChatId = useStore(chatId);
+
+  const dialog = useDeploymentDialog<GitHubUserResponse, GitHubRepoInfo>({
+    isOpen,
+    projectName,
+    storageKey: 'github_connection',
+    getUser: (conn) => (conn.user as GitHubUserResponse) ?? null,
+    getToken: (conn) => (typeof conn.token === 'string' ? conn.token : null),
+    fetchRepos: (token) => fetchGitHubRepos(token),
+    onClose,
+    sanitizeName: sanitizeRepoName,
+    extraFilter: (repo, query) => Boolean(repo.language && repo.language.toLowerCase().includes(query)),
+  });
 
   // Function to create a new repository or push to an existing one
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,13 +125,13 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       return;
     }
 
-    if (!repoName.trim()) {
+    if (!dialog.repoName.trim()) {
       toast.error('Repository name is required');
       return;
     }
 
     // Validate repository name
-    const sanitizedName = sanitizeRepoName(repoName);
+    const sanitizedName = sanitizeRepoName(dialog.repoName);
 
     if (!sanitizedName || sanitizedName.length < 1) {
       toast.error('Repository name must contain at least one alphanumeric character');
@@ -208,12 +144,12 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     }
 
     // Update the repo name field with the sanitized version if it was changed
-    if (sanitizedName !== repoName) {
-      setRepoName(sanitizedName);
+    if (sanitizedName !== dialog.repoName) {
+      dialog.setRepoName(sanitizedName);
       toast.info(`Repository name sanitized to: ${sanitizedName}`);
     }
 
-    setIsLoading(true);
+    dialog.setIsLoading(true);
 
     try {
       // Initialize Octokit with the GitHub token
@@ -222,7 +158,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
       try {
         // Check if the repository already exists - ensure repo name is properly sanitized
-        const sanitizedRepoName = sanitizeRepoName(repoName);
+        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         const { data: existingRepo } = await octokit.repos.get({
           owner: connection.user.login,
           repo: sanitizedRepoName,
@@ -231,11 +167,11 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         repoExists = true;
 
         // If we get here, the repo exists - confirm overwrite
-        let confirmMessage = `Repository "${repoName}" already exists. Do you want to update it? This will add or modify files in the repository.`;
+        let confirmMessage = `Repository "${dialog.repoName}" already exists. Do you want to update it? This will add or modify files in the repository.`;
 
         // Add visibility change warning if needed
-        if (existingRepo.private !== isPrivate) {
-          const visibilityChange = isPrivate
+        if (existingRepo.private !== dialog.isPrivate) {
+          const visibilityChange = dialog.isPrivate
             ? 'This will also change the repository from public to private.'
             : 'This will also change the repository from private to public.';
 
@@ -245,31 +181,36 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         const confirmOverwrite = window.confirm(confirmMessage);
 
         if (!confirmOverwrite) {
-          setIsLoading(false);
+          dialog.setIsLoading(false);
           return;
         }
 
         // If visibility needs to be updated
-        if (existingRepo.private !== isPrivate) {
+        if (existingRepo.private !== dialog.isPrivate) {
           await octokit.repos.update({
             owner: connection.user.login,
             repo: sanitizedRepoName,
-            private: isPrivate,
+            private: dialog.isPrivate,
           });
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // 404 means repo doesn't exist, which is what we want for new repos
-        if (error.status !== 404) {
+        if (
+          typeof error === 'object' &&
+          error !== null &&
+          'status' in error &&
+          (error as { status: number }).status !== 404
+        ) {
           throw error;
         }
       }
 
       // Create repository if it doesn't exist
       if (!repoExists) {
-        const sanitizedRepoName = sanitizeRepoName(repoName);
+        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         const { data: newRepo } = await octokit.repos.createForAuthenticatedUser({
           name: sanitizedRepoName,
-          private: isPrivate,
+          private: dialog.isPrivate,
 
           // Initialize with a README to avoid empty repository issues
           auto_init: true,
@@ -279,7 +220,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         });
 
         // Set the URL for success dialog
-        setCreatedRepoUrl(newRepo.html_url);
+        dialog.setCreatedRepoUrl(newRepo.html_url);
 
         // Since we created the repo with auto_init, we need to wait for GitHub to initialize it
         logger.debug('Created new repository with auto_init, waiting for GitHub to initialize it...');
@@ -288,8 +229,8 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         await new Promise((resolve) => setTimeout(resolve, 2000));
       } else {
         // Set URL for existing repo
-        const sanitizedRepoName = sanitizeRepoName(repoName);
-        setCreatedRepoUrl(`https://github.com/${connection.user.login}/${sanitizedRepoName}`);
+        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
+        dialog.setCreatedRepoUrl(`https://github.com/${connection.user.login}/${sanitizedRepoName}`);
       }
 
       // Process files to upload
@@ -304,7 +245,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         };
       });
 
-      setPushedFiles(fileList);
+      dialog.setPushedFiles(fileList);
 
       /*
        * Now we need to handle the repository, whether it's new or existing
@@ -315,7 +256,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
       try {
         // For both new and existing repos, get the repository info
-        const sanitizedRepoName = sanitizeRepoName(repoName);
+        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         const { data: repo } = await octokit.repos.get({
           owner: connection.user.login,
           repo: sanitizedRepoName,
@@ -368,7 +309,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         logger.debug(`Creating tree with ${tree.length} files using base: ${baseSha || 'none'}`);
 
         // Create a tree with all the files, using the base tree if available
-        const sanitizedRepoName = sanitizeRepoName(repoName);
+        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         const { data: treeData } = await octokit.git.createTree({
           owner: connection.user.login,
           repo: sanitizedRepoName,
@@ -451,7 +392,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       }
 
       // Save the repository information for this chat
-      const sanitizedRepoName = sanitizeRepoName(repoName);
+      const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
       localStorage.setItem(
         `github-repo-${currentChatId}`,
         JSON.stringify({
@@ -462,377 +403,100 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       );
 
       // Show success dialog
-      setShowSuccessDialog(true);
+      dialog.setShowSuccessDialog(true);
     } catch (error) {
       logger.error('Error pushing to GitHub:', error);
 
-      // Attempt to extract more specific error information
-      let errorMessage = 'Failed to push to GitHub';
-      let isRetryable = false;
-
-      if (error instanceof Error) {
-        const errorMsg = error.message.toLowerCase();
-
-        if (errorMsg.includes('network') || errorMsg.includes('fetch failed') || errorMsg.includes('connection')) {
-          errorMessage = 'Network error. Please check your internet connection and try again.';
-          isRetryable = true;
-        } else if (errorMsg.includes('401') || errorMsg.includes('unauthorized')) {
-          errorMessage = 'GitHub authentication failed. Please check your access token in Settings > Connections.';
-        } else if (errorMsg.includes('403') || errorMsg.includes('forbidden')) {
-          errorMessage =
-            'Access denied. Your GitHub token may not have sufficient permissions to create/modify repositories.';
-        } else if (errorMsg.includes('404') || errorMsg.includes('not found')) {
-          errorMessage = 'Repository or resource not found. Please check the repository name and your permissions.';
-        } else if (errorMsg.includes('422') || errorMsg.includes('validation failed')) {
-          if (errorMsg.includes('name already exists')) {
-            errorMessage =
-              'A repository with this name already exists in your account. Please choose a different name.';
-          } else {
-            errorMessage = 'Repository validation failed. Please check the repository name and settings.';
-          }
-        } else if (errorMsg.includes('rate limit') || errorMsg.includes('429')) {
-          errorMessage = 'GitHub API rate limit exceeded. Please wait a moment and try again.';
-          isRetryable = true;
-        } else if (errorMsg.includes('timeout')) {
-          errorMessage = 'Request timed out. Please check your connection and try again.';
-          isRetryable = true;
-        } else {
-          errorMessage = `GitHub error: ${error.message}`;
-        }
-      } else if (typeof error === 'object' && error !== null) {
-        // Octokit errors
-        if ('message' in error) {
-          errorMessage = `GitHub API error: ${error.message as string}`;
-        }
-
-        // GitHub API errors
-        if ('documentation_url' in error) {
-          logger.trace('GitHub API documentation:', error.documentation_url);
-        }
-      }
+      const classified = classifyDeploymentError(error);
 
       // Show error with retry suggestion if applicable
-      const finalMessage = isRetryable ? `${errorMessage} Click to retry.` : errorMessage;
+      const finalMessage = classified.isRetryable ? `${classified.message} Click to retry.` : classified.message;
       toast.error(finalMessage);
     } finally {
-      setIsLoading(false);
+      dialog.setIsLoading(false);
     }
   };
 
-  const handleClose = () => {
-    setRepoName('');
-    setIsPrivate(false);
-    setShowSuccessDialog(false);
-    setCreatedRepoUrl('');
-    onClose();
-  };
-
-  const handleAuthDialogClose = () => {
-    setShowAuthDialog(false);
-
-    // Refresh user data after auth
-    const connection = getLocalStorage('github_connection');
-
-    if (connection?.user && connection?.token) {
-      setUser(connection.user);
-      fetchRecentRepos(connection.token);
-    }
-  };
-
-  if (showSuccessDialog) {
+  if (dialog.showSuccessDialog) {
     return (
       <DeploymentSuccessDialog
         isOpen={isOpen}
-        onClose={handleClose}
+        onClose={dialog.handleClose}
         provider={GITHUB_PROVIDER}
-        repoUrl={createdRepoUrl}
-        pushedFiles={pushedFiles}
+        repoUrl={dialog.createdRepoUrl}
+        pushedFiles={dialog.pushedFiles}
       />
     );
   }
 
-  if (!user) {
+  if (!dialog.user) {
     return (
       <ConnectionRequiredDialog
         isOpen={isOpen}
-        onClose={handleClose}
+        onClose={dialog.handleClose}
         provider={GITHUB_PROVIDER}
-        onConnect={() => setShowAuthDialog(true)}
+        onConnect={() => dialog.setShowAuthDialog(true)}
       >
-        <GitHubAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
+        <GitHubAuthDialog isOpen={dialog.showAuthDialog} onClose={dialog.handleAuthDialogClose} />
       </ConnectionRequiredDialog>
     );
   }
 
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-        <div className="fixed inset-0 flex items-center justify-center z-[9999]">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="w-[90vw] md:w-[500px]"
-          >
-            <Dialog.Content
-              className="bg-white dark:bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark shadow-xl"
-              aria-describedby="push-dialog-description"
-            >
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="w-10 h-10 rounded-xl bg-bolt-elements-background-depth-3 flex items-center justify-center text-purple-500"
-                  >
-                    <div className="i-ph:github-logo w-5 h-5" />
-                  </motion.div>
-                  <div>
-                    <Dialog.Title className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
-                      Deploy to GitHub
-                    </Dialog.Title>
-                    <p
-                      id="push-dialog-description"
-                      className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark"
-                    >
-                      Deploy your code to a new or existing GitHub repository
-                    </p>
-                  </div>
-                  <Dialog.Close asChild>
-                    <button
-                      onClick={handleClose}
-                      className="ml-auto p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary dark:text-bolt-elements-textTertiary-dark dark:hover:text-bolt-elements-textPrimary-dark hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-3 focus:outline-none focus:ring-2 focus:ring-bolt-elements-borderColor dark:focus:ring-bolt-elements-borderColor-dark"
-                    >
-                      <span className="i-ph:x block w-5 h-5" aria-hidden="true" />
-                      <span className="sr-only">Close dialog</span>
-                    </button>
-                  </Dialog.Close>
-                </div>
-
-                <div className="flex items-center gap-3 mb-6 p-4 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-                  <div className="relative">
-                    <img src={user.avatar_url} alt={user.login} className="w-10 h-10 rounded-full" />
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-purple-500 flex items-center justify-center text-white">
-                      <div className="i-ph:github-logo w-3 h-3" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
-                      {user.name || user.login}
-                    </p>
-                    <p className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark">
-                      @{user.login}
-                    </p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="repoName"
-                      className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark"
-                    >
-                      Repository Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark">
-                        <span className="i-ph:git-branch w-4 h-4" />
-                      </div>
-                      <input
-                        id="repoName"
-                        type="text"
-                        value={repoName}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setRepoName(value);
-
-                          // Show real-time feedback for invalid characters
-                          const sanitized = sanitizeRepoName(value);
-
-                          if (value && value !== sanitized) {
-                            // Show preview of sanitized name without being too intrusive
-                            e.target.setAttribute('data-sanitized', sanitized);
-                          } else {
-                            e.target.removeAttribute('data-sanitized');
-                          }
-                        }}
-                        placeholder="my-awesome-project"
-                        className="w-full pl-10 px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark placeholder-bolt-elements-textTertiary dark:placeholder-bolt-elements-textTertiary-dark focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        required
-                        maxLength={100}
-                        pattern="[a-zA-Z0-9\-_\s]+"
-                        title="Repository name can contain letters, numbers, hyphens, underscores, and spaces"
-                      />
-                    </div>
-                    {repoName && sanitizeRepoName(repoName) !== repoName && (
-                      <p className="text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark mt-1">
-                        Will be created as:{' '}
-                        <span className="font-mono text-purple-600 dark:text-purple-400">
-                          {sanitizeRepoName(repoName)}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark">
-                        Recent Repositories
-                      </label>
-                      <span className="text-xs text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark">
-                        {filteredRepos.length} of {recentRepos.length}
-                      </span>
-                    </div>
-
-                    <div className="mb-2">
-                      <SearchInput
-                        placeholder="Search repositories..."
-                        value={repoSearchQuery}
-                        onChange={(e) => setRepoSearchQuery(e.target.value)}
-                        onClear={() => setRepoSearchQuery('')}
-                        className="bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-sm"
-                      />
-                    </div>
-
-                    {recentRepos.length === 0 && !isFetchingRepos ? (
-                      <EmptyState
-                        icon="i-ph:github-logo"
-                        title="No repositories found"
-                        description="We couldn't find any repositories in your GitHub account."
-                        variant="compact"
-                      />
-                    ) : (
-                      <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                        {filteredRepos.length === 0 && repoSearchQuery.trim() !== '' ? (
-                          <EmptyState
-                            icon="i-ph:magnifying-glass"
-                            title="No matching repositories"
-                            description="Try a different search term"
-                            variant="compact"
-                          />
-                        ) : (
-                          filteredRepos.map((repo) => (
-                            <motion.button
-                              key={repo.full_name}
-                              type="button"
-                              onClick={() => setRepoName(repo.name)}
-                              className="w-full p-3 text-left rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 transition-colors group border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark hover:border-purple-500/30"
-                              whileHover={{ scale: 1.01 }}
-                              whileTap={{ scale: 0.99 }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="i-ph:git-branch w-4 h-4 text-purple-500" />
-                                  <span className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark group-hover:text-purple-500">
-                                    {repo.name}
-                                  </span>
-                                </div>
-                                {repo.private && (
-                                  <Badge variant="primary" size="sm" icon="i-ph:lock w-3 h-3">
-                                    Private
-                                  </Badge>
-                                )}
-                              </div>
-                              {repo.description && (
-                                <p className="mt-1 text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark line-clamp-2">
-                                  {repo.description}
-                                </p>
-                              )}
-                              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                                {repo.language && (
-                                  <Badge variant="subtle" size="sm" icon="i-ph:code w-3 h-3">
-                                    {repo.language}
-                                  </Badge>
-                                )}
-                                <Badge variant="subtle" size="sm" icon="i-ph:star w-3 h-3">
-                                  {repo.stargazers_count.toLocaleString()}
-                                </Badge>
-                                <Badge variant="subtle" size="sm" icon="i-ph:git-fork w-3 h-3">
-                                  {repo.forks_count.toLocaleString()}
-                                </Badge>
-                                <Badge variant="subtle" size="sm" icon="i-ph:clock w-3 h-3">
-                                  {new Date(repo.updated_at).toLocaleDateString()}
-                                </Badge>
-                              </div>
-                            </motion.button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {isFetchingRepos && (
-                    <div className="flex items-center justify-center py-4">
-                      <StatusIndicator status="loading" pulse={true} label="Loading repositories..." />
-                    </div>
-                  )}
-
-                  <div className="p-3 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="private"
-                        checked={isPrivate}
-                        onChange={(e) => setIsPrivate(e.target.checked)}
-                        className="rounded border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-purple-500 focus:ring-purple-500 dark:bg-bolt-elements-background-depth-3"
-                      />
-                      <label
-                        htmlFor="private"
-                        className="text-sm text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark"
-                      >
-                        Make repository private
-                      </label>
-                    </div>
-                    <p className="text-xs text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark mt-2 ml-6">
-                      Private repositories are only visible to you and people you share them with
-                    </p>
-                  </div>
-
-                  <div className="pt-4 flex gap-2">
-                    <motion.button
-                      type="button"
-                      onClick={handleClose}
-                      className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 text-sm border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
-                      type="submit"
-                      disabled={isLoading}
-                      className={classNames(
-                        'flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 text-sm inline-flex items-center justify-center gap-2',
-                        isLoading ? 'opacity-50 cursor-not-allowed' : '',
-                      )}
-                      whileHover={!isLoading ? { scale: 1.02 } : {}}
-                      whileTap={!isLoading ? { scale: 0.98 } : {}}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="i-ph:spinner-gap animate-spin w-4 h-4" />
-                          Deploying...
-                        </>
-                      ) : (
-                        <>
-                          <div className="i-ph:github-logo w-4 h-4" />
-                          Deploy to GitHub
-                        </>
-                      )}
-                    </motion.button>
-                  </div>
-                </form>
-              </div>
-            </Dialog.Content>
-          </motion.div>
-        </div>
-      </Dialog.Portal>
+    <>
+      <DeploymentFormShell
+        isOpen={isOpen}
+        onClose={dialog.handleClose}
+        brandColor="purple"
+        providerIcon="i-ph:github-logo"
+        providerName="GitHub"
+        avatarUrl={dialog.user.avatar_url}
+        displayName={dialog.user.name || dialog.user.login}
+        username={dialog.user.login}
+        repoName={dialog.repoName}
+        onRepoNameChange={dialog.setRepoName}
+        showSanitizedPreview={true}
+        repoNameMaxLength={100}
+        isPrivate={dialog.isPrivate}
+        onPrivateChange={dialog.setIsPrivate}
+        isLoading={dialog.isLoading}
+        onSubmit={handleSubmit}
+      >
+        <RepoListSection<GitHubRepoInfo>
+          recentRepos={dialog.recentRepos}
+          filteredRepos={dialog.filteredRepos}
+          repoSearchQuery={dialog.repoSearchQuery}
+          isFetchingRepos={dialog.isFetchingRepos}
+          brandColor="purple"
+          providerIcon="i-ph:github-logo"
+          onSearchChange={dialog.setRepoSearchQuery}
+          onSearchClear={() => dialog.setRepoSearchQuery('')}
+          onSelectRepo={dialog.setRepoName}
+          getRepoKey={(repo) => repo.full_name}
+          isPrivate={(repo) => Boolean(repo.private)}
+          renderBadges={(repo) => (
+            <>
+              {repo.language && (
+                <Badge variant="subtle" size="sm" icon="i-ph:code w-3 h-3">
+                  {repo.language}
+                </Badge>
+              )}
+              <Badge variant="subtle" size="sm" icon="i-ph:star w-3 h-3">
+                {repo.stargazers_count.toLocaleString()}
+              </Badge>
+              <Badge variant="subtle" size="sm" icon="i-ph:git-fork w-3 h-3">
+                {repo.forks_count.toLocaleString()}
+              </Badge>
+              <Badge variant="subtle" size="sm" icon="i-ph:clock w-3 h-3">
+                {new Date(repo.updated_at).toLocaleDateString()}
+              </Badge>
+            </>
+          )}
+        />
+      </DeploymentFormShell>
 
       {/* GitHub Auth Dialog */}
-      <GitHubAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
-    </Dialog.Root>
+      <GitHubAuthDialog isOpen={dialog.showAuthDialog} onClose={dialog.handleAuthDialogClose} />
+    </>
   );
 }

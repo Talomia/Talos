@@ -1,25 +1,25 @@
-import * as Dialog from '@radix-ui/react-dialog';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('GitLabDeploymentDialog');
-import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-import { motion } from 'framer-motion';
-import { classNames } from '~/utils/classNames';
 import { getLocalStorage } from '~/lib/persistence/localStorage';
 import type { GitLabUserResponse, GitLabProjectInfo } from '~/types/GitLab';
 import { logStore } from '~/lib/stores/logs';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import { useStore } from '@nanostores/react';
 import { GitLabApiService } from '~/lib/services/gitlabApiService';
-import { SearchInput, EmptyState, StatusIndicator, Badge } from '~/components/ui';
+import { Badge } from '~/components/ui';
 import { formatSize } from '~/utils/formatSize';
 import { GitLabAuthDialog } from '~/components/@settings/tabs/gitlab/components/GitLabAuthDialog';
+import { classifyDeploymentError } from '~/components/deploy/deployUtils';
 import {
   DeploymentSuccessDialog,
   ConnectionRequiredDialog,
   type DeploymentProviderConfig,
-} from './DeploymentDialogComponents';
+} from '~/components/deploy/DeploymentDialogComponents';
+import { useDeploymentDialog } from '~/components/deploy/useDeploymentDialog';
+import { RepoListSection } from '~/components/deploy/RepoListSection';
+import { DeploymentFormShell } from '~/components/deploy/DeploymentFormShell';
 
 const GITLAB_PROVIDER: DeploymentProviderConfig = {
   name: 'GitLab',
@@ -34,83 +34,37 @@ interface GitLabDeploymentDialogProps {
   files: Record<string, string>;
 }
 
+/**
+ * Fetches GitLab projects using the API service.
+ */
+async function fetchGitLabRepos(token: string, connection: Record<string, unknown>): Promise<GitLabProjectInfo[]> {
+  try {
+    const gitlabUrl = (typeof connection.gitlabUrl === 'string' ? connection.gitlabUrl : null) || 'https://gitlab.com';
+    const apiService = new GitLabApiService(token, gitlabUrl);
+
+    return await apiService.getProjects();
+  } catch (error) {
+    logger.error('Failed to fetch GitLab repositories:', error);
+    logStore.logError('Failed to fetch GitLab repositories', { error });
+    toast.error('Failed to fetch recent repositories');
+
+    return [];
+  }
+}
+
 export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: GitLabDeploymentDialogProps) {
-  const [repoName, setRepoName] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<GitLabUserResponse | null>(null);
-  const [recentRepos, setRecentRepos] = useState<GitLabProjectInfo[]>([]);
-  const [filteredRepos, setFilteredRepos] = useState<GitLabProjectInfo[]>([]);
-  const [repoSearchQuery, setRepoSearchQuery] = useState('');
-  const [isFetchingRepos, setIsFetchingRepos] = useState(false);
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [createdRepoUrl, setCreatedRepoUrl] = useState('');
-  const [pushedFiles, setPushedFiles] = useState<{ path: string; size: number }[]>([]);
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
   const currentChatId = useStore(chatId);
 
-  // Load GitLab connection on mount
-  useEffect(() => {
-    if (isOpen) {
-      const connection = getLocalStorage('gitlab_connection');
-
-      // Set a default repository name based on the project name
-      setRepoName(projectName.replace(/\s+/g, '-').toLowerCase());
-
-      if (connection?.user && connection?.token) {
-        setUser(connection.user);
-
-        // Only fetch if we have both user and token
-        if (connection.token.trim()) {
-          fetchRecentRepos(connection.token, connection.gitlabUrl || 'https://gitlab.com');
-        }
-      }
-    }
-  }, [isOpen, projectName]);
-
-  // Filter repositories based on search query
-  useEffect(() => {
-    if (recentRepos.length === 0) {
-      setFilteredRepos([]);
-      return;
-    }
-
-    if (!repoSearchQuery.trim()) {
-      setFilteredRepos(recentRepos);
-      return;
-    }
-
-    const query = repoSearchQuery.toLowerCase().trim();
-    const filtered = recentRepos.filter(
-      (repo) =>
-        repo.name.toLowerCase().includes(query) || (repo.description && repo.description.toLowerCase().includes(query)),
-    );
-
-    setFilteredRepos(filtered);
-  }, [recentRepos, repoSearchQuery]);
-
-  const fetchRecentRepos = async (token: string, gitlabUrl = 'https://gitlab.com') => {
-    if (!token) {
-      logStore.logError('No GitLab token available');
-      toast.error('GitLab authentication required');
-
-      return;
-    }
-
-    try {
-      setIsFetchingRepos(true);
-
-      const apiService = new GitLabApiService(token, gitlabUrl);
-      const repos = await apiService.getProjects();
-      setRecentRepos(repos);
-    } catch (error) {
-      logger.error('Failed to fetch GitLab repositories:', error);
-      logStore.logError('Failed to fetch GitLab repositories', { error });
-      toast.error('Failed to fetch recent repositories');
-    } finally {
-      setIsFetchingRepos(false);
-    }
-  };
+  const dialog = useDeploymentDialog<GitLabUserResponse, GitLabProjectInfo>({
+    isOpen,
+    projectName,
+    storageKey: 'gitlab_connection',
+    getUser: (conn) => (conn.user as GitLabUserResponse) ?? null,
+    getToken: (conn) => (typeof conn.token === 'string' ? conn.token : null),
+    fetchRepos: fetchGitLabRepos,
+    onClose,
+    sanitizeName: (name) => name.replace(/\s+/g, '-').toLowerCase(),
+  });
 
   // Function to create a new repository or push to an existing one
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,15 +77,15 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       return;
     }
 
-    if (!repoName.trim()) {
+    if (!dialog.repoName.trim()) {
       toast.error('Repository name is required');
       return;
     }
 
-    setIsLoading(true);
+    dialog.setIsLoading(true);
 
     // Sanitize repository name to match what the API will create
-    const sanitizedRepoName = repoName
+    const sanitizedRepoName = dialog.repoName
       .replace(/[^a-zA-Z0-9-_.]/g, '-')
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '')
@@ -142,7 +96,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       const apiService = new GitLabApiService(connection.token, gitlabUrl);
 
       // Warn user if repository name was changed
-      if (sanitizedRepoName !== repoName && sanitizedRepoName !== repoName.toLowerCase()) {
+      if (sanitizedRepoName !== dialog.repoName && sanitizedRepoName !== dialog.repoName.toLowerCase()) {
         toast.info(`Repository name sanitized to "${sanitizedRepoName}" to meet GitLab requirements`);
       }
 
@@ -154,8 +108,8 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       if (projectExists && existingProject) {
         // Confirm overwrite
         const visibilityChange =
-          existingProject.visibility !== (isPrivate ? 'private' : 'public')
-            ? `\n\nThis will also change the repository from ${existingProject.visibility} to ${isPrivate ? 'private' : 'public'}.`
+          existingProject.visibility !== (dialog.isPrivate ? 'private' : 'public')
+            ? `\n\nThis will also change the repository from ${existingProject.visibility} to ${dialog.isPrivate ? 'private' : 'public'}.`
             : '';
 
         const confirmOverwrite = window.confirm(
@@ -163,27 +117,27 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         );
 
         if (!confirmOverwrite) {
-          setIsLoading(false);
+          dialog.setIsLoading(false);
           return;
         }
 
         // Update visibility if needed
-        if (existingProject.visibility !== (isPrivate ? 'private' : 'public')) {
+        if (existingProject.visibility !== (dialog.isPrivate ? 'private' : 'public')) {
           toast.info('Updating repository visibility...');
-          await apiService.updateProjectVisibility(existingProject.id, isPrivate ? 'private' : 'public');
+          await apiService.updateProjectVisibility(existingProject.id, dialog.isPrivate ? 'private' : 'public');
         }
 
         // Update project with files
         toast.info('Uploading files to existing repository...');
         await apiService.updateProjectWithFiles(existingProject.id, files);
-        setCreatedRepoUrl(existingProject.http_url_to_repo);
+        dialog.setCreatedRepoUrl(existingProject.http_url_to_repo);
         toast.success('Repository updated successfully!');
       } else {
         // Create new project with files
         toast.info('Creating new repository...');
 
-        const newProject = await apiService.createProjectWithFiles(sanitizedRepoName, isPrivate, files);
-        setCreatedRepoUrl(newProject.http_url_to_repo);
+        const newProject = await apiService.createProjectWithFiles(sanitizedRepoName, dialog.isPrivate, files);
+        dialog.setCreatedRepoUrl(newProject.http_url_to_repo);
         toast.success('Repository created successfully!');
       }
 
@@ -193,8 +147,8 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         size: new TextEncoder().encode(content).length,
       }));
 
-      setPushedFiles(fileList);
-      setShowSuccessDialog(true);
+      dialog.setPushedFiles(fileList);
+      dialog.setShowSuccessDialog(true);
 
       // Save repository info
       localStorage.setItem(
@@ -202,7 +156,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         JSON.stringify({
           owner: connection.user.username,
           name: sanitizedRepoName,
-          url: createdRepoUrl,
+          url: dialog.createdRepoUrl,
         }),
       );
 
@@ -223,369 +177,142 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         projectPath: `${connection.user.username}/${sanitizedRepoName}`,
       });
 
-      // Provide specific error messages based on error type
-      let errorMessage = 'Failed to push to GitLab';
-
-      if (error instanceof Error) {
-        const errorMsg = error.message.toLowerCase();
-
-        if (errorMsg.includes('404') || errorMsg.includes('not found')) {
-          errorMessage =
-            'Repository or GitLab instance not found. Please check your GitLab URL and repository permissions.';
-        } else if (errorMsg.includes('401') || errorMsg.includes('unauthorized')) {
-          errorMessage = 'GitLab authentication failed. Please check your access token and permissions.';
-        } else if (errorMsg.includes('403') || errorMsg.includes('forbidden')) {
-          errorMessage =
-            'Access denied. Your GitLab token may not have sufficient permissions to create/modify repositories.';
-        } else if (errorMsg.includes('network') || errorMsg.includes('fetch')) {
-          errorMessage = 'Network error. Please check your internet connection and try again.';
-        } else if (errorMsg.includes('timeout')) {
-          errorMessage = 'Request timed out. Please try again or check your connection.';
-        } else if (errorMsg.includes('rate limit')) {
-          errorMessage = 'GitLab API rate limit exceeded. Please wait a moment and try again.';
-        } else {
-          errorMessage = `GitLab error: ${error.message}`;
-        }
-      }
-
-      toast.error(errorMessage);
+      const classified = classifyDeploymentError(error);
+      toast.error(classified.message);
     } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleClose = () => {
-    setRepoName('');
-    setIsPrivate(false);
-    setShowSuccessDialog(false);
-    setCreatedRepoUrl('');
-    onClose();
-  };
-
-  const handleAuthDialogClose = () => {
-    setShowAuthDialog(false);
-
-    // Refresh user data after auth
-    const connection = getLocalStorage('gitlab_connection');
-
-    if (connection?.user && connection?.token) {
-      setUser(connection.user);
-      fetchRecentRepos(connection.token, connection.gitlabUrl || 'https://gitlab.com');
+      dialog.setIsLoading(false);
     }
   };
 
   // Success Dialog
-  if (showSuccessDialog) {
+  if (dialog.showSuccessDialog) {
     return (
       <DeploymentSuccessDialog
         isOpen={isOpen}
-        onClose={handleClose}
+        onClose={dialog.handleClose}
         provider={GITLAB_PROVIDER}
-        repoUrl={createdRepoUrl}
-        pushedFiles={pushedFiles}
+        repoUrl={dialog.createdRepoUrl}
+        pushedFiles={dialog.pushedFiles}
         formatSize={formatSize}
       />
     );
   }
 
-  if (!user) {
+  if (!dialog.user) {
     return (
       <ConnectionRequiredDialog
         isOpen={isOpen}
-        onClose={handleClose}
+        onClose={dialog.handleClose}
         provider={GITLAB_PROVIDER}
-        onConnect={() => setShowAuthDialog(true)}
+        onConnect={() => dialog.setShowAuthDialog(true)}
       >
-        <GitLabAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
+        <GitLabAuthDialog isOpen={dialog.showAuthDialog} onClose={dialog.handleAuthDialogClose} />
       </ConnectionRequiredDialog>
     );
   }
 
+  const renderGitLabAvatar = () => (
+    <>
+      {dialog.user!.avatar_url && dialog.user!.avatar_url !== 'null' && dialog.user!.avatar_url !== '' ? (
+        <img
+          src={dialog.user!.avatar_url}
+          alt={dialog.user!.username}
+          className="w-10 h-10 rounded-full object-cover"
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            // Handle CORS/COEP errors by hiding the image and showing fallback
+            const target = e.target as HTMLImageElement;
+            target.style.display = 'none';
+
+            const fallback = target.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
+
+            if (fallback) {
+              fallback.style.display = 'flex';
+            }
+          }}
+          onLoad={(e) => {
+            // Ensure fallback is hidden when image loads successfully
+            const target = e.target as HTMLImageElement;
+
+            const fallback = target.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
+
+            if (fallback) {
+              fallback.style.display = 'none';
+            }
+          }}
+        />
+      ) : null}
+
+      <div
+        className="avatar-fallback w-10 h-10 rounded-full bg-bolt-elements-background-depth-4 flex items-center justify-center text-bolt-elements-textSecondary font-semibold text-sm"
+        style={{
+          display:
+            dialog.user!.avatar_url && dialog.user!.avatar_url !== 'null' && dialog.user!.avatar_url !== ''
+              ? 'none'
+              : 'flex',
+        }}
+      >
+        {dialog.user!.name ? (
+          dialog.user!.name.charAt(0).toUpperCase()
+        ) : dialog.user!.username ? (
+          dialog.user!.username.charAt(0).toUpperCase()
+        ) : (
+          <div className="i-ph:user w-5 h-5" />
+        )}
+      </div>
+    </>
+  );
+
   return (
-    <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-        <div className="fixed inset-0 flex items-center justify-center z-[9999]">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="w-[90vw] md:w-[500px]"
-          >
-            <Dialog.Content
-              className="bg-white dark:bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark shadow-xl"
-              aria-describedby="push-dialog-description"
-            >
-              <div className="p-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="w-10 h-10 rounded-xl bg-bolt-elements-background-depth-3 flex items-center justify-center text-orange-500"
-                  >
-                    <div className="i-ph:gitlab-logo w-5 h-5" />
-                  </motion.div>
-                  <div>
-                    <Dialog.Title className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
-                      Deploy to GitLab
-                    </Dialog.Title>
-                    <p
-                      id="push-dialog-description"
-                      className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark"
-                    >
-                      Deploy your code to a new or existing GitLab repository
-                    </p>
-                  </div>
-                  <Dialog.Close asChild>
-                    <button
-                      onClick={handleClose}
-                      className="ml-auto p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary dark:text-bolt-elements-textTertiary-dark dark:hover:text-bolt-elements-textPrimary-dark hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-3 focus:outline-none focus:ring-2 focus:ring-bolt-elements-borderColor dark:focus:ring-bolt-elements-borderColor-dark"
-                    >
-                      <span className="i-ph:x block w-5 h-5" aria-hidden="true" />
-                      <span className="sr-only">Close dialog</span>
-                    </button>
-                  </Dialog.Close>
-                </div>
-
-                <div className="flex items-center gap-3 mb-6 p-4 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-                  <div className="relative">
-                    {user.avatar_url && user.avatar_url !== 'null' && user.avatar_url !== '' ? (
-                      <img
-                        src={user.avatar_url}
-                        alt={user.username}
-                        className="w-10 h-10 rounded-full object-cover"
-                        crossOrigin="anonymous"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          // Handle CORS/COEP errors by hiding the image and showing fallback
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-
-                          const fallback = target.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
-
-                          if (fallback) {
-                            fallback.style.display = 'flex';
-                          }
-                        }}
-                        onLoad={(e) => {
-                          // Ensure fallback is hidden when image loads successfully
-                          const target = e.target as HTMLImageElement;
-
-                          const fallback = target.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
-
-                          if (fallback) {
-                            fallback.style.display = 'none';
-                          }
-                        }}
-                      />
-                    ) : null}
-
-                    <div
-                      className="avatar-fallback w-10 h-10 rounded-full bg-bolt-elements-background-depth-4 flex items-center justify-center text-bolt-elements-textSecondary font-semibold text-sm"
-                      style={{
-                        display:
-                          user.avatar_url && user.avatar_url !== 'null' && user.avatar_url !== '' ? 'none' : 'flex',
-                      }}
-                    >
-                      {user.name ? (
-                        user.name.charAt(0).toUpperCase()
-                      ) : user.username ? (
-                        user.username.charAt(0).toUpperCase()
-                      ) : (
-                        <div className="i-ph:user w-5 h-5" />
-                      )}
-                    </div>
-                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center text-white">
-                      <div className="i-ph:gitlab-logo w-3 h-3" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
-                      {user.name || user.username}
-                    </p>
-                    <p className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark">
-                      @{user.username}
-                    </p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <label
-                      htmlFor="repoName"
-                      className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark"
-                    >
-                      Repository Name
-                    </label>
-                    <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark">
-                        <span className="i-ph:git-branch w-4 h-4" />
-                      </div>
-                      <input
-                        id="repoName"
-                        type="text"
-                        value={repoName}
-                        onChange={(e) => setRepoName(e.target.value)}
-                        placeholder="my-awesome-project"
-                        className="w-full pl-10 px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark placeholder-bolt-elements-textTertiary dark:placeholder-bolt-elements-textTertiary-dark focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark">
-                        Recent Repositories
-                      </label>
-                      <span className="text-xs text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark">
-                        {filteredRepos.length} of {recentRepos.length}
-                      </span>
-                    </div>
-
-                    <div className="mb-2">
-                      <SearchInput
-                        placeholder="Search repositories..."
-                        value={repoSearchQuery}
-                        onChange={(e) => setRepoSearchQuery(e.target.value)}
-                        onClear={() => setRepoSearchQuery('')}
-                        className="bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-sm"
-                      />
-                    </div>
-
-                    {recentRepos.length === 0 && !isFetchingRepos ? (
-                      <EmptyState
-                        icon="i-ph:gitlab-logo"
-                        title="No repositories found"
-                        description="We couldn't find any repositories in your GitLab account."
-                        variant="compact"
-                      />
-                    ) : (
-                      <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
-                        {filteredRepos.length === 0 && repoSearchQuery.trim() !== '' ? (
-                          <EmptyState
-                            icon="i-ph:magnifying-glass"
-                            title="No matching repositories"
-                            description="Try a different search term"
-                            variant="compact"
-                          />
-                        ) : (
-                          filteredRepos.map((repo) => (
-                            <motion.button
-                              key={repo.id}
-                              type="button"
-                              onClick={() => setRepoName(repo.name)}
-                              className="w-full p-3 text-left rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 transition-colors group border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark hover:border-orange-500/30"
-                              whileHover={{ scale: 1.01 }}
-                              whileTap={{ scale: 0.99 }}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="i-ph:git-branch w-4 h-4 text-orange-500" />
-                                  <span className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark group-hover:text-orange-500">
-                                    {repo.name}
-                                  </span>
-                                </div>
-                                {repo.visibility === 'private' && (
-                                  <Badge variant="primary" size="sm" icon="i-ph:lock w-3 h-3">
-                                    Private
-                                  </Badge>
-                                )}
-                              </div>
-                              {repo.description && (
-                                <p className="mt-1 text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark line-clamp-2">
-                                  {repo.description}
-                                </p>
-                              )}
-                              <div className="mt-2 flex items-center gap-2 flex-wrap">
-                                <Badge variant="subtle" size="sm" icon="i-ph:star w-3 h-3">
-                                  {repo.star_count.toLocaleString()}
-                                </Badge>
-                                <Badge variant="subtle" size="sm" icon="i-ph:git-fork w-3 h-3">
-                                  {repo.forks_count.toLocaleString()}
-                                </Badge>
-                                <Badge variant="subtle" size="sm" icon="i-ph:clock w-3 h-3">
-                                  {new Date(repo.updated_at).toLocaleDateString()}
-                                </Badge>
-                              </div>
-                            </motion.button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {isFetchingRepos && (
-                    <div className="flex items-center justify-center py-4">
-                      <StatusIndicator status="loading" pulse={true} label="Loading repositories..." />
-                    </div>
-                  )}
-
-                  <div className="p-3 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id="private"
-                        checked={isPrivate}
-                        onChange={(e) => setIsPrivate(e.target.checked)}
-                        className="rounded border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-orange-500 focus:ring-orange-500 dark:bg-bolt-elements-background-depth-3"
-                      />
-                      <label
-                        htmlFor="private"
-                        className="text-sm text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark"
-                      >
-                        Make repository private
-                      </label>
-                    </div>
-                    <p className="text-xs text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark mt-2 ml-6">
-                      Private repositories are only visible to you and people you share them with
-                    </p>
-                  </div>
-
-                  <div className="pt-4 flex gap-2">
-                    <motion.button
-                      type="button"
-                      onClick={handleClose}
-                      className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 text-sm border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Cancel
-                    </motion.button>
-                    <motion.button
-                      type="submit"
-                      disabled={isLoading}
-                      className={classNames(
-                        'flex-1 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-sm inline-flex items-center justify-center gap-2',
-                        isLoading ? 'opacity-50 cursor-not-allowed' : '',
-                      )}
-                      whileHover={!isLoading ? { scale: 1.02 } : {}}
-                      whileTap={!isLoading ? { scale: 0.98 } : {}}
-                    >
-                      {isLoading ? (
-                        <>
-                          <div className="i-ph:spinner-gap animate-spin w-4 h-4" />
-                          Deploying...
-                        </>
-                      ) : (
-                        <>
-                          <div className="i-ph:gitlab-logo w-4 h-4" />
-                          Deploy to GitLab
-                        </>
-                      )}
-                    </motion.button>
-                  </div>
-                </form>
-              </div>
-            </Dialog.Content>
-          </motion.div>
-        </div>
-      </Dialog.Portal>
+    <>
+      <DeploymentFormShell
+        isOpen={isOpen}
+        onClose={dialog.handleClose}
+        brandColor="orange"
+        providerIcon="i-ph:gitlab-logo"
+        providerName="GitLab"
+        avatarUrl={dialog.user.avatar_url}
+        displayName={dialog.user.name || dialog.user.username}
+        username={dialog.user.username}
+        renderAvatar={renderGitLabAvatar}
+        repoName={dialog.repoName}
+        onRepoNameChange={dialog.setRepoName}
+        isPrivate={dialog.isPrivate}
+        onPrivateChange={dialog.setIsPrivate}
+        isLoading={dialog.isLoading}
+        onSubmit={handleSubmit}
+      >
+        <RepoListSection<GitLabProjectInfo>
+          recentRepos={dialog.recentRepos}
+          filteredRepos={dialog.filteredRepos}
+          repoSearchQuery={dialog.repoSearchQuery}
+          isFetchingRepos={dialog.isFetchingRepos}
+          brandColor="orange"
+          providerIcon="i-ph:gitlab-logo"
+          onSearchChange={dialog.setRepoSearchQuery}
+          onSearchClear={() => dialog.setRepoSearchQuery('')}
+          onSelectRepo={dialog.setRepoName}
+          getRepoKey={(repo) => String(repo.id)}
+          isPrivate={(repo) => repo.visibility === 'private'}
+          renderBadges={(repo) => (
+            <>
+              <Badge variant="subtle" size="sm" icon="i-ph:star w-3 h-3">
+                {repo.star_count.toLocaleString()}
+              </Badge>
+              <Badge variant="subtle" size="sm" icon="i-ph:git-fork w-3 h-3">
+                {repo.forks_count.toLocaleString()}
+              </Badge>
+              <Badge variant="subtle" size="sm" icon="i-ph:clock w-3 h-3">
+                {new Date(repo.updated_at).toLocaleDateString()}
+              </Badge>
+            </>
+          )}
+        />
+      </DeploymentFormShell>
 
       {/* GitLab Auth Dialog */}
-      <GitLabAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
-    </Dialog.Root>
+      <GitLabAuthDialog isOpen={dialog.showAuthDialog} onClose={dialog.handleAuthDialogClose} />
+    </>
   );
 }
