@@ -63,11 +63,11 @@ export function createFilesContext(files: FileMap, useRelativePath?: boolean) {
   });
 
   const fileContexts = filePaths
-    .filter((x) => files[x] && files[x].type == 'file')
+    .filter((x) => files[x] && files[x].type === 'file')
     .map((path) => {
       const dirent = files[path];
 
-      if (!dirent || dirent.type == 'folder') {
+      if (!dirent || dirent.type === 'folder') {
         return '';
       }
 
@@ -89,7 +89,7 @@ export function createFilesContext(files: FileMap, useRelativePath?: boolean) {
 }
 
 export function extractCurrentContext(messages: Message[]) {
-  const lastAssistantMessage = messages.filter((x) => x.role == 'assistant').slice(-1)[0];
+  const lastAssistantMessage = messages.filter((x) => x.role === 'assistant').slice(-1)[0];
 
   if (!lastAssistantMessage) {
     return { summary: undefined, codeContext: undefined };

@@ -38,7 +38,7 @@ export async function selectContext(props: {
       currentProvider = provider;
 
       return { ...message, content };
-    } else if (message.role == 'assistant') {
+    } else if (message.role === 'assistant') {
       let content = message.content;
 
       content = simplifyRecurrsiveActions(content);
@@ -90,7 +90,7 @@ export async function selectContext(props: {
   });
 
   let context = '';
-  const currrentFiles: string[] = [];
+  const currentFiles: string[] = [];
   const contextFiles: FileMap = {};
 
   if (codeContext?.type === 'codeContext') {
@@ -104,20 +104,20 @@ export async function selectContext(props: {
 
       if (codeContextFiles.includes(relativePath)) {
         contextFiles[relativePath] = files[path];
-        currrentFiles.push(relativePath);
+        currentFiles.push(relativePath);
       }
     });
     context = createFilesContext(contextFiles);
   }
 
-  const summaryText = `Here is the summary of the chat till now: ${summary}`;
+  const summaryText = `Here is the summary of the chat so far: ${summary}`;
 
   const extractTextContent = (message: Message) =>
     Array.isArray(message.content)
       ? (message.content.find((item) => item.type === 'text')?.text as string) || ''
       : message.content;
 
-  const lastUserMessage = processedMessages.filter((x) => x.role == 'user').pop();
+  const lastUserMessage = processedMessages.filter((x) => x.role === 'user').pop();
 
   if (!lastUserMessage) {
     throw new Error('No user message found');
@@ -170,7 +170,7 @@ export async function selectContext(props: {
         * context buffer is extremely expensive, so only include files that are absolutely necessary.
         * If no changes are needed, you can leave the response empty updateContextBuffer tag.
         * Only 5 files can be placed in the context buffer at a time.
-        * if the buffer is full, you need to exclude files that is not needed and include files that is relevent.
+        * If the buffer is full, you need to exclude files that are not needed and include files that are relevant.
 
         `,
     model: provider.getModelInstance({
@@ -215,7 +215,7 @@ export async function selectContext(props: {
       // throw new Error(`File ${path} is not in the list of files above.`);
     }
 
-    if (currrentFiles.includes(path)) {
+    if (currentFiles.includes(path)) {
       return;
     }
 
@@ -229,7 +229,7 @@ export async function selectContext(props: {
   const totalFiles = Object.keys(filteredFiles).length;
   logger.info(`Total files: ${totalFiles}`);
 
-  if (totalFiles == 0) {
+  if (totalFiles === 0) {
     throw new Error(`Bolt failed to select files`);
   }
 

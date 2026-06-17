@@ -93,7 +93,7 @@ export async function streamText(props: {
       currentModel = model;
       currentProvider = provider;
       newMessage.content = sanitizeText(content);
-    } else if (message.role == 'assistant') {
+    } else if (message.role === 'assistant') {
       newMessage.content = sanitizeText(message.content);
     }
 
@@ -179,7 +179,7 @@ export async function streamText(props: {
 
     if (summary) {
       systemPrompt = `${systemPrompt}
-      below is the chat history till now
+      Below is the chat history so far
       CHAT SUMMARY:
       ---
       ${props.summary}

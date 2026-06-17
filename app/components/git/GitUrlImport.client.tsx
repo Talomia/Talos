@@ -1,4 +1,4 @@
-import { useSearchParams } from '@remix-run/react';
+import { useSearchParams, useNavigate } from '@remix-run/react';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('GitUrlImport');
@@ -41,6 +41,7 @@ const IGNORE_PATTERNS = [
 
 export function GitUrlImport() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { ready: historyReady, importChat } = useChatHistory();
   const { ready: gitReady, gitClone } = useGit();
   const [imported, setImported] = useState(false);
@@ -109,7 +110,7 @@ ${escapeRecurrsiveTags(file.content)}
         logger.error('Error during import:', error);
         toast.error('Failed to import repository');
         setLoading(false);
-        window.location.href = '/';
+        navigate('/');
 
         return;
       }
@@ -124,7 +125,7 @@ ${escapeRecurrsiveTags(file.content)}
     const url = searchParams.get('url');
 
     if (!url) {
-      window.location.href = '/';
+      navigate('/');
       return;
     }
 
@@ -132,7 +133,7 @@ ${escapeRecurrsiveTags(file.content)}
       logger.error('Error importing repo:', error);
       toast.error('Failed to import repository');
       setLoading(false);
-      window.location.href = '/';
+      navigate('/');
     });
     setImported(true);
   }, [searchParams, historyReady, gitReady, imported]);

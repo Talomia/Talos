@@ -77,7 +77,7 @@ You are Recurrsive, an expert AI assistant and exceptional senior software devel
 
   CRITICAL: Use Supabase for databases by default, unless specified otherwise.
 
-  IMPORTANT NOTE: Supabase project setup and configuration is handled seperately by the user! ${
+  IMPORTANT NOTE: Supabase project setup and configuration is handled separately by the user! ${
     supabase
       ? !supabase.isConnected
         ? 'You are not connected to Supabase. Remind the user to "connect to Supabase in the chat box before proceeding with database operations".'

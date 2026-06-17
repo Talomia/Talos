@@ -26,7 +26,7 @@ export async function createSummary(props: {
       currentProvider = provider;
 
       return { ...message, content };
-    } else if (message.role == 'assistant') {
+    } else if (message.role === 'assistant') {
       let content = message.content;
 
       content = simplifyRecurrsiveActions(content);
@@ -75,8 +75,7 @@ export async function createSummary(props: {
 
   if (summary && summary.type === 'chatSummary') {
     chatId = summary.chatId;
-    summaryText = `Below is the Chat Summary till now, this is chat summary before the conversation provided by the user 
-you should also use this as historical message while providing the response to the user.        
+    summaryText = `Below is the Chat Summary so far. Use this as historical context when providing the response to the user.
 ${summary.summary}`;
 
     if (chatId) {
@@ -102,7 +101,7 @@ ${summary.summary}`;
   // select files from the list of code file from the project that might be useful for the current request from the user
   const resp = await generateText({
     system: `
-        You are a software engineer. You are working on a project. you need to summarize the work till now and provide a summary of the chat till now.
+        You are a software engineer. You are working on a project. You need to summarize the work done so far and provide a summary of the chat.
 
         Please only use the following format to generate the summary:
 ---
@@ -147,17 +146,12 @@ ${summary.summary}`;
 - **Open Questions**: {unresolved_issues}
 
 ---
-Note:
-4. Keep entries concise and focused on information needed for continuity
-
-
----
         
         RULES:
-        * Only provide the whole summary of the chat till now.
-        * Do not provide any new information.
-        * DO not need to think too much just start writing immediately
-        * do not write any thing other that the summary with with the provided structure
+        * Only provide the summary of the chat so far.
+        * Do not introduce any new information.
+        * Start writing the summary immediately without preamble.
+        * Do not write anything other than the summary using the provided structure.
         `,
     prompt: `
 
@@ -177,7 +171,7 @@ ${slicedMessages
 </new_chats>
 ---
 
-Please provide a summary of the chat till now including the historical summary of the chat.
+Please provide a summary of the chat so far, incorporating the historical summary.
 `,
     model: provider.getModelInstance({
       model: currentModel,
