@@ -6,7 +6,7 @@ import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
 import { ControlPanel } from '~/components/@settings/core/ControlPanel';
 import { SettingsButton, HelpButton } from '~/components/ui/SettingsButton';
 import { Button } from '~/components/ui/Button';
-import { db, deleteById, getAll, chatId, type ChatHistoryItem, useChatHistory } from '~/lib/persistence';
+import { getDb, deleteById, getAll, chatId, type ChatHistoryItem, useChatHistory } from '~/lib/persistence';
 import { cubicEasingFn } from '~/utils/easings';
 import { HistoryItem } from './HistoryItem';
 import { binDates } from './date-binning';
@@ -79,6 +79,23 @@ export const Menu = () => {
     searchFields: ['description'],
   });
 
+  const [db, setDb] = useState<IDBDatabase | undefined>(undefined);
+
+  // Initialize database on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    getDb().then((resolvedDb) => {
+      if (!cancelled) {
+        setDb(resolvedDb);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const loadEntries = useCallback(() => {
     if (db) {
       getAll(db)
@@ -86,7 +103,7 @@ export const Menu = () => {
         .then(setList)
         .catch((error) => toast.error(error.message));
     }
-  }, []);
+  }, [db]);
 
   const deleteChat = useCallback(
     async (id: string): Promise<void> => {

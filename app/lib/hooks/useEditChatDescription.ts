@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
   chatId as chatIdStore,
-  db,
+  getDb,
   description as descriptionStore,
   getMessages,
   updateChatDescription,
@@ -47,6 +47,22 @@ export function useEditChatDescription({
   const chatIdFromStore = useStore(chatIdStore);
   const [editing, setEditing] = useState(false);
   const [currentDescription, setCurrentDescription] = useState(initialDescription);
+  const [db, setDb] = useState<IDBDatabase | undefined>(undefined);
+
+  // Initialize database lazily on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    getDb().then((resolvedDb) => {
+      if (!cancelled) {
+        setDb(resolvedDb);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [chatId, setChatId] = useState<string>();
 

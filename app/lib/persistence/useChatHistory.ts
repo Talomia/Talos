@@ -37,7 +37,45 @@ export interface ChatHistoryItem {
 
 const persistenceEnabled = !import.meta.env.VITE_DISABLE_PERSISTENCE;
 
-export const db = persistenceEnabled ? await openDatabase() : undefined;
+/*
+ * Lazy-initialized database singleton.
+ * Avoids top-level await that can block module loading and cause startup race conditions.
+ */
+let _db: IDBDatabase | undefined;
+let _dbInitialized = false;
+
+async function initDb(): Promise<IDBDatabase | undefined> {
+  if (_dbInitialized) {
+    return _db;
+  }
+
+  _dbInitialized = true;
+
+  if (!persistenceEnabled) {
+    return undefined;
+  }
+
+  try {
+    _db = await openDatabase();
+  } catch (error) {
+    logger.error('Failed to open database:', error);
+  }
+
+  return _db;
+}
+
+/**
+ * Get the database instance. Returns undefined if persistence is disabled.
+ * Lazily initializes the database on first call and caches the result.
+ */
+export async function getDb(): Promise<IDBDatabase | undefined> {
+  return initDb();
+}
+
+// For backward compatibility: synchronous getter (returns undefined until initialized)
+export function getDbSync(): IDBDatabase | undefined {
+  return _db;
+}
 
 export const chatId = atom<string | undefined>(undefined);
 export const description = atom<string | undefined>(undefined);
@@ -51,8 +89,29 @@ export function useChatHistory() {
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
   const [ready, setReady] = useState<boolean>(false);
   const [urlId, setUrlId] = useState<string | undefined>();
+  const [db, setDb] = useState<IDBDatabase | undefined>(undefined);
+
+  // Initialize database on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    getDb().then((resolvedDb) => {
+      if (!cancelled) {
+        setDb(resolvedDb);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
+    // Wait for db initialization before proceeding
+    if (db === undefined && persistenceEnabled) {
+      return;
+    }
+
     if (!db) {
       setReady(true);
 
