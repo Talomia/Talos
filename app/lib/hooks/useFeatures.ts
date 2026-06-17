@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('Features');
 
 // TODO: Replace with real feature flags backend when available
 interface Feature {
@@ -10,7 +13,9 @@ interface Feature {
 }
 
 const getFeatureFlags = async (): Promise<Feature[]> => [];
-const markFeatureViewed = async (_featureId: string): Promise<void> => {};
+const markFeatureViewed = async (_featureId: string): Promise<void> => {
+  // TODO: Implement when feature flags backend is available
+};
 
 const VIEWED_FEATURES_KEY = 'bolt_viewed_features';
 
@@ -27,7 +32,7 @@ const setViewedFeatures = (featureIds: string[]) => {
   try {
     localStorage.setItem(VIEWED_FEATURES_KEY, JSON.stringify(featureIds));
   } catch (error) {
-    console.error('Failed to persist viewed features:', error);
+    logger.error('Failed to persist viewed features:', error);
   }
 };
 
@@ -44,7 +49,7 @@ export const useFeatures = () => {
         setUnviewedFeatures(unviewed);
         setHasNewFeatures(unviewed.length > 0);
       } catch (error) {
-        console.error('Failed to check for new features:', error);
+        logger.error('Failed to check for new features:', error);
       }
     };
 
@@ -61,7 +66,7 @@ export const useFeatures = () => {
       setUnviewedFeatures((prev) => prev.filter((feature) => feature.id !== featureId));
       setHasNewFeatures(unviewedFeatures.length > 1);
     } catch (error) {
-      console.error('Failed to acknowledge feature:', error);
+      logger.error('Failed to acknowledge feature:', error);
     }
   };
 
@@ -75,7 +80,7 @@ export const useFeatures = () => {
       setUnviewedFeatures([]);
       setHasNewFeatures(false);
     } catch (error) {
-      console.error('Failed to acknowledge all features:', error);
+      logger.error('Failed to acknowledge all features:', error);
     }
   };
 

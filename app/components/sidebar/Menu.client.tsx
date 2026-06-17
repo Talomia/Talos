@@ -1,6 +1,7 @@
 import { motion, type Variants } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
+import { createScopedLogger } from '~/utils/logger';
 import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
 import { ControlPanel } from '~/components/@settings/core/ControlPanel';
@@ -63,6 +64,8 @@ function CurrentDateTime() {
   );
 }
 
+const logger = createScopedLogger('Menu');
+
 export const Menu = () => {
   const { duplicateCurrentChat, exportChat } = useChatHistory();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -116,7 +119,7 @@ export const Menu = () => {
         const snapshotKey = `snapshot:${id}`;
         localStorage.removeItem(snapshotKey);
       } catch (snapshotError) {
-        console.error(`Error deleting snapshot for chat ${id}:`, snapshotError);
+        logger.error(`Error deleting snapshot for chat ${id}:`, snapshotError);
       }
 
       // Delete the chat from the database
@@ -147,7 +150,7 @@ export const Menu = () => {
           }
         })
         .catch((error) => {
-          console.error('Failed to delete chat:', error);
+          logger.error('Failed to delete chat:', error);
           toast.error('Failed to delete conversation', {
             position: 'bottom-right',
             autoClose: 3000,
@@ -181,7 +184,7 @@ export const Menu = () => {
             shouldNavigate = true;
           }
         } catch (error) {
-          console.error(`Error deleting chat ${id}:`, error);
+          logger.error(`Error deleting chat ${id}:`, error);
           errors.push(id);
         }
       }

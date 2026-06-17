@@ -248,7 +248,7 @@ ${value.content}
           setReady(true);
         })
         .catch((error) => {
-          console.error(error);
+          logger.error(error);
 
           logStore.logError('Failed to load chat messages or snapshot', error); // Updated error message
           toast.error('Failed to load chat: ' + error.message); // More specific error
@@ -277,7 +277,7 @@ ${value.content}
       try {
         await setSnapshot(db, id, snapshot);
       } catch (error) {
-        console.error('Failed to save snapshot:', error);
+        logger.error('Failed to save snapshot:', error);
         toast.error('Failed to save chat snapshot.');
       }
     },
@@ -332,7 +332,7 @@ ${value.content}
         chatMetadata.set(metadata);
       } catch (error) {
         toast.error('Failed to update chat metadata');
-        console.error(error);
+        logger.error(error);
       }
     },
     storeMessageHistory: async (messages: Message[]) => {
