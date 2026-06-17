@@ -186,7 +186,7 @@ export default function VercelTab() {
           logger.debug('No server-side Vercel token available, manual connection required');
         }
       } catch (error) {
-        console.error('Failed to initialize Vercel connection:', error);
+        logger.error('Failed to initialize Vercel connection:', error);
       }
     };
     initializeConnection();
@@ -258,7 +258,7 @@ export default function VercelTab() {
       await fetchVercelStats(token);
       toast.success('Successfully connected to Vercel');
     } catch (error) {
-      console.error('Auth error:', error);
+      logger.error('Auth error:', error);
       logStore.logError('Failed to authenticate with Vercel', { error });
 
       const errorMessage = error instanceof Error ? error.message : 'Failed to connect to Vercel';

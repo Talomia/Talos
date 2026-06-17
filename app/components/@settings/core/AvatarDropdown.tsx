@@ -3,7 +3,10 @@ import { motion } from 'framer-motion';
 import { useStore } from '@nanostores/react';
 import { classNames } from '~/utils/classNames';
 import { profileStore } from '~/lib/stores/profile';
+import { createScopedLogger } from '~/utils/logger';
 import type { TabType, Profile } from './types';
+
+const logger = createScopedLogger('AvatarDropdown');
 
 interface AvatarDropdownProps {
   onSelectTab: (tab: TabType) => void;
@@ -143,7 +146,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
                 const { downloadDebugLog } = await import('~/utils/debugLogger');
                 await downloadDebugLog();
               } catch (error) {
-                console.error('Failed to download debug log:', error);
+                logger.error('Failed to download debug log:', error);
               }
             }}
           >

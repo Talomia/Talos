@@ -80,7 +80,7 @@ const fetchConfiguredProviders = async (): Promise<ConfiguredProvider[]> => {
 
     return data.providers || [];
   } catch (error) {
-    console.error('Error fetching configured providers:', error);
+    logger.error('Error fetching configured providers:', error);
     return [];
   }
 };
@@ -113,7 +113,7 @@ const getInitialProviderSettings = (): ProviderSetting => {
           }
         });
       } catch (error) {
-        console.error('Error parsing saved provider settings:', error);
+        logger.error('Error parsing saved provider settings:', error);
       }
     }
   }
@@ -182,7 +182,7 @@ const autoEnableConfiguredProviders = async () => {
       logger.info(`Auto-enabled providers: ${newlyAutoEnabled.join(', ')}`);
     }
   } catch (error) {
-    console.error('Error auto-enabling configured providers:', error);
+    logger.error('Error auto-enabling configured providers:', error);
   }
 };
 
@@ -247,7 +247,7 @@ const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => 
       localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(updatedAutoEnabled));
     }
   } catch (error) {
-    console.error('Error updating auto-enabled tracking:', error);
+    logger.error('Error updating auto-enabled tracking:', error);
   }
 };
 
@@ -356,7 +356,7 @@ const getInitialTabConfiguration = (): TabWindowConfig => {
       userTabs: parsed.userTabs.filter((tab: TabVisibilityConfig): tab is UserTabConfig => tab.window === 'user'),
     };
   } catch (error) {
-    console.warn('Failed to parse tab configuration:', error);
+    logger.warn('Failed to parse tab configuration:', error);
     return defaultConfig;
   }
 };

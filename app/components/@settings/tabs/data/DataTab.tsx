@@ -161,7 +161,7 @@ export function DataTab() {
           setChatItems(extendedChats.map((chat) => createChatItem(chat)));
         })
         .catch((error) => {
-          console.error('Error loading chats:', error);
+          logger.error('Error loading chats:', error);
           toast.error('Failed to load chats: ' + (error instanceof Error ? error.message : 'Unknown error'));
         });
     }
@@ -324,7 +324,7 @@ export function DataTab() {
 
                         await handleExportAllChats();
                       } catch (error) {
-                        console.error('Error exporting chats:', error);
+                        logger.error('Error exporting chats:', error);
                         toast.error(
                           `Failed to export chats: ${error instanceof Error ? error.message : 'Unknown error'}`,
                         );

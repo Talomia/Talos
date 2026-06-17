@@ -4,6 +4,9 @@ import { toast } from 'react-toastify';
 import { classNames } from '~/utils/classNames';
 import { Button } from '~/components/ui/Button';
 import { useGitLabConnection } from '~/lib/hooks';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('GitLabConnection');
 
 interface ConnectionTestResult {
   status: 'success' | 'error' | 'testing';
@@ -33,7 +36,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
       await connect(token, gitlabUrl);
       setToken(''); // Clear token on successful connection
     } catch (error) {
-      console.error('GitLab connect failed:', error);
+      logger.error('GitLab connect failed:', error);
 
       // Error handling is done in the hook
     }

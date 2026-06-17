@@ -75,7 +75,7 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading saved connection:', error);
+      logger.error('Error loading saved connection:', error);
       setError('Failed to load saved connection');
       setIsLoading(false);
 
@@ -117,7 +117,7 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
       gitlabConnectionStore.setGitLabUrl(baseUrl);
       gitlabConnectionStore.setToken(connection.token);
     } catch (error) {
-      console.error('Error refreshing connection data:', error);
+      logger.error('Error refreshing connection data:', error);
     }
   }, []);
 
@@ -149,17 +149,17 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
         if (statsResult.success) {
           logger.trace('GitLab stats fetched successfully:', statsResult.stats);
         } else {
-          console.error('Failed to fetch GitLab stats:', statsResult.error);
+          logger.error('Failed to fetch GitLab stats:', statsResult.error);
         }
       } catch (statsError) {
-        console.error('Failed to fetch GitLab stats:', statsError);
+        logger.error('Failed to fetch GitLab stats:', statsError);
 
         // Don't fail the connection if stats fail
       }
 
       toast.success('Connected to GitLab successfully!');
     } catch (error) {
-      console.error('Failed to connect to GitLab:', error);
+      logger.error('Failed to connect to GitLab:', error);
 
       const errorMessage = error instanceof Error ? error.message : 'Failed to connect to GitLab';
 
@@ -198,7 +198,7 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
     try {
       await refreshConnectionData(connection);
     } catch (error) {
-      console.error('Error refreshing connection:', error);
+      logger.error('Error refreshing connection:', error);
       setError('Failed to refresh connection');
       throw error;
     } finally {
@@ -222,7 +222,7 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
 
       return response.ok;
     } catch (error) {
-      console.error('Connection test failed:', error);
+      logger.error('Connection test failed:', error);
       return false;
     }
   }, [connection]);
@@ -239,7 +239,7 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
         throw new Error(statsResult.error || 'Failed to refresh stats');
       }
     } catch (error) {
-      console.error('Error refreshing GitLab stats:', error);
+      logger.error('Error refreshing GitLab stats:', error);
       throw error;
     }
   }, [connection]);

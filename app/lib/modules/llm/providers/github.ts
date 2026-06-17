@@ -111,10 +111,10 @@ export default class GithubProvider extends BaseProvider {
           }));
         }
       } else {
-        console.warn('GitHub: API request failed with status:', response.status, response.statusText);
+        logger.warn('GitHub: API request failed with status:', response.status, response.statusText);
       }
     } catch (error) {
-      console.warn('GitHub: Failed to fetch models, using static models:', error);
+      logger.warn('GitHub: Failed to fetch models, using static models:', error);
     }
 
     // Fallback to static models
@@ -142,7 +142,7 @@ export default class GithubProvider extends BaseProvider {
     });
 
     if (!apiKey) {
-      console.error('GitHub: No API key found');
+      logger.error('GitHub: No API key found');
       throw new Error(`Missing API key for ${this.name} provider`);
     }
 

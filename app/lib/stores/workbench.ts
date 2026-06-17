@@ -366,7 +366,7 @@ export class WorkbenchStore {
 
       return success;
     } catch (error) {
-      console.error('Failed to create file:', error);
+      logger.error('Failed to create file:', error);
       throw error;
     }
   }
@@ -375,7 +375,7 @@ export class WorkbenchStore {
     try {
       return await this.#filesStore.createFolder(folderPath);
     } catch (error) {
-      console.error('Failed to create folder:', error);
+      logger.error('Failed to create folder:', error);
       throw error;
     }
   }
@@ -412,7 +412,7 @@ export class WorkbenchStore {
 
       return success;
     } catch (error) {
-      console.error('Failed to delete file:', error);
+      logger.error('Failed to delete file:', error);
       throw error;
     }
   }
@@ -455,7 +455,7 @@ export class WorkbenchStore {
 
       return success;
     } catch (error) {
-      console.error('Failed to delete folder:', error);
+      logger.error('Failed to delete folder:', error);
       throw error;
     }
   }
@@ -742,7 +742,7 @@ export class WorkbenchStore {
               logger.trace('Waiting for visibility change to propagate...');
               await new Promise((resolve) => setTimeout(resolve, 3000)); // 3 second delay
             } catch (visibilityError) {
-              console.error('Failed to update repository visibility:', visibilityError);
+              logger.error('Failed to update repository visibility:', visibilityError);
 
               // Continue with push even if visibility update fails
             }
@@ -770,7 +770,7 @@ export class WorkbenchStore {
             logger.trace('Waiting for repository to initialize...');
             await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
           } else {
-            console.error('Cannot create repo:', error);
+            logger.error('Cannot create repo:', error);
             throw error; // Some other error occurred
           }
         }
@@ -858,7 +858,7 @@ export class WorkbenchStore {
 
             return repo.html_url;
           } catch (error) {
-            console.error(`Error during push attempt ${attempt}:`, error);
+            logger.error(`Error during push attempt ${attempt}:`, error);
 
             // If we've just changed visibility and this is not our last attempt, wait and retry
             if ((visibilityJustChanged || attempt === 1) && attempt < maxAttempts) {
@@ -938,7 +938,7 @@ export class WorkbenchStore {
       // Should not reach here since we only handle GitHub and GitLab
       throw new Error(`Unsupported provider: ${provider}`);
     } catch (error) {
-      console.error('Error pushing to repository:', error);
+      logger.error('Error pushing to repository:', error);
       throw error; // Rethrow the error for further handling
     }
   }

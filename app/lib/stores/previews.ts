@@ -96,7 +96,7 @@ export class PreviewsStore {
     try {
       return new globalBroadcastChannel(name);
     } catch (error) {
-      console.warn('[Preview] BroadcastChannel unavailable:', error);
+      logger.warn('[Preview] BroadcastChannel unavailable:', error);
       return undefined;
     }
   }
@@ -122,7 +122,7 @@ export class PreviewsStore {
           const originalSetItem = Object.getPrototypeOf(localStorage).setItem;
           originalSetItem.call(localStorage, key, value);
         } catch (error) {
-          console.error('[Preview] Error syncing storage:', error);
+          logger.error('[Preview] Error syncing storage:', error);
         }
       });
 

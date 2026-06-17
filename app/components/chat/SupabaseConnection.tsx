@@ -1,10 +1,13 @@
 import { useEffect } from 'react';
+import { createScopedLogger } from '~/utils/logger';
 import { useSupabaseConnection } from '~/lib/hooks/useSupabaseConnection';
 import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import { fetchSupabaseStats } from '~/lib/stores/supabase';
 import { Dialog, DialogRoot, DialogClose, DialogTitle, DialogButton } from '~/components/ui/Dialog';
+
+const logger = createScopedLogger('SupabaseConnection');
 
 export function SupabaseConnection() {
   const {
@@ -65,13 +68,13 @@ export function SupabaseConnection() {
 
   useEffect(() => {
     if (isConnected && supabaseConn.token) {
-      fetchSupabaseStats(supabaseConn.token).catch(console.error);
+      fetchSupabaseStats(supabaseConn.token).catch((e) => logger.error(e));
     }
   }, [isConnected, supabaseConn.token]);
 
   useEffect(() => {
     if (isConnected && supabaseConn.selectedProjectId && supabaseConn.token && !supabaseConn.credentials) {
-      fetchProjectApiKeys(supabaseConn.selectedProjectId).catch(console.error);
+      fetchProjectApiKeys(supabaseConn.selectedProjectId).catch((e) => logger.error(e));
     }
   }, [isConnected, supabaseConn.selectedProjectId, supabaseConn.token, supabaseConn.credentials]);
 

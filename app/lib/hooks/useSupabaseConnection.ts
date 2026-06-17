@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useStore } from '@nanostores/react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('UseSupabaseConnection');
 import { logStore } from '~/lib/stores/logs';
 import {
   supabaseConnection,
@@ -46,7 +49,7 @@ export function useSupabaseConnection() {
         }
 
         if (parsed.token && parsed.selectedProjectId && !parsed.credentials) {
-          fetchProjectApiKeys(parsed.selectedProjectId, parsed.token).catch(console.error);
+          fetchProjectApiKeys(parsed.selectedProjectId, parsed.token).catch((e) => logger.error(e));
         }
       }
     };
@@ -88,7 +91,7 @@ export function useSupabaseConnection() {
 
       return true;
     } catch (error) {
-      console.error('Connection error:', error);
+      logger.error('Connection error:', error);
       logStore.logError('Failed to authenticate with Supabase', { error });
       toast.error(error instanceof Error ? error.message : 'Failed to connect to Supabase');
       updateSupabaseConnection({ user: null, token: '' });
@@ -123,7 +126,7 @@ export function useSupabaseConnection() {
         await fetchProjectApiKeys(projectId, currentState.token);
         toast.success('Project selected successfully');
       } catch (error) {
-        console.error('Failed to fetch API keys:', error);
+        logger.error('Failed to fetch API keys:', error);
         toast.error('Selected project but failed to fetch API keys');
       }
     } else {

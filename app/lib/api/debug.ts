@@ -1,3 +1,7 @@
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('DebugAPI');
+
 export interface DebugWarning {
   id: string;
   message: string;
@@ -94,7 +98,7 @@ export const getDebugStatus = async (): Promise<DebugStatus> => {
 
     return issues;
   } catch (error) {
-    console.error('Error getting debug status:', error);
+    logger.error('Error getting debug status:', error);
     return issues;
   }
 };
@@ -116,6 +120,6 @@ export const acknowledgeError = async (id: string): Promise<void> => {
       localStorage.setItem('error_logs', JSON.stringify(updatedErrors));
     }
   } catch (error) {
-    console.error('Error acknowledging error:', error);
+    logger.error('Error acknowledging error:', error);
   }
 };

@@ -1,4 +1,7 @@
 import { useStore } from '@nanostores/react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('UseEditChatDescription');
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import {
@@ -88,7 +91,7 @@ export function useEditChatDescription({
       const chat = await getMessages(db, chatId);
       return chat?.description || initialDescription;
     } catch (error) {
-      console.error('Failed to fetch latest description:', error);
+      logger.error('Failed to fetch latest description:', error);
       return initialDescription;
     }
   }, [db, chatId, initialDescription]);

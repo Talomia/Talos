@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { createScopedLogger } from '~/utils/logger';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useStore } from '@nanostores/react';
@@ -12,6 +13,8 @@ import {
   fetchVercelStats,
   autoConnectVercel,
 } from '~/lib/stores/vercel';
+
+const logger = createScopedLogger('VercelConnection');
 
 export default function VercelConnection() {
   const connection = useStore(vercelConnection);
@@ -36,7 +39,7 @@ export default function VercelConnection() {
         if (result.success) {
           toast.success('Connected to Vercel automatically');
         } else {
-          console.error('Vercel auto-connection failed:', result.error);
+          logger.error('Vercel auto-connection failed:', result.error);
         }
       } else if (connection.user && connection.token) {
         // Fetch stats for existing connection
@@ -72,7 +75,7 @@ export default function VercelConnection() {
       await fetchVercelStats(connection.token);
       toast.success('Successfully connected to Vercel');
     } catch (error) {
-      console.error('Auth error:', error);
+      logger.error('Auth error:', error);
       logStore.logError('Failed to authenticate with Vercel', { error });
       toast.error('Failed to connect to Vercel');
       updateVercelConnection({ user: null, token: '' });

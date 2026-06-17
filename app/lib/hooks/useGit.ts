@@ -118,7 +118,7 @@ export function useGit() {
             }
           },
           onAuthFailure: (baseUrl, _auth) => {
-            console.error(`Authentication failed for ${baseUrl}`);
+            logger.error(`Authentication failed for ${baseUrl}`);
             toast.error(
               `Authentication failed for ${baseUrl.split('/')[2]}. Please check your credentials and try again.`,
             );
@@ -140,7 +140,7 @@ export function useGit() {
 
         return { workdir: webcontainer.workdir, data };
       } catch (error) {
-        console.error('Git clone error:', error);
+        logger.error('Git clone error:', error);
 
         // Handle specific error types
         const errorMessage = error instanceof Error ? error.message : String(error);

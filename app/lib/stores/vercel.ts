@@ -34,7 +34,7 @@ if (storedConnection) {
       initialConnection = parsed;
     }
   } catch (error) {
-    console.error('Error parsing saved Vercel connection:', error);
+    logger.error('Error parsing saved Vercel connection:', error);
     initialConnection = {
       user: null,
       token: envToken || '',
@@ -69,7 +69,7 @@ export async function autoConnectVercel() {
   logger.trace('autoConnectVercel called, envToken exists:', !!envToken);
 
   if (!envToken) {
-    console.error('No Vercel token found in environment');
+    logger.error('No Vercel token found in environment');
     return { success: false, error: 'No Vercel token found in environment' };
   }
 
@@ -109,7 +109,7 @@ export async function autoConnectVercel() {
 
     return { success: true };
   } catch (error) {
-    console.error('Failed to auto-connect to Vercel:', error);
+    logger.error('Failed to auto-connect to Vercel:', error);
     logStore.logError(`Vercel auto-connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`, {
       type: 'system',
       message: 'Vercel auto-connection failed',
@@ -130,7 +130,7 @@ export function initializeVercelConnection() {
 
   if (envToken && !vercelConnection.get().token) {
     updateVercelConnection({ token: envToken });
-    fetchVercelStats(envToken).catch(console.error);
+    fetchVercelStats(envToken).catch((e) => logger.error('Failed to fetch Vercel stats:', e));
   }
 }
 
@@ -178,7 +178,7 @@ export async function fetchVercelStats(token: string) {
 
           return project;
         } catch (error) {
-          console.error(`Error fetching deployments for project ${project.id}:`, error);
+          logger.error(`Error fetching deployments for project ${project.id}:`, error);
           return project;
         }
       }),
@@ -193,7 +193,7 @@ export async function fetchVercelStats(token: string) {
       },
     });
   } catch (error) {
-    console.error('Vercel API Error:', error);
+    logger.error('Vercel API Error:', error);
     logStore.logError('Failed to fetch Vercel stats', { error });
     toast.error('Failed to fetch Vercel statistics');
   } finally {

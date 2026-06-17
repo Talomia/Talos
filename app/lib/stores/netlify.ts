@@ -66,7 +66,7 @@ export async function initializeNetlifyConnection() {
     // Fetch initial stats
     await fetchNetlifyStats(envToken);
   } catch (error) {
-    console.error('Error initializing Netlify connection:', error);
+    logger.error('Error initializing Netlify connection:', error);
     logStore.logError('Failed to initialize Netlify connection', { error });
   } finally {
     isConnecting.set(false);
@@ -110,7 +110,7 @@ export async function fetchNetlifyStats(token: string) {
       },
     });
   } catch (error) {
-    console.error('Netlify API Error:', error);
+    logger.error('Netlify API Error:', error);
     logStore.logError('Failed to fetch Netlify stats', { error });
     toast.error('Failed to fetch Netlify statistics');
   } finally {

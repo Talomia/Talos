@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createScopedLogger } from '~/utils/logger';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { classNames } from '~/utils/classNames';
@@ -19,6 +20,8 @@ const getModifierSymbol = (modifier: string): string => {
       return modifier;
   }
 };
+
+const logger = createScopedLogger('SettingsTab');
 
 export default function SettingsTab() {
   const [currentTimezone, setCurrentTimezone] = useState('');
@@ -54,7 +57,7 @@ export default function SettingsTab() {
       localStorage.setItem('bolt_user_profile', JSON.stringify(updatedProfile));
       toast.success('Settings updated');
     } catch (error) {
-      console.error('Error saving settings:', error);
+      logger.error('Error saving settings:', error);
       toast.error('Failed to update settings');
     }
   }, [settings]);

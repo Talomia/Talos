@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { createScopedLogger } from '~/utils/logger';
 import { motion } from 'framer-motion';
 import { useGitLabConnection } from '~/lib/hooks';
 import GitLabConnection from './components/GitLabConnection';
 import { StatsDisplay } from './components/StatsDisplay';
 import { RepositoryList } from './components/RepositoryList';
+
+const logger = createScopedLogger('GitLabTab');
 
 // GitLab logo SVG component
 const GitLabLogo = () => (
@@ -265,7 +268,7 @@ export default function GitLabTab() {
               try {
                 await refreshStats();
               } catch (error) {
-                console.error('Failed to refresh stats:', error);
+                logger.error('Failed to refresh stats:', error);
               } finally {
                 setIsRefreshingStats(false);
               }
@@ -291,7 +294,7 @@ export default function GitLabTab() {
               try {
                 await refreshStats();
               } catch (error) {
-                console.error('Failed to refresh repositories:', error);
+                logger.error('Failed to refresh repositories:', error);
               } finally {
                 setIsRefreshingStats(false);
               }

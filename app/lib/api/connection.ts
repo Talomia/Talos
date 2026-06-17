@@ -1,3 +1,7 @@
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('ConnectionAPI');
+
 export interface ConnectionStatus {
   connected: boolean;
   latency: number;
@@ -53,7 +57,7 @@ export const checkConnection = async (): Promise<ConnectionStatus> => {
       lastChecked: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('Connection check failed:', error);
+    logger.error('Connection check failed:', error);
     return {
       connected: false,
       latency: 0,

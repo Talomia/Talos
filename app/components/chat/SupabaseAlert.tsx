@@ -40,7 +40,7 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
 
   const executeSupabaseAction = async (sql: string) => {
     if (!connection.token || !connection.selectedProjectId) {
-      console.error('No Supabase token or project selected');
+      logger.error('No Supabase token or project selected');
       return;
     }
 
@@ -68,7 +68,7 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
       logger.debug('Supabase query executed successfully:', result);
       clearAlert();
     } catch (error) {
-      console.error('Failed to execute Supabase action:', error);
+      logger.error('Failed to execute Supabase action:', error);
       postMessage(
         `*Error executing Supabase query please fix and return the query again*\n\`\`\`\n${error instanceof Error ? error.message : String(error)}\n\`\`\`\n`,
       );

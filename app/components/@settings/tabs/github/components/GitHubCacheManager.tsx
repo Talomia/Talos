@@ -56,7 +56,7 @@ class CacheManagerService {
           });
         }
       } catch (error) {
-        console.warn(`Failed to parse cache entry: ${key}`, error);
+        logger.warn(`Failed to parse cache entry: ${key}`, error);
       }
     }
 
@@ -121,7 +121,7 @@ class CacheManagerService {
         };
         localStorage.setItem(entry.key, JSON.stringify(compacted));
       } catch (error) {
-        console.warn(`Failed to compact cache entry: ${entry.key}`, error);
+        logger.warn(`Failed to compact cache entry: ${entry.key}`, error);
       }
     }
   }
@@ -167,7 +167,7 @@ export function GitHubCacheManager({ className = '', showStats = true }: GitHubC
         window.location.reload();
       }, 1000);
     } catch (error) {
-      console.error('Failed to clear cache:', error);
+      logger.error('Failed to clear cache:', error);
     } finally {
       setIsLoading(false);
     }
@@ -185,7 +185,7 @@ export function GitHubCacheManager({ className = '', showStats = true }: GitHubC
         logger.debug(`Removed ${removedCount} expired cache entries`);
       }
     } catch (error) {
-      console.error('Failed to clear expired cache:', error);
+      logger.error('Failed to clear expired cache:', error);
     } finally {
       setIsLoading(false);
     }
@@ -198,7 +198,7 @@ export function GitHubCacheManager({ className = '', showStats = true }: GitHubC
       CacheManagerService.compactCache();
       refreshCacheData();
     } catch (error) {
-      console.error('Failed to compact cache:', error);
+      logger.error('Failed to compact cache:', error);
     } finally {
       setIsLoading(false);
     }
@@ -212,7 +212,7 @@ export function GitHubCacheManager({ className = '', showStats = true }: GitHubC
         CacheManagerService.clearCache([key]);
         refreshCacheData();
       } catch (error) {
-        console.error(`Failed to clear cache key: ${key}`, error);
+        logger.error(`Failed to clear cache key: ${key}`, error);
       } finally {
         setIsLoading(false);
       }

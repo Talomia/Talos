@@ -15,7 +15,9 @@ import { Slider, type SliderOptions } from '~/components/ui/Slider';
 import { workbenchStore, type WorkbenchViewType } from '~/lib/stores/workbench';
 import { classNames } from '~/utils/classNames';
 import { cubicEasingFn } from '~/utils/easings';
-import { renderLogger } from '~/utils/logger';
+import { renderLogger, createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('Workbench');
 import { EditorPanel } from './EditorPanel';
 import { Preview } from './Preview';
 import useViewport from '~/lib/hooks';
@@ -157,7 +159,7 @@ export const Workbench = memo(
         await workbenchStore.syncFiles(directoryHandle);
         toast.success('Files synced successfully');
       } catch (error) {
-        console.error('Error syncing files:', error);
+        logger.error('Error syncing files:', error);
         toast.error('Failed to sync files');
       } finally {
         setIsSyncing(false);

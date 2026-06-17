@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { useStore } from '@nanostores/react';
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('UseGitHubConnection');
 import type { GitHubUserResponse, GitHubConnection } from '~/types/GitHub';
 import { useGitHubAPI } from './useGitHubAPI';
 import { githubConnection, isConnecting, updateGitHubConnection } from '~/lib/stores/github';
@@ -56,7 +59,7 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading saved connection:', error);
+      logger.error('Error loading saved connection:', error);
       setError('Failed to load saved connection');
       setIsLoading(false);
 
@@ -93,7 +96,7 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
 
       updateGitHubConnection(updatedConnection);
     } catch (error) {
-      console.error('Error refreshing connection data:', error);
+      logger.error('Error refreshing connection data:', error);
     }
   }, []);
 
@@ -146,7 +149,7 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
 
       toast.success(`Connected to GitHub as ${userData.login}`);
     } catch (error) {
-      console.error('Failed to connect to GitHub:', error);
+      logger.error('Failed to connect to GitHub:', error);
 
       const errorMessage = error instanceof Error ? error.message : 'Failed to connect to GitHub';
 
@@ -189,7 +192,7 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
     try {
       await refreshConnectionData(connection);
     } catch (error) {
-      console.error('Error refreshing connection:', error);
+      logger.error('Error refreshing connection:', error);
       setError('Failed to refresh connection');
       throw error;
     } finally {
@@ -222,7 +225,7 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
 
       return response.ok;
     } catch (error) {
-      console.error('Connection test failed:', error);
+      logger.error('Connection test failed:', error);
       return false;
     }
   }, [connection]);

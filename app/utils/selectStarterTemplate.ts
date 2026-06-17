@@ -80,7 +80,7 @@ const parseSelectedTemplate = (llmOutput: string): { template: string; title: st
 
     return { template: templateNameMatch[1].trim(), title: titleMatch?.[1].trim() || 'Untitled Project' };
   } catch (error) {
-    console.error('Error parsing template selection:', error);
+    logger.error('Error parsing template selection:', error);
     return null;
   }
 };
@@ -129,7 +129,7 @@ const getGitHubRepoContent = async (repoName: string): Promise<{ name: string; p
 
     return files;
   } catch (error) {
-    console.error('Error fetching release contents:', error);
+    logger.error('Error fetching release contents:', error);
     throw error;
   }
 };

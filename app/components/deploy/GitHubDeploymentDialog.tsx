@@ -345,11 +345,11 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           baseSha = commitData.tree.sha;
           logger.trace(`Using base tree SHA: ${baseSha}`);
         } catch (refError) {
-          console.error('Error getting reference:', refError);
+          logger.error('Error getting reference:', refError);
           baseSha = null;
         }
       } catch (repoError) {
-        console.error('Error getting repository info:', repoError);
+        logger.error('Error getting repository info:', repoError);
         defaultBranch = 'main';
         baseSha = null;
       }
@@ -431,7 +431,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
             });
             logger.debug('Reference created successfully');
           } catch (createRefError) {
-            console.error('Error creating reference:', createRefError);
+            logger.error('Error creating reference:', createRefError);
 
             const errorMsg =
               typeof createRefError === 'object' && createRefError !== null && 'message' in createRefError
@@ -441,7 +441,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           }
         }
       } catch (gitError) {
-        console.error('Error with git operations:', gitError);
+        logger.error('Error with git operations:', gitError);
 
         const gitErrorMsg =
           typeof gitError === 'object' && gitError !== null && 'message' in gitError
@@ -464,7 +464,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       // Show success dialog
       setShowSuccessDialog(true);
     } catch (error) {
-      console.error('Error pushing to GitHub:', error);
+      logger.error('Error pushing to GitHub:', error);
 
       // Attempt to extract more specific error information
       let errorMessage = 'Failed to push to GitHub';

@@ -1,4 +1,7 @@
 import type { AppLoadContext } from '@remix-run/cloudflare';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('EntryServer');
 import { RemixServer } from '@remix-run/react';
 import { isbot } from 'isbot';
 import { renderToReadableStream } from 'react-dom/server';
@@ -18,7 +21,7 @@ export default async function handleRequest(
   const readable = await renderToReadableStream(<RemixServer context={remixContext} url={request.url} />, {
     signal: request.signal,
     onError(error: unknown) {
-      console.error(error);
+      logger.error(error);
       responseStatusCode = 500;
     },
   });

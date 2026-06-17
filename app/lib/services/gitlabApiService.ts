@@ -202,10 +202,10 @@ export class GitLabApiService {
 
         try {
           const errorData = await response.json();
-          console.error('GitLab projects API error:', errorData);
+          logger.error('GitLab projects API error:', errorData);
           errorMessage = `Failed to fetch projects: ${JSON.stringify(errorData)}`;
         } catch (parseError) {
-          console.error('Could not parse GitLab error response:', parseError);
+          logger.error('Could not parse GitLab error response:', parseError);
         }
         throw new Error(errorMessage);
       }
@@ -321,7 +321,7 @@ export class GitLabApiService {
           }
         }
       } catch (parseError) {
-        console.error('Could not parse error response:', parseError);
+        logger.error('Could not parse error response:', parseError);
       }
 
       throw new Error(errorMessage);
@@ -403,7 +403,7 @@ export class GitLabApiService {
       }
 
       const errorText = await response.text();
-      console.error(`Failed to fetch project ${projectPath}:`, response.status, errorText);
+      logger.error(`Failed to fetch project ${projectPath}:`, response.status, errorText);
       throw new Error(`Failed to fetch project: ${response.status} ${response.statusText}`);
     } catch (error) {
       if (error instanceof Error && (error.message.includes('404') || error.message.includes('Not Found'))) {
@@ -453,7 +453,7 @@ export class GitLabApiService {
       try {
         await this.commitFiles(project.id, commitRequest);
       } catch (error) {
-        console.error('Failed to commit files to new project:', error);
+        logger.error('Failed to commit files to new project:', error);
 
         /*
          * Don't throw the error, as the project was created successfully

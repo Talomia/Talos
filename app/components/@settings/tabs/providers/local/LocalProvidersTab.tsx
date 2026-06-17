@@ -131,7 +131,7 @@ export default function LocalProvidersTab() {
         })),
       );
     } catch {
-      console.error('Error fetching Ollama models');
+      logger.error('Error fetching Ollama models');
     } finally {
       setIsLoadingModels(false);
     }
@@ -150,7 +150,7 @@ export default function LocalProvidersTab() {
       const data = (await response.json()) as { data: LMStudioModel[] };
       setLMStudioModels(data.data || []);
     } catch {
-      console.error('Error fetching LM Studio models');
+      logger.error('Error fetching LM Studio models');
       setLMStudioModels([]);
     } finally {
       setIsLoadingLMStudioModels(false);

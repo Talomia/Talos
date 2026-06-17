@@ -1,4 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('Security');
 
 /*
  * ⚠️ LIMITATION: In-memory rate limiting resets on every Cloudflare Worker cold start.
@@ -248,7 +251,7 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
         headers: responseHeaders,
       });
     } catch (error) {
-      console.error('Security-wrapped handler error:', error);
+      logger.error('Security-wrapped handler error:', error);
 
       const errorMessage = sanitizeErrorMessage(error, process.env.NODE_ENV === 'development');
 

@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('HeaderActionButtons');
 import { useStore } from '@nanostores/react';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { DeployButton } from '~/components/deploy/DeployButton';
@@ -37,7 +40,7 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
                 const { downloadDebugLog } = await import('~/utils/debugLogger');
                 await downloadDebugLog();
               } catch (error) {
-                console.error('Failed to download debug log:', error);
+                logger.error('Failed to download debug log:', error);
               }
             }}
             className="rounded-r-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-bolt-elements-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-bolt-elements-button-primary-backgroundHover outline-accent-500 flex gap-1.5"

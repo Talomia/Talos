@@ -199,7 +199,7 @@ export function useVercelDeploy() {
       const data = (await response.json()) as any;
 
       if (!response.ok || !data.deploy || !data.project) {
-        console.error('Invalid deploy response:', data);
+        logger.error('Invalid deploy response:', data);
 
         // Notify that deployment failed
         deployArtifact.runner.handleDeployAction('deploying', 'failed', {
@@ -224,7 +224,7 @@ export function useVercelDeploy() {
 
       return true;
     } catch (err) {
-      console.error('Vercel deploy error:', err);
+      logger.error('Vercel deploy error:', err);
       toast.error(err instanceof Error ? err.message : 'Vercel deployment failed');
 
       return false;

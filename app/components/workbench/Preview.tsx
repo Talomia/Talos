@@ -1,4 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('Preview');
 import { useStore } from '@nanostores/react';
 import { IconButton } from '~/components/ui/IconButton';
 import { workbenchStore } from '~/lib/stores/workbench';
@@ -581,7 +584,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                         className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary`}
                         onClick={() => {
                           if (!activePreview?.baseUrl) {
-                            console.warn('[Preview] No active preview available');
+                            logger.warn('No active preview available');
                             return;
                           }
 
@@ -590,7 +593,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                           );
 
                           if (!match) {
-                            console.warn('[Preview] Invalid WebContainer URL:', activePreview.baseUrl);
+                            logger.warn('Invalid WebContainer URL:', activePreview.baseUrl);
                             return;
                           }
 

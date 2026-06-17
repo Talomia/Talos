@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createScopedLogger } from '~/utils/logger';
 import { motion } from 'framer-motion';
 import { Switch } from '~/components/ui/Switch';
 import { logStore, type LogEntry } from '~/lib/stores/logs';
@@ -8,6 +9,8 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { Dialog, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
 import { jsPDF } from 'jspdf';
 import { toast } from 'react-toastify';
+
+const logger = createScopedLogger('EventLogsTab');
 
 interface SelectOption {
   value: string;
@@ -435,7 +438,7 @@ export function EventLogsTab() {
       document.body.removeChild(a);
       toast.success('Event logs exported successfully as JSON');
     } catch (error) {
-      console.error('Failed to export JSON:', error);
+      logger.error('Failed to export JSON:', error);
       toast.error('Failed to export event logs as JSON');
     }
   };
@@ -469,7 +472,7 @@ export function EventLogsTab() {
       document.body.removeChild(a);
       toast.success('Event logs exported successfully as CSV');
     } catch (error) {
-      console.error('Failed to export CSV:', error);
+      logger.error('Failed to export CSV:', error);
       toast.error('Failed to export event logs as CSV');
     }
   };
@@ -719,7 +722,7 @@ export function EventLogsTab() {
       doc.save(`bolt-event-logs-${new Date().toISOString()}.pdf`);
       toast.success('Event logs exported successfully as PDF');
     } catch (error) {
-      console.error('Failed to export PDF:', error);
+      logger.error('Failed to export PDF:', error);
       toast.error('Failed to export event logs as PDF');
     }
   };
@@ -754,7 +757,7 @@ export function EventLogsTab() {
       document.body.removeChild(a);
       toast.success('Event logs exported successfully as text file');
     } catch (error) {
-      console.error('Failed to export text file:', error);
+      logger.error('Failed to export text file:', error);
       toast.error('Failed to export event logs as text file');
     }
   };

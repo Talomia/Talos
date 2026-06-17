@@ -1,4 +1,7 @@
 import { useSearchParams } from '@remix-run/react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('GitUrlImport');
 import { generateId, type Message } from 'ai';
 import ignore from 'ignore';
 import { useEffect, useState } from 'react';
@@ -103,7 +106,7 @@ ${escapeRecurrsiveTags(file.content)}
           await importChat(`Git Project:${repoUrl.split('/').slice(-1)[0]}`, messages, { gitUrl: repoUrl });
         }
       } catch (error) {
-        console.error('Error during import:', error);
+        logger.error('Error during import:', error);
         toast.error('Failed to import repository');
         setLoading(false);
         window.location.href = '/';
@@ -126,7 +129,7 @@ ${escapeRecurrsiveTags(file.content)}
     }
 
     importRepo(url).catch((error) => {
-      console.error('Error importing repo:', error);
+      logger.error('Error importing repo:', error);
       toast.error('Failed to import repository');
       setLoading(false);
       window.location.href = '/';

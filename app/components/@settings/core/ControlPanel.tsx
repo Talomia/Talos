@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createScopedLogger } from '~/utils/logger';
 import { useStore } from '@nanostores/react';
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { classNames } from '~/utils/classNames';
@@ -36,6 +37,8 @@ interface ControlPanelProps {
 }
 
 // Beta status for experimental features
+const logger = createScopedLogger('ControlPanel');
+
 const BETA_TABS = new Set<TabType>(['local-providers', 'mcp']);
 
 const BetaLabel = () => (
@@ -67,7 +70,7 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
   // Add visibleTabs logic using useMemo with optimized calculations
   const visibleTabs = useMemo(() => {
     if (!tabConfiguration?.userTabs || !Array.isArray(tabConfiguration.userTabs)) {
-      console.warn('Invalid tab configuration, resetting to defaults');
+      logger.warn('Invalid tab configuration, resetting to defaults');
       resetTabConfiguration();
 
       return [];
