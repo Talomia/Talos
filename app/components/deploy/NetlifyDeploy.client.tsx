@@ -8,6 +8,9 @@ import { useState } from 'react';
 import type { ActionCallbackData } from '~/lib/runtime/message-parser';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import { formatBuildFailureOutput } from './deployUtils';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('NetlifyDeploy');
 
 export function useNetlifyDeploy() {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -86,7 +89,7 @@ export function useNetlifyDeploy() {
       // Remove /home/project from buildPath if it exists
       const buildPath = buildOutput.path.replace('/home/project', '');
 
-      console.log('Original buildPath', buildPath);
+      logger.debug('Original buildPath', buildPath);
 
       // Check if the build path exists
       let finalBuildPath = buildPath;
@@ -102,11 +105,11 @@ export function useNetlifyDeploy() {
           await container.fs.readdir(dir);
           finalBuildPath = dir;
           buildPathExists = true;
-          console.log(`Using build directory: ${finalBuildPath}`);
+          logger.debug(`Using build directory: ${finalBuildPath}`);
           break;
         } catch (error) {
           // Directory doesn't exist, try the next one
-          console.log(`Directory ${dir} doesn't exist, trying next option. ${error}`);
+          logger.trace(`Directory ${dir} doesn't exist, trying next option. ${error}`);
           continue;
         }
       }

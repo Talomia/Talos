@@ -13,6 +13,9 @@ import ErrorBoundary from './ErrorBoundary';
 import { ModelCardSkeleton } from './LoadingSkeleton';
 import SetupGuide from './SetupGuide';
 import StatusDashboard from './StatusDashboard';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('LocalProvidersTab');
 import ProviderCard from './ProviderCard';
 import ModelCard from './ModelCard';
 import { OLLAMA_API_URL } from './types';
@@ -83,10 +86,10 @@ export default function LocalProvidersTab() {
       const baseUrl = provider.settings.baseUrl;
 
       if (provider.settings.enabled && baseUrl) {
-        console.log(`[LocalProvidersTab] Starting monitoring for ${provider.name} at ${baseUrl}`);
+        logger.debug(`Starting monitoring for ${provider.name} at ${baseUrl}`);
         startMonitoring(provider.name as 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl);
       } else if (!provider.settings.enabled && baseUrl) {
-        console.log(`[LocalProvidersTab] Stopping monitoring for ${provider.name} at ${baseUrl}`);
+        logger.debug(`Stopping monitoring for ${provider.name} at ${baseUrl}`);
         stopMonitoring(provider.name as 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl);
       }
     });

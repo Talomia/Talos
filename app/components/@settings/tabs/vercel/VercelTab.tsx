@@ -10,6 +10,7 @@ import { ServiceHeader, ConnectionTestIndicator } from '~/components/@settings/s
 import { useConnectionTest } from '~/lib/hooks';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/components/ui/Collapsible';
 import Cookies from 'js-cookie';
+import { createScopedLogger } from '~/utils/logger';
 import {
   vercelConnection,
   isConnecting,
@@ -19,6 +20,8 @@ import {
   fetchVercelStatsViaAPI,
   initializeVercelConnection,
 } from '~/lib/stores/vercel';
+
+const logger = createScopedLogger('VercelTab');
 
 interface ProjectAction {
   name: string;
@@ -180,7 +183,7 @@ export default function VercelTab() {
         const currentState = vercelConnection.get();
 
         if (!currentState.user) {
-          console.log('No server-side Vercel token available, manual connection required');
+          logger.debug('No server-side Vercel token available, manual connection required');
         }
       } catch (error) {
         console.error('Failed to initialize Vercel connection:', error);
@@ -710,8 +713,6 @@ export default function VercelTab() {
     handleProjectAction,
     projectActions,
   ]);
-
-  console.log('connection', connection);
 
   return (
     <div className="space-y-6">

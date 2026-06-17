@@ -2,6 +2,9 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Button } from '~/components/ui/Button';
 import { classNames } from '~/utils/classNames';
 import { Database, Trash2, RefreshCw, Clock, HardDrive, CheckCircle } from 'lucide-react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('GitHubCacheManager');
 
 interface CacheEntry {
   key: string;
@@ -179,7 +182,7 @@ export function GitHubCacheManager({ className = '', showStats = true }: GitHubC
 
       if (removedCount > 0) {
         // Show success message or trigger update
-        console.log(`Removed ${removedCount} expired cache entries`);
+        logger.debug(`Removed ${removedCount} expired cache entries`);
       }
     } catch (error) {
       console.error('Failed to clear expired cache:', error);

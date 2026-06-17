@@ -8,6 +8,9 @@ import { useState } from 'react';
 import type { ActionCallbackData } from '~/lib/runtime/message-parser';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import { formatBuildFailureOutput } from './deployUtils';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('VercelDeploy');
 
 export function useVercelDeploy() {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -160,7 +163,7 @@ export function useVercelDeploy() {
               allProjectFiles[relativePath] = content;
             } catch (error) {
               // Skip binary files or files that can't be read as text
-              console.log(`Skipping file ${entry.name}: ${error}`);
+              logger.trace(`Skipping file ${entry.name}: ${error}`);
             }
           } else if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
             await getAllProjectFiles(fullPath);

@@ -98,14 +98,12 @@ export const Menu = () => {
       try {
         const snapshotKey = `snapshot:${id}`;
         localStorage.removeItem(snapshotKey);
-        console.log('Removed snapshot for chat:', id);
       } catch (snapshotError) {
         console.error(`Error deleting snapshot for chat ${id}:`, snapshotError);
       }
 
       // Delete the chat from the database
       await deleteById(db, id);
-      console.log('Successfully deleted chat:', id);
     },
     [db],
   );
@@ -116,8 +114,6 @@ export const Menu = () => {
       event.stopPropagation();
 
       // Log the delete operation to help debugging
-      console.log('Attempting to delete chat:', { id: item.id, description: item.description });
-
       deleteChat(item.id)
         .then(() => {
           toast.success('Chat deleted successfully', {
@@ -130,7 +126,6 @@ export const Menu = () => {
 
           if (chatId.get() === item.id) {
             // hard page navigation to clear the stores
-            console.log('Navigating away from deleted chat');
             window.location.pathname = '/';
           }
         })
@@ -151,11 +146,8 @@ export const Menu = () => {
   const deleteSelectedItems = useCallback(
     async (itemsToDeleteIds: string[]) => {
       if (!db || itemsToDeleteIds.length === 0) {
-        console.log('Bulk delete skipped: No DB or no items to delete.');
         return;
       }
-
-      console.log(`Starting bulk delete for ${itemsToDeleteIds.length} chats`, itemsToDeleteIds);
 
       let deletedCount = 0;
       const errors: string[] = [];
@@ -195,7 +187,6 @@ export const Menu = () => {
 
       // Navigate if needed
       if (shouldNavigate) {
-        console.log('Navigating away from deleted chat');
         window.location.pathname = '/';
       }
     },
@@ -218,8 +209,6 @@ export const Menu = () => {
   const toggleItemSelection = useCallback((id: string) => {
     setSelectedItems((prev) => {
       const newSelectedItems = prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id];
-      console.log('Selected items updated:', newSelectedItems);
-
       return newSelectedItems; // Return the new array
     });
   }, []); // No dependencies needed
@@ -248,14 +237,10 @@ export const Menu = () => {
       if (allFilteredAreSelected) {
         // Deselect only the filtered items
         const newSelectedItems = prev.filter((id) => !allFilteredIds.includes(id));
-        console.log('Deselecting all filtered items. New selection:', newSelectedItems);
-
         return newSelectedItems;
       } else {
         // Select all filtered items, adding them to any existing selections
         const newSelectedItems = [...new Set([...prev, ...allFilteredIds])];
-        console.log('Selecting all filtered items. New selection:', newSelectedItems);
-
         return newSelectedItems;
       }
     });
@@ -274,7 +259,6 @@ export const Menu = () => {
        * Don't clear selection state anymore when sidebar closes
        * This allows the selection to persist when reopening the sidebar
        */
-      console.log('Sidebar closed, preserving selection state');
     }
   }, [open, selectionMode]);
 
@@ -318,7 +302,6 @@ export const Menu = () => {
   };
 
   const setDialogContentWithLogging = useCallback((content: DialogContent) => {
-    console.log('Setting dialog content:', content);
     setDialogContent(content);
   }, []);
 
@@ -435,7 +418,6 @@ export const Menu = () => {
                         onDelete={(event) => {
                           event.preventDefault();
                           event.stopPropagation();
-                          console.log('Delete triggered for item:', item);
                           setDialogContentWithLogging({ type: 'delete', item });
                         }}
                         onDuplicate={() => handleDuplicate(item.id)}
@@ -469,7 +451,6 @@ export const Menu = () => {
                       <DialogButton
                         type="danger"
                         onClick={(event) => {
-                          console.log('Dialog delete button clicked for item:', dialogContent.item);
                           deleteItem(event, dialogContent.item);
                           closeDialog();
                         }}
@@ -512,7 +493,6 @@ export const Menu = () => {
                            * This captures the state at the moment the user confirms.
                            */
                           const itemsToDeleteNow = [...selectedItems];
-                          console.log('Bulk delete confirmed for', itemsToDeleteNow.length, 'items', itemsToDeleteNow);
                           deleteSelectedItems(itemsToDeleteNow);
                           closeDialog();
                         }}

@@ -12,6 +12,7 @@ import { useStore } from '@nanostores/react';
 import { GitHubAuthDialog } from '~/components/@settings/tabs/github/components/GitHubAuthDialog';
 import { SearchInput, EmptyState, StatusIndicator, Badge } from '~/components/ui';
 import { createScopedLogger } from '~/utils/logger';
+import { sanitizeRepoName } from './deployUtils';
 
 const logger = createScopedLogger('GitHubDeploymentDialog');
 
@@ -36,27 +37,6 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
   const [pushedFiles, setPushedFiles] = useState<{ path: string; size: number }[]>([]);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const currentChatId = useStore(chatId);
-
-  /*
-   * Load GitHub connection on mount
-   * Helper function to sanitize repository name
-   */
-  const sanitizeRepoName = (name: string): string => {
-    return (
-      name
-        .toLowerCase()
-        // Replace spaces and underscores with hyphens
-        .replace(/[\s_]+/g, '-')
-        // Remove special characters except hyphens and alphanumeric
-        .replace(/[^a-z0-9-]/g, '')
-        // Remove multiple consecutive hyphens
-        .replace(/-+/g, '-')
-        // Remove leading/trailing hyphens
-        .replace(/^-+|-+$/g, '')
-        // Ensure it's not empty and has reasonable length
-        .substring(0, 100) || 'my-project'
-    );
-  };
 
   useEffect(() => {
     if (isOpen) {
@@ -364,7 +344,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       }
 
       try {
-        console.log('Creating tree for repository');
+        logger.debug('Creating tree for repository');
 
         // Create a tree with all files
         const tree = fileEntries.map(([filePath, content]) => ({
@@ -374,7 +354,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           content,
         }));
 
-        console.log(`Creating tree with ${tree.length} files using base: ${baseSha || 'none'}`);
+        logger.debug(`Creating tree with ${tree.length} files using base: ${baseSha || 'none'}`);
 
         // Create a tree with all the files, using the base tree if available
         const sanitizedRepoName = sanitizeRepoName(repoName);
@@ -385,7 +365,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           base_tree: baseSha || undefined,
         });
 
-        console.log('Tree created successfully', treeData.sha);
+        logger.debug('Tree created successfully', treeData.sha);
 
         // Get the current reference to use as parent for our commit
         let parentCommitSha: string | null = null;
@@ -397,14 +377,14 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
             ref: `heads/${defaultBranch}`,
           });
           parentCommitSha = refData.object.sha;
-          console.log(`Found parent commit: ${parentCommitSha}`);
+          logger.debug(`Found parent commit: ${parentCommitSha}`);
         } catch (refError) {
-          console.log('No reference found, this is a brand new repo', refError);
+          logger.debug('No reference found, this is a brand new repo', refError);
           parentCommitSha = null;
         }
 
         // Create a commit with the tree
-        console.log('Creating commit');
+        logger.debug('Creating commit');
 
         const { data: commitData } = await octokit.git.createCommit({
           owner: connection.user.login,
@@ -414,11 +394,11 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           parents: parentCommitSha ? [parentCommitSha] : [], // Use parent if available
         });
 
-        console.log('Commit created successfully', commitData.sha);
+        logger.debug('Commit created successfully', commitData.sha);
 
         // Update the reference to point to the new commit
         try {
-          console.log(`Updating reference: heads/${defaultBranch} to ${commitData.sha}`);
+          logger.debug(`Updating reference: heads/${defaultBranch} to ${commitData.sha}`);
           await octokit.git.updateRef({
             owner: connection.user.login,
             repo: sanitizedRepoName,
@@ -426,9 +406,9 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
             sha: commitData.sha,
             force: true, // Use force to ensure the update works
           });
-          console.log('Reference updated successfully');
+          logger.debug('Reference updated successfully');
         } catch (refError) {
-          console.log('Failed to update reference, attempting to create it', refError);
+          logger.debug('Failed to update reference, attempting to create it', refError);
 
           // If the reference doesn't exist, create it (shouldn't happen with auto_init, but just in case)
           try {
@@ -438,7 +418,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
               ref: `refs/heads/${defaultBranch}`,
               sha: commitData.sha,
             });
-            console.log('Reference created successfully');
+            logger.debug('Reference created successfully');
           } catch (createRefError) {
             console.error('Error creating reference:', createRefError);
 

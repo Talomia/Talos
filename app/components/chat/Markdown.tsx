@@ -58,7 +58,7 @@ export const Markdown = memo(
               try {
                 elementData = JSON.parse(elementDataAttr);
               } catch (e) {
-                console.error('Failed to parse element data:', e);
+                logger.error('Failed to parse element data:', e);
               }
             }
 
@@ -176,7 +176,7 @@ export const Markdown = memo(
                       const url = new URL(href, window.location.origin);
                       window.open(url.toString(), '_blank', 'noopener,noreferrer');
                     } catch (error) {
-                      console.error('Invalid URL:', href, error);
+                      logger.error('Invalid URL:', href, error);
                     }
                   }
                 }}

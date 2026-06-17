@@ -16,6 +16,9 @@ import {
   initializeSupabaseConnection,
   type SupabaseProject,
 } from '~/lib/stores/supabase';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('SupabaseTab');
 
 interface ConnectionTestResult {
   status: 'success' | 'error' | 'testing';
@@ -199,7 +202,7 @@ export default function SupabaseTab() {
         const currentState = supabaseConnection.get();
 
         if (!currentState.user) {
-          console.log('No server-side Supabase token available, manual connection required');
+          logger.debug('No server-side Supabase token available, manual connection required');
         }
       } catch (error) {
         console.error('Failed to initialize Supabase connection:', error);

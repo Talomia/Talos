@@ -3,6 +3,9 @@ import type { ITerminal } from '~/types/terminal';
 import { withResolvers } from './promises';
 import { atom } from 'nanostores';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('Shell');
 
 export async function newShellProcess(webcontainer: WebContainer, terminal: ITerminal) {
   const args: string[] = [];
@@ -251,7 +254,7 @@ export class RecurrsiveShell {
       try {
         resp.output = cleanTerminalOutput(resp.output);
       } catch (error) {
-        console.log('failed to format terminal output', error);
+        logger.error('Failed to format terminal output', error);
       }
     }
 

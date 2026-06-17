@@ -4,6 +4,9 @@ import { classNames } from '~/utils/classNames';
 import { supabaseConnection } from '~/lib/stores/supabase';
 import { useStore } from '@nanostores/react';
 import { useState } from 'react';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('SupabaseAlert');
 
 interface Props {
   alert: SupabaseAlert;
@@ -62,7 +65,7 @@ export function SupabaseChatAlert({ alert, clearAlert, postMessage }: Props) {
       }
 
       const result = await response.json();
-      console.log('Supabase query executed successfully:', result);
+      logger.debug('Supabase query executed successfully:', result);
       clearAlert();
     } catch (error) {
       console.error('Failed to execute Supabase action:', error);

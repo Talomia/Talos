@@ -8,6 +8,9 @@ import { openDatabase, getAllChats, type Chat } from '~/lib/persistence/db';
 import { DataVisualization } from './DataVisualization';
 import { classNames } from '~/utils/classNames';
 import { toast } from 'react-toastify';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('DataTab');
 
 // Create a custom hook to connect to the boltHistory database
 function useBoltHistoryDB() {
@@ -140,7 +143,7 @@ export function DataTab() {
   // Load available chats
   useEffect(() => {
     if (db) {
-      console.log('Loading chats from boltHistory database', {
+      logger.debug('Loading chats from boltHistory database', {
         name: db.name,
         version: db.version,
         objectStoreNames: Array.from(db.objectStoreNames),
@@ -148,7 +151,7 @@ export function DataTab() {
 
       getAllChats(db)
         .then((chats) => {
-          console.log('Found chats:', chats.length);
+          logger.trace('Found chats:', chats.length);
 
           // Cast to ExtendedChat to handle additional properties
           const extendedChats = chats as ExtendedChat[];
@@ -308,7 +311,7 @@ export function DataTab() {
                           return;
                         }
 
-                        console.log('Database information:', {
+                        logger.debug('Database information:', {
                           name: db.name,
                           version: db.version,
                           objectStoreNames: Array.from(db.objectStoreNames),

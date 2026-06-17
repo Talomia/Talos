@@ -25,21 +25,12 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
   const handleConnect = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    console.log('GitLab connect attempt:', {
-      token: token ? `${token.substring(0, 10)}...` : 'empty',
-      gitlabUrl,
-      tokenLength: token.length,
-    });
-
     if (!token.trim()) {
-      console.log('Token is empty, not attempting connection');
       return;
     }
 
     try {
-      console.log('Calling connect function...');
       await connect(token, gitlabUrl);
-      console.log('Connect function completed successfully');
       setToken(''); // Clear token on successful connection
     } catch (error) {
       console.error('GitLab connect failed:', error);
@@ -180,9 +171,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    console.log('Manual test:', { token: token ? `${token.substring(0, 10)}...` : 'empty', gitlabUrl })
-                  }
+                  onClick={() => void 0}
                   className="px-4 py-2 rounded-lg text-sm bg-gray-500 text-white hover:bg-gray-600"
                 >
                   Test Values
