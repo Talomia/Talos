@@ -17,10 +17,28 @@ export default defineConfig((config) => {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
     server: {
+      // Fixes the blocked host issue on Easypanel subdomains
       allowedHosts: true,
     },
     build: {
       target: 'esnext',
+      chunkSizeWarningLimit: 800,
+      rollupOptions: {
+        output: {
+          // Fixes the 100% CPU spikes / OOM crashes by splitting the massive bundle apart
+          manualChunks(id) {
+            if (id.includes('node_modules')) {
+              if (id.includes('@codemirror') || id.includes('shiki') || id.includes('@xterm')) {
+                return 'vendor-editor-ui';
+              }
+              if (id.includes('@ai-sdk') || id.includes('openai') || id.includes('anthropic')) {
+                return 'vendor-ai-core';
+              }
+              return 'vendor-packages';
+            }
+          },
+        },
+      },
     },
     plugins: [
       nodePolyfills({
@@ -82,7 +100,7 @@ export default defineConfig((config) => {
         '**/cypress/**',
         '**/.{idea,git,cache,output,temp}/**',
         '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
-        '**/tests/preview/**', // Exclude preview tests that require Playwright
+        '**/tests/preview/**',
       ],
     },
   };
