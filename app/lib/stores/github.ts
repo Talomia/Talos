@@ -1,5 +1,5 @@
 import { atom } from 'nanostores';
-import type { GitHubConnection } from '~/types/GitHub';
+import type { GitHubConnection, GitHubRepoInfo } from '~/types/GitHub';
 import { logStore } from './logs';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -88,7 +88,7 @@ export async function fetchGitHubStatsViaAPI() {
       throw new Error(`Failed to fetch repositories: ${response.status}`);
     }
 
-    const data = (await response.json()) as { repos: any[] };
+    const data = (await response.json()) as { repos: GitHubRepoInfo[] };
     const repos = data.repos || [];
 
     const currentState = githubConnection.get();
@@ -99,12 +99,12 @@ export async function fetchGitHubStatsViaAPI() {
         recentActivity: [],
         languages: {},
         totalGists: 0,
-        publicRepos: repos.filter((r: any) => !r.private).length,
-        privateRepos: repos.filter((r: any) => r.private).length,
-        stars: repos.reduce((sum: number, r: any) => sum + (r.stargazers_count || 0), 0),
-        forks: repos.reduce((sum: number, r: any) => sum + (r.forks_count || 0), 0),
-        totalStars: repos.reduce((sum: number, r: any) => sum + (r.stargazers_count || 0), 0),
-        totalForks: repos.reduce((sum: number, r: any) => sum + (r.forks_count || 0), 0),
+        publicRepos: repos.filter((r) => !r.private).length,
+        privateRepos: repos.filter((r) => r.private).length,
+        stars: repos.reduce((sum, r) => sum + (r.stargazers_count || 0), 0),
+        forks: repos.reduce((sum, r) => sum + (r.forks_count || 0), 0),
+        totalStars: repos.reduce((sum, r) => sum + (r.stargazers_count || 0), 0),
+        totalForks: repos.reduce((sum, r) => sum + (r.forks_count || 0), 0),
         followers: 0,
         publicGists: 0,
         privateGists: 0,
