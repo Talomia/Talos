@@ -204,3 +204,51 @@ function buildDeviceFrameHtml(options: DeviceFrameHtmlOptions): string {
 </body>
 </html>`;
 }
+
+// --- Pure utility functions extracted from Preview ---
+
+/**
+ * Reducer callback that returns the index of the preview with the smallest port number.
+ */
+export function findMinPortIndex(
+  minIndex: number,
+  preview: { port: number },
+  index: number,
+  array: { port: number }[],
+): number {
+  return preview.port < array[minIndex].port ? index : minIndex;
+}
+
+/**
+ * Returns the correct CSS padding string for the device frame based on
+ * the selected window size and landscape orientation.
+ */
+export function getFramePadding(selectedWindowSize: WindowSize | null, isLandscape: boolean): string {
+  if (!selectedWindowSize) {
+    return '40px 20px';
+  }
+
+  const isMobile = selectedWindowSize.frameType === 'mobile';
+
+  if (isLandscape) {
+    // Increase horizontal padding in landscape mode to ensure full device frame is visible
+    return isMobile ? '40px 60px' : '30px 50px';
+  }
+
+  return isMobile ? '40px 20px' : '50px 30px';
+}
+
+/**
+ * Returns the device frame border color based on whether the app is in dark mode.
+ * Checks the document for dark class, data-theme, or prefers-color-scheme media query.
+ */
+export function getFrameColor(): string {
+  // Check if the document has a dark class or data-theme="dark"
+  const isDarkMode =
+    document.documentElement.classList.contains('dark') ||
+    document.documentElement.getAttribute('data-theme') === 'dark' ||
+    window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+  // Return a darker color for light mode, lighter color for dark mode
+  return isDarkMode ? '#555' : '#111';
+}
