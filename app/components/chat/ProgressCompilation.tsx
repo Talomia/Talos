@@ -8,7 +8,7 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
   const [progressList, setProgressList] = React.useState<ProgressAnnotation[]>([]);
   const [expanded, setExpanded] = useState(false);
   React.useEffect(() => {
-    if (!data || data.length == 0) {
+    if (!data || data.length === 0) {
       setProgressList([]);
       return;
     }
