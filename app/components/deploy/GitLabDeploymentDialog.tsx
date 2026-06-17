@@ -12,6 +12,17 @@ import { GitLabApiService } from '~/lib/services/gitlabApiService';
 import { SearchInput, EmptyState, StatusIndicator, Badge } from '~/components/ui';
 import { formatSize } from '~/utils/formatSize';
 import { GitLabAuthDialog } from '~/components/@settings/tabs/gitlab/components/GitLabAuthDialog';
+import {
+  DeploymentSuccessDialog,
+  ConnectionRequiredDialog,
+  type DeploymentProviderConfig,
+} from './DeploymentDialogComponents';
+
+const GITLAB_PROVIDER: DeploymentProviderConfig = {
+  name: 'GitLab',
+  logoIcon: 'i-ph:gitlab-logo',
+  brandColor: 'orange',
+};
 
 interface GitLabDeploymentDialogProps {
   isOpen: boolean;
@@ -263,214 +274,27 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
   // Success Dialog
   if (showSuccessDialog) {
     return (
-      <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-          <div className="fixed inset-0 flex items-center justify-center z-[9999]">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="w-[90vw] md:w-[600px] max-h-[85vh] overflow-y-auto"
-            >
-              <Dialog.Content
-                className="bg-white dark:bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark shadow-xl"
-                aria-describedby="success-dialog-description"
-              >
-                <Dialog.Title className="sr-only">Successfully pushed to GitLab</Dialog.Title>
-                <div className="p-6 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center text-green-500">
-                        <div className="i-ph:check-circle w-5 h-5" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
-                          Successfully pushed to GitLab
-                        </h3>
-                        <p
-                          id="success-dialog-description"
-                          className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark"
-                        >
-                          Your code is now available on GitLab
-                        </p>
-                      </div>
-                    </div>
-                    <Dialog.Close asChild>
-                      <button
-                        onClick={handleClose}
-                        className="p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary dark:text-bolt-elements-textTertiary-dark dark:hover:text-bolt-elements-textPrimary-dark hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-3 focus:outline-none focus:ring-2 focus:ring-bolt-elements-borderColor dark:focus:ring-bolt-elements-borderColor-dark"
-                      >
-                        <span className="i-ph:x block w-5 h-5" aria-hidden="true" />
-                        <span className="sr-only">Close dialog</span>
-                      </button>
-                    </Dialog.Close>
-                  </div>
-
-                  <div className="bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg p-4 text-left border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-                    <p className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark mb-2 flex items-center gap-2">
-                      <span className="i-ph:gitlab-logo w-4 h-4 text-orange-500" />
-                      Repository URL
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 text-sm bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-4 px-3 py-2 rounded border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark font-mono">
-                        {createdRepoUrl}
-                      </code>
-                      <motion.button
-                        onClick={() => {
-                          navigator.clipboard.writeText(createdRepoUrl);
-                          toast.success('URL copied to clipboard');
-                        }}
-                        className="p-2 text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:text-bolt-elements-textSecondary-dark dark:hover:text-bolt-elements-textPrimary-dark bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-4 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <div className="i-ph:copy w-4 h-4" />
-                      </motion.button>
-                    </div>
-                  </div>
-
-                  <div className="bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg p-4 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-                    <p className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark mb-2 flex items-center gap-2">
-                      <span className="i-ph:files w-4 h-4 text-purple-500" />
-                      Pushed Files ({pushedFiles.length})
-                    </p>
-                    <div className="max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
-                      {pushedFiles.slice(0, 100).map((file) => (
-                        <div
-                          key={file.path}
-                          className="flex items-center justify-between py-1.5 text-sm text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark border-b border-bolt-elements-borderColor/30 dark:border-bolt-elements-borderColor-dark/30 last:border-0"
-                        >
-                          <span className="font-mono truncate flex-1 text-xs">{file.path}</span>
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-bolt-elements-background-depth-3 dark:bg-bolt-elements-background-depth-4 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark ml-2">
-                            {formatSize(file.size)}
-                          </span>
-                        </div>
-                      ))}
-                      {pushedFiles.length > 100 && (
-                        <div className="py-2 text-center text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark">
-                          +{pushedFiles.length - 100} more files
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <motion.a
-                      href={createdRepoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 text-sm inline-flex items-center gap-2"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="i-ph:gitlab-logo w-4 h-4" />
-                      View Repository
-                    </motion.a>
-                    <motion.button
-                      onClick={() => {
-                        navigator.clipboard.writeText(createdRepoUrl);
-                        toast.success('URL copied to clipboard');
-                      }}
-                      className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 text-sm inline-flex items-center gap-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="i-ph:copy w-4 h-4" />
-                      Copy URL
-                    </motion.button>
-                    <motion.button
-                      onClick={handleClose}
-                      className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 text-sm border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      Close
-                    </motion.button>
-                  </div>
-                </div>
-              </Dialog.Content>
-            </motion.div>
-          </div>
-        </Dialog.Portal>
-      </Dialog.Root>
+      <DeploymentSuccessDialog
+        isOpen={isOpen}
+        onClose={handleClose}
+        provider={GITLAB_PROVIDER}
+        repoUrl={createdRepoUrl}
+        pushedFiles={pushedFiles}
+        formatSize={formatSize}
+      />
     );
   }
 
   if (!user) {
     return (
-      <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-        <Dialog.Portal>
-          <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999]" />
-          <div className="fixed inset-0 flex items-center justify-center z-[9999]">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.2 }}
-              className="w-[90vw] md:w-[500px]"
-            >
-              <Dialog.Content
-                className="bg-white dark:bg-bolt-elements-background-depth-1 rounded-lg p-6 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark shadow-xl"
-                aria-describedby="connection-required-description"
-              >
-                <Dialog.Title className="sr-only">GitLab Connection Required</Dialog.Title>
-                <div className="relative text-center space-y-4">
-                  <Dialog.Close asChild>
-                    <button
-                      onClick={handleClose}
-                      className="absolute right-0 top-0 p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary dark:text-bolt-elements-textTertiary-dark dark:hover:text-bolt-elements-textPrimary-dark hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-3 focus:outline-none focus:ring-2 focus:ring-bolt-elements-borderColor dark:focus:ring-bolt-elements-borderColor-dark"
-                    >
-                      <span className="i-ph:x block w-5 h-5" aria-hidden="true" />
-                      <span className="sr-only">Close dialog</span>
-                    </button>
-                  </Dialog.Close>
-                  <motion.div
-                    initial={{ scale: 0.8 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="mx-auto w-16 h-16 rounded-xl bg-bolt-elements-background-depth-3 flex items-center justify-center text-orange-500"
-                  >
-                    <div className="i-ph:gitlab-logo w-8 h-8" />
-                  </motion.div>
-                  <h3 className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
-                    GitLab Connection Required
-                  </h3>
-                  <p
-                    id="connection-required-description"
-                    className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark max-w-md mx-auto"
-                  >
-                    To deploy your code to GitLab, you need to connect your GitLab account first.
-                  </p>
-                  <div className="pt-2 flex justify-center gap-3">
-                    <motion.button
-                      className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark text-sm hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={handleClose}
-                    >
-                      Close
-                    </motion.button>
-                    <motion.button
-                      onClick={() => setShowAuthDialog(true)}
-                      className="px-4 py-2 rounded-lg bg-orange-500 text-white text-sm hover:bg-orange-600 inline-flex items-center gap-2"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <div className="i-ph:gitlab-logo w-4 h-4" />
-                      Connect GitLab Account
-                    </motion.button>
-                  </div>
-                </div>
-              </Dialog.Content>
-            </motion.div>
-          </div>
-        </Dialog.Portal>
-
-        {/* GitLab Auth Dialog */}
+      <ConnectionRequiredDialog
+        isOpen={isOpen}
+        onClose={handleClose}
+        provider={GITLAB_PROVIDER}
+        onConnect={() => setShowAuthDialog(true)}
+      >
         <GitLabAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
-      </Dialog.Root>
+      </ConnectionRequiredDialog>
     );
   }
 
