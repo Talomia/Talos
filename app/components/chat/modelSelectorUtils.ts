@@ -1,4 +1,133 @@
 import type { ModelInfo } from '~/lib/modules/llm/types';
+import type { ProviderInfo } from '~/types/model';
+
+/*
+ * ---------------------------------------------------------------------------
+ * Shared types
+ * ---------------------------------------------------------------------------
+ */
+
+export type ConnectionStatus = 'unknown' | 'connected' | 'disconnected';
+
+/** A ModelInfo decorated with search-scoring metadata. */
+export interface SearchableModel extends ModelInfo {
+  searchScore: number;
+  searchMatches: boolean;
+  highlightedLabel: string;
+  highlightedName: string;
+}
+
+/** A ProviderInfo decorated with search-scoring metadata. */
+export interface SearchableProvider extends ProviderInfo {
+  searchScore: number;
+  searchMatches: boolean;
+  highlightedName: string;
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * Shared constants
+ * ---------------------------------------------------------------------------
+ */
+
+/** Scrollbar styling classes reused across both dropdown panels. */
+export const SCROLLBAR_CLASSES = [
+  'max-h-60 overflow-y-auto',
+  'sm:scrollbar-none',
+  '[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar]:h-2',
+  '[&::-webkit-scrollbar-thumb]:bg-bolt-elements-borderColor',
+  '[&::-webkit-scrollbar-thumb]:hover:bg-bolt-elements-borderColorHover',
+  '[&::-webkit-scrollbar-thumb]:rounded-full',
+  '[&::-webkit-scrollbar-track]:bg-bolt-elements-background-depth-2',
+  '[&::-webkit-scrollbar-track]:rounded-full',
+  'sm:[&::-webkit-scrollbar]:w-1.5 sm:[&::-webkit-scrollbar]:h-1.5',
+  'sm:hover:[&::-webkit-scrollbar-thumb]:bg-bolt-elements-borderColor/50',
+  'sm:hover:[&::-webkit-scrollbar-thumb:hover]:bg-bolt-elements-borderColor',
+  'sm:[&::-webkit-scrollbar-track]:bg-transparent',
+] as const;
+
+/*
+ * ---------------------------------------------------------------------------
+ * Filtering / sorting helpers
+ * ---------------------------------------------------------------------------
+ */
+
+/**
+ * Filters, scores and sorts models for the model dropdown.
+ * Pure function – no React dependency.
+ */
+export const filterModels = (
+  modelList: ModelInfo[],
+  providerName: string | undefined,
+  showFreeModelsOnly: boolean,
+  searchQuery: string,
+): SearchableModel[] => {
+  const baseModels = [...modelList].filter((e) => e.provider === providerName && e.name);
+
+  return baseModels
+    .filter((m) => {
+      // Apply free models filter
+      if (showFreeModelsOnly && !isModelLikelyFree(m, providerName)) {
+        return false;
+      }
+
+      return true;
+    })
+    .map((m) => {
+      // Calculate search scores for fuzzy matching
+      const labelMatch = fuzzyMatch(searchQuery, m.label);
+      const nameMatch = fuzzyMatch(searchQuery, m.name);
+      const contextMatch = fuzzyMatch(searchQuery, formatContextSize(m.maxTokenAllowed));
+
+      const bestScore = Math.max(labelMatch.score, nameMatch.score, contextMatch.score);
+      const matches = labelMatch.matches || nameMatch.matches || contextMatch.matches || !searchQuery; // Show all if no query
+
+      return {
+        ...m,
+        searchScore: bestScore,
+        searchMatches: matches,
+        highlightedLabel: highlightText(m.label, searchQuery),
+        highlightedName: highlightText(m.name, searchQuery),
+      };
+    })
+    .filter((m) => m.searchMatches)
+    .sort((a, b) => {
+      // Sort by search score (highest first), then by label
+      if (searchQuery) {
+        return b.searchScore - a.searchScore;
+      }
+
+      return a.label.localeCompare(b.label);
+    });
+};
+
+/**
+ * Filters, scores and sorts providers for the provider dropdown.
+ * Pure function – no React dependency.
+ */
+export const filterProviders = (providerList: ProviderInfo[], searchQuery: string): SearchableProvider[] => {
+  if (!searchQuery) {
+    return providerList.map((p) => ({
+      ...p,
+      searchScore: 0,
+      searchMatches: true,
+      highlightedName: p.name,
+    }));
+  }
+
+  return providerList
+    .map((p) => {
+      const match = fuzzyMatch(searchQuery, p.name);
+      return {
+        ...p,
+        searchScore: match.score,
+        searchMatches: match.matches,
+        highlightedName: highlightText(p.name, searchQuery),
+      };
+    })
+    .filter((p) => p.searchMatches)
+    .sort((a, b) => b.searchScore - a.searchScore);
+};
 
 /**
  * Levenshtein distance algorithm for fuzzy string matching.

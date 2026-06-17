@@ -11,7 +11,7 @@ import { useToast } from '~/components/ui/use-toast';
 import { useLocalModelHealth } from '~/lib/hooks/useLocalModelHealth';
 import ErrorBoundary from './ErrorBoundary';
 import { ModelCardSkeleton } from './LoadingSkeleton';
-import SetupGuide from './SetupGuide';
+import SetupGuide from './setup-guide';
 import StatusDashboard from './StatusDashboard';
 import { createScopedLogger } from '~/utils/logger';
 
