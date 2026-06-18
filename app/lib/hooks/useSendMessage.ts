@@ -193,7 +193,13 @@ export function useSendMessage(deps: UseSendMessageDeps) {
                 ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
                 : undefined;
 
-            reload(reloadOptions);
+            try {
+              await reload(reloadOptions);
+            } catch (reloadError) {
+              logger.error('Template reload failed:', reloadError);
+              toast.error('Failed to start chat. Please try again.');
+            }
+
             setInput('');
             Cookies.remove(PROMPT_COOKIE_KEY);
 
@@ -223,7 +229,14 @@ export function useSendMessage(deps: UseSendMessageDeps) {
           experimental_attachments: attachments,
         },
       ]);
-      reload(attachments ? { experimental_attachments: attachments } : undefined);
+
+      try {
+        await reload(attachments ? { experimental_attachments: attachments } : undefined);
+      } catch (reloadError) {
+        logger.error('Chat reload failed:', reloadError);
+        toast.error('Failed to start chat. Please try again.');
+      }
+
       setFakeLoading(false);
       setInput('');
       Cookies.remove(PROMPT_COOKIE_KEY);
@@ -253,32 +266,48 @@ export function useSendMessage(deps: UseSendMessageDeps) {
       const attachmentOptions =
         uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
 
-      append(
-        {
-          role: 'user',
-          content: messageText,
-          parts: createMessageParts(messageText, imageDataList),
-        },
-        attachmentOptions,
-      );
+      try {
+        await append(
+          {
+            role: 'user',
+            content: messageText,
+            parts: createMessageParts(messageText, imageDataList),
+          },
+          attachmentOptions,
+        );
 
-      workbenchStore.resetAllFileModifications();
+        // Only clear modifications after successful append
+        workbenchStore.resetAllFileModifications();
+      } catch (appendError) {
+        logger.error('Append with modifications failed:', appendError);
+        toast.error('Failed to send message. Your file modifications have been preserved.');
+
+        return;
+      }
     } else {
       const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
 
       const attachmentOptions =
         uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
 
-      append(
-        {
-          role: 'user',
-          content: messageText,
-          parts: createMessageParts(messageText, imageDataList),
-        },
-        attachmentOptions,
-      );
+      try {
+        await append(
+          {
+            role: 'user',
+            content: messageText,
+            parts: createMessageParts(messageText, imageDataList),
+          },
+          attachmentOptions,
+        );
+      } catch (appendError) {
+        logger.error('Append failed:', appendError);
+        toast.error('Failed to send message. Please try again.');
+
+        return;
+      }
     }
 
+    // Only clear state after successful send
     setInput('');
     Cookies.remove(PROMPT_COOKIE_KEY);
 
