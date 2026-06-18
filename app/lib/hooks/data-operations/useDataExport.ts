@@ -366,8 +366,8 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
       // Step 1: Get API keys from all sources
       showProgress('Retrieving API keys', 25);
 
-      // Create a fetch request to get API keys from server
-      const response = await fetch('/api/export-api-keys');
+      // Get API key providers from the secure vault endpoint
+      const response = await fetch('/api/keys');
 
       if (!response.ok) {
         throw new Error('Failed to retrieve API keys from server');

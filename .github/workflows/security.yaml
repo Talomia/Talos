@@ -74,7 +74,7 @@ jobs:
 
       - name: Run npm audit
         run: pnpm audit --audit-level moderate
-        continue-on-error: true
+        continue-on-error: false
 
       - name: Generate SBOM
         uses: anchore/sbom-action@v0

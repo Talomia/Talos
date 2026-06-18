@@ -14,11 +14,23 @@ const highlighterOptions = {
   themes: ['light-plus', 'dark-plus'],
 };
 
-const shellHighlighter: HighlighterGeneric<BundledLanguage, BundledTheme> =
-  import.meta.hot?.data.shellHighlighter ?? (await createHighlighter(highlighterOptions));
+// Lazy highlighter initialization — avoids top-level await that blocks module loading.
+let _shellHighlighterPromise: Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> | undefined;
 
-if (import.meta.hot) {
-  import.meta.hot.data.shellHighlighter = shellHighlighter;
+function getShellHighlighter(): Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> {
+  if (!_shellHighlighterPromise) {
+    _shellHighlighterPromise = import.meta.hot?.data.shellHighlighter
+      ? Promise.resolve(import.meta.hot.data.shellHighlighter as HighlighterGeneric<BundledLanguage, BundledTheme>)
+      : createHighlighter(highlighterOptions).then((h) => {
+          if (import.meta.hot) {
+            import.meta.hot.data.shellHighlighter = h;
+          }
+
+          return h;
+        });
+  }
+
+  return _shellHighlighterPromise;
 }
 
 interface ArtifactProps {
@@ -161,17 +173,23 @@ interface ShellCodeBlockProps {
 }
 
 function ShellCodeBlock({ className: shellClassName, code }: ShellCodeBlockProps) {
-  return (
-    <div
-      className={classNames('text-xs', shellClassName)}
-      dangerouslySetInnerHTML={{
-        __html: shellHighlighter.codeToHtml(code, {
-          lang: 'shell',
-          theme: 'dark-plus',
-        }),
-      }}
-    ></div>
-  );
+  const [html, setHtml] = useState<string>('');
+
+  useEffect(() => {
+    getShellHighlighter().then((highlighter) => {
+      setHtml(highlighter.codeToHtml(code, { lang: 'shell', theme: 'dark-plus' }));
+    });
+  }, [code]);
+
+  if (!html) {
+    return (
+      <div className={classNames('text-xs', shellClassName)}>
+        <pre>{code}</pre>
+      </div>
+    );
+  }
+
+  return <div className={classNames('text-xs', shellClassName)} dangerouslySetInnerHTML={{ __html: html }}></div>;
 }
 
 interface ActionListProps {

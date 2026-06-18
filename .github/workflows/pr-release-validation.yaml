@@ -30,7 +30,7 @@ jobs:
 
       - name: Check required status checks
         uses: actions/github-script@v7
-        continue-on-error: true
+        continue-on-error: false
         with:
           script: |
             const { data: checks } = await github.rest.checks.listForRef({

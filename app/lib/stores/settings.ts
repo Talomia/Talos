@@ -4,7 +4,6 @@ import type { IProviderConfig } from '~/types/model';
 import type { TabVisibilityConfig, TabWindowConfig, UserTabConfig } from '~/components/@settings/core/types';
 import { DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
 import { toggleTheme } from './theme';
-import { create } from 'zustand';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('SettingsStore');
@@ -374,35 +373,3 @@ export const resetTabConfiguration = () => {
   tabConfigurationStore.set(defaultConfig);
   localStorage.setItem('bolt_tab_configuration', JSON.stringify(defaultConfig));
 };
-
-// First, let's define the SettingsStore interface
-interface SettingsStore {
-  isOpen: boolean;
-  selectedTab: string;
-  openSettings: () => void;
-  closeSettings: () => void;
-  setSelectedTab: (tab: string) => void;
-}
-
-export const useSettingsStore = create<SettingsStore>((set) => ({
-  isOpen: false,
-  selectedTab: 'user', // Default tab
-
-  openSettings: () => {
-    set({
-      isOpen: true,
-      selectedTab: 'user', // Always open to user tab
-    });
-  },
-
-  closeSettings: () => {
-    set({
-      isOpen: false,
-      selectedTab: 'user', // Reset to user tab when closing
-    });
-  },
-
-  setSelectedTab: (tab: string) => {
-    set({ selectedTab: tab });
-  },
-}));

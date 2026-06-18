@@ -66,22 +66,7 @@ export interface TabWindowConfig {
   userTabs: UserTabConfig[];
 }
 
-export const TAB_LABELS: Record<TabType, string> = {
-  profile: 'Profile',
-  settings: 'Settings',
-  notifications: 'Notifications',
-  features: 'Features',
-  data: 'Data Management',
-  'cloud-providers': 'Cloud Providers',
-  'local-providers': 'Local Providers',
-  github: 'GitHub',
-  gitlab: 'GitLab',
-  netlify: 'Netlify',
-  vercel: 'Vercel',
-  supabase: 'Supabase',
-  'event-logs': 'Event Logs',
-  mcp: 'MCP Servers',
-};
+// TAB_LABELS is defined in constants.tsx (the canonical location).
 
 export const categoryLabels: Record<SettingCategory, string> = {
   profile: 'Profile & Account',

@@ -71,7 +71,7 @@ jobs:
           
           echo "⚠️ Health check failed after 5 attempts"
           exit 1
-        continue-on-error: true  # Don't fail deploy on smoke test failure
+        continue-on-error: false  # Fail deploy if smoke test fails
 
       - name: Post deployment summary
         if: always()

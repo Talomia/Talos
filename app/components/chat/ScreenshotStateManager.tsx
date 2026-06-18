@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { ScreenshotProvider } from '~/lib/contexts/ScreenshotContext';
 
 interface ScreenshotStateManagerProps {
   setUploadedFiles?: (files: File[]) => void;
   setImageDataList?: (dataList: string[]) => void;
   uploadedFiles: File[];
   imageDataList: string[];
+  children?: ReactNode;
 }
 
 export const ScreenshotStateManager = ({
@@ -12,24 +14,20 @@ export const ScreenshotStateManager = ({
   setImageDataList,
   uploadedFiles,
   imageDataList,
+  children,
 }: ScreenshotStateManagerProps) => {
-  useEffect(() => {
-    if (setUploadedFiles && setImageDataList) {
-      const win = window as unknown as Record<string, unknown>;
-      win.__BOLT_SET_UPLOADED_FILES__ = setUploadedFiles;
-      win.__BOLT_SET_IMAGE_DATA_LIST__ = setImageDataList;
-      win.__BOLT_UPLOADED_FILES__ = uploadedFiles;
-      win.__BOLT_IMAGE_DATA_LIST__ = imageDataList;
-    }
+  if (!setUploadedFiles || !setImageDataList) {
+    return <>{children}</>;
+  }
 
-    return () => {
-      const win = window as unknown as Record<string, unknown>;
-      delete win.__BOLT_SET_UPLOADED_FILES__;
-      delete win.__BOLT_SET_IMAGE_DATA_LIST__;
-      delete win.__BOLT_UPLOADED_FILES__;
-      delete win.__BOLT_IMAGE_DATA_LIST__;
-    };
-  }, [setUploadedFiles, setImageDataList, uploadedFiles, imageDataList]);
-
-  return null;
+  return (
+    <ScreenshotProvider
+      uploadedFiles={uploadedFiles}
+      setUploadedFiles={setUploadedFiles}
+      imageDataList={imageDataList}
+      setImageDataList={setImageDataList}
+    >
+      {children}
+    </ScreenshotProvider>
+  );
 };

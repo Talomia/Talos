@@ -20,11 +20,23 @@ const highlighterOptions = {
   themes: ['light-plus', 'dark-plus'],
 };
 
-const jsonHighlighter: HighlighterGeneric<BundledLanguage, BundledTheme> =
-  import.meta.hot?.data.jsonHighlighter ?? (await createHighlighter(highlighterOptions));
+// Lazy highlighter initialization — avoids top-level await that blocks module loading.
+let _jsonHighlighterPromise: Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> | undefined;
 
-if (import.meta.hot) {
-  import.meta.hot.data.jsonHighlighter = jsonHighlighter;
+function getJsonHighlighter(): Promise<HighlighterGeneric<BundledLanguage, BundledTheme>> {
+  if (!_jsonHighlighterPromise) {
+    _jsonHighlighterPromise = import.meta.hot?.data.jsonHighlighter
+      ? Promise.resolve(import.meta.hot.data.jsonHighlighter as HighlighterGeneric<BundledLanguage, BundledTheme>)
+      : createHighlighter(highlighterOptions).then((h) => {
+          if (import.meta.hot) {
+            import.meta.hot.data.jsonHighlighter = h;
+          }
+
+          return h;
+        });
+  }
+
+  return _jsonHighlighterPromise;
 }
 
 interface JsonCodeBlockProps {
@@ -34,6 +46,8 @@ interface JsonCodeBlockProps {
 }
 
 function JsonCodeBlock({ className, code, theme }: JsonCodeBlockProps) {
+  const [html, setHtml] = useState<string>('');
+
   let formattedCode = code;
 
   try {
@@ -53,15 +67,29 @@ function JsonCodeBlock({ className, code, theme }: JsonCodeBlockProps) {
     logger.error('Failed to parse JSON', { error: e });
   }
 
-  return (
-    <div
-      className={classNames('text-xs rounded-md overflow-hidden mcp-tool-invocation-code', className)}
-      dangerouslySetInnerHTML={{
-        __html: jsonHighlighter.codeToHtml(formattedCode, {
+  useEffect(() => {
+    getJsonHighlighter().then((highlighter) => {
+      setHtml(
+        highlighter.codeToHtml(formattedCode, {
           lang: 'json',
           theme: theme === 'dark' ? 'dark-plus' : 'light-plus',
         }),
-      }}
+      );
+    });
+  }, [formattedCode, theme]);
+
+  if (!html) {
+    return (
+      <div className={classNames('text-xs rounded-md overflow-hidden mcp-tool-invocation-code', className)}>
+        <pre>{formattedCode}</pre>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={classNames('text-xs rounded-md overflow-hidden mcp-tool-invocation-code', className)}
+      dangerouslySetInnerHTML={{ __html: html }}
       style={{
         padding: '0',
         margin: '0',

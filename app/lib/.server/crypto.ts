@@ -72,8 +72,10 @@ export function getVaultSecret(env?: Record<string, string>): string {
 
   if (!secret) {
     if (process.env.NODE_ENV === 'production') {
-      logger.warn('VAULT_SECRET not set in production! Using fallback. Set VAULT_SECRET env var.');
+      throw new Error('VAULT_SECRET environment variable is required in production');
     }
+
+    logger.warn('VAULT_SECRET not set — using development fallback. Set VAULT_SECRET env var for production.');
 
     return 'recurrsive-dev-secret-change-in-production';
   }
