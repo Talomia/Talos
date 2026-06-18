@@ -1,4 +1,4 @@
-import Cookies from 'js-cookie';
+import { setSecureCookie } from '~/lib/api/secureCookies';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('StorageHelpers');
@@ -38,7 +38,7 @@ export function safeSetItem(key: string, value: unknown): void {
  */
 export function safeSetCookie(key: string, value: unknown): void {
   try {
-    Cookies.set(key, typeof value === 'string' ? value : JSON.stringify(value), { expires: 365 });
+    setSecureCookie(key, typeof value === 'string' ? value : JSON.stringify(value), { expires: 365 });
   } catch (err) {
     logger.error(`Error setting cookie ${key}:`, err);
   }

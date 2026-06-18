@@ -1,5 +1,5 @@
 import { atom, computed } from 'nanostores';
-import Cookies from 'js-cookie';
+import { setSecureCookie, removeCookie } from '~/lib/api/secureCookies';
 import { logStore } from '~/lib/stores/logs';
 import { GitLabApiService } from '~/lib/services/gitlabApiService';
 import { calculateStatsSummary } from '~/utils/gitlabStats';
@@ -80,10 +80,10 @@ class GitLabConnectionStore {
       });
 
       // Set cookies for client-side access
-      Cookies.set('gitlabUsername', user.username);
-      Cookies.set('gitlabToken', token);
-      Cookies.set('git:gitlab.com', JSON.stringify({ username: user.username, password: token }));
-      Cookies.set('gitlabUrl', gitlabUrl);
+      setSecureCookie('gitlabUsername', user.username);
+      setSecureCookie('gitlabToken', token);
+      setSecureCookie('git:gitlab.com', JSON.stringify({ username: user.username, password: token }));
+      setSecureCookie('gitlabUrl', gitlabUrl);
 
       // Store connection details in localStorage
       localStorage.setItem(
@@ -167,10 +167,10 @@ class GitLabConnectionStore {
 
   disconnect() {
     // Remove cookies
-    Cookies.remove('gitlabToken');
-    Cookies.remove('gitlabUsername');
-    Cookies.remove('git:gitlab.com');
-    Cookies.remove('gitlabUrl');
+    removeCookie('gitlabToken');
+    removeCookie('gitlabUsername');
+    removeCookie('git:gitlab.com');
+    removeCookie('gitlabUrl');
 
     // Clear localStorage
     localStorage.removeItem('gitlab_connection');
@@ -245,10 +245,10 @@ class GitLabConnectionStore {
       });
 
       // Set cookies for client-side access
-      Cookies.set('gitlabUsername', user.username);
-      Cookies.set('gitlabToken', envToken);
-      Cookies.set('git:gitlab.com', JSON.stringify({ username: user.username, password: envToken }));
-      Cookies.set('gitlabUrl', 'https://gitlab.com');
+      setSecureCookie('gitlabUsername', user.username);
+      setSecureCookie('gitlabToken', envToken);
+      setSecureCookie('git:gitlab.com', JSON.stringify({ username: user.username, password: envToken }));
+      setSecureCookie('gitlabUrl', 'https://gitlab.com');
 
       // Store connection details in localStorage
       localStorage.setItem(

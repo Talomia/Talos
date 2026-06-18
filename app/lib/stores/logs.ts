@@ -1,5 +1,5 @@
 import { atom, map } from 'nanostores';
-import Cookies from 'js-cookie';
+import { setSecureCookie, getCookie } from '~/lib/api/secureCookies';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('LogStore');
@@ -67,7 +67,7 @@ class LogStore {
   }
 
   private _loadLogs() {
-    const savedLogs = Cookies.get('eventLogs');
+    const savedLogs = getCookie('eventLogs');
 
     if (savedLogs) {
       try {
@@ -98,7 +98,7 @@ class LogStore {
 
   private _saveLogs() {
     const currentLogs = this._logs.get();
-    Cookies.set('eventLogs', JSON.stringify(currentLogs));
+    setSecureCookie('eventLogs', JSON.stringify(currentLogs));
   }
 
   private _saveReadLogs() {

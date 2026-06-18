@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Cookies from 'js-cookie';
+import { setSecureCookie, getCookie } from '~/lib/api/secureCookies';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constants';
 import type { ProviderInfo } from '~/types/model';
 
@@ -14,22 +14,22 @@ export interface UseChatModelReturn {
 
 export function useChatModel(): UseChatModelReturn {
   const [model, setModel] = useState(() => {
-    const savedModel = Cookies.get('selectedModel');
+    const savedModel = getCookie('selectedModel');
     return savedModel || DEFAULT_MODEL;
   });
   const [provider, setProvider] = useState(() => {
-    const savedProvider = Cookies.get('selectedProvider');
+    const savedProvider = getCookie('selectedProvider');
     return (PROVIDER_LIST.find((p) => p.name === savedProvider) || DEFAULT_PROVIDER) as ProviderInfo;
   });
 
   const handleModelChange = (newModel: string) => {
     setModel(newModel);
-    Cookies.set('selectedModel', newModel, { expires: 30 });
+    setSecureCookie('selectedModel', newModel, { expires: 30 });
   };
 
   const handleProviderChange = (newProvider: ProviderInfo) => {
     setProvider(newProvider);
-    Cookies.set('selectedProvider', newProvider.name, { expires: 30 });
+    setSecureCookie('selectedProvider', newProvider.name, { expires: 30 });
   };
 
   return { model, setModel, provider, setProvider, handleModelChange, handleProviderChange };

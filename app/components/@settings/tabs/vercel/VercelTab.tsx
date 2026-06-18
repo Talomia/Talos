@@ -8,7 +8,7 @@ import { classNames } from '~/utils/classNames';
 import { ServiceHeader, ConnectionTestIndicator } from '~/components/@settings/shared/service-integration';
 import { useConnectionTest } from '~/lib/hooks';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/components/ui/Collapsible';
-import Cookies from 'js-cookie';
+import { setSecureCookie, removeCookie } from '~/lib/api/secureCookies';
 import { createScopedLogger } from '~/utils/logger';
 import {
   vercelConnection,
@@ -135,7 +135,7 @@ export default function VercelTab() {
       const userData = (await testResponse.json()) as VercelUserResponse;
 
       // Set cookies for server-side API access
-      Cookies.set('VITE_VERCEL_ACCESS_TOKEN', token, { expires: 365 });
+      setSecureCookie('VITE_VERCEL_ACCESS_TOKEN', token, { expires: 365 });
 
       // Normalize the user data structure
       const normalizedUser = userData.user || {
@@ -167,7 +167,7 @@ export default function VercelTab() {
 
   const handleDisconnect = () => {
     // Clear Vercel-related cookies
-    Cookies.remove('VITE_VERCEL_ACCESS_TOKEN');
+    removeCookie('VITE_VERCEL_ACCESS_TOKEN');
 
     updateVercelConnection({ user: null, token: '' });
     toast.success('Disconnected from Vercel');

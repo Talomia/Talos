@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 
 import { webcontainer as webcontainerPromise } from '~/lib/webcontainer';
 import git, { type GitAuth, type PromiseFsClient } from 'isomorphic-git';
 import http from 'isomorphic-git/http/web';
-import Cookies from 'js-cookie';
+import { setSecureCookie, getCookie } from '~/lib/api/secureCookies';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -11,7 +11,7 @@ const logger = createScopedLogger('UseGit');
 
 const lookupSavedPassword = (url: string) => {
   const domain = url.split('/')[2];
-  const gitCreds = Cookies.get(`git:${domain}`);
+  const gitCreds = getCookie(`git:${domain}`);
 
   if (!gitCreds) {
     return null;
@@ -28,7 +28,7 @@ const lookupSavedPassword = (url: string) => {
 
 const saveGitAuth = (url: string, auth: GitAuth) => {
   const domain = url.split('/')[2];
-  Cookies.set(`git:${domain}`, JSON.stringify(auth));
+  setSecureCookie(`git:${domain}`, JSON.stringify(auth));
 };
 
 export function useGit() {

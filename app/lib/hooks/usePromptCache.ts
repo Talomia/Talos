@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import Cookies from 'js-cookie';
+import { setSecureCookie } from '~/lib/api/secureCookies';
 import { debounce } from '~/utils/debounce';
 import { PROMPT_COOKIE_KEY } from '~/utils/constants';
 
@@ -15,7 +15,7 @@ export function usePromptCache(): UsePromptCacheReturn {
   const debouncedCachePrompt = useCallback(
     debounce((event: React.ChangeEvent<HTMLTextAreaElement>) => {
       const trimmedValue = event.target.value.trim();
-      Cookies.set(PROMPT_COOKIE_KEY, trimmedValue, { expires: 30 });
+      setSecureCookie(PROMPT_COOKIE_KEY, trimmedValue, { expires: 30 });
     }, 1000),
     [],
   );

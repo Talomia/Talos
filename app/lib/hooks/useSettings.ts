@@ -17,7 +17,7 @@ import {
   updatePromptId,
 } from '~/lib/stores/settings';
 import { useCallback, useEffect, useState } from 'react';
-import Cookies from 'js-cookie';
+import { setSecureCookie } from '~/lib/api/secureCookies';
 import type { IProviderSetting, ProviderInfo, IProviderConfig } from '~/types/model';
 import type { TabWindowConfig } from '~/components/@settings/core/types';
 import { logStore } from '~/lib/stores/logs';
@@ -115,7 +115,7 @@ export function useSettings(): UseSettingsReturn {
   const enableDebugMode = useCallback((enabled: boolean) => {
     isDebugMode.set(enabled);
     logStore.logSystem(`Debug mode ${enabled ? 'enabled' : 'disabled'}`);
-    Cookies.set('isDebugEnabled', String(enabled));
+    setSecureCookie('isDebugEnabled', String(enabled));
   }, []);
 
   const setEventLogs = useCallback((enabled: boolean) => {
@@ -183,7 +183,7 @@ export function useSettings(): UseSettingsReturn {
     Object.keys(providers).forEach((provider) => {
       providerSetting[provider] = providers[provider].settings;
     });
-    Cookies.set('providers', JSON.stringify(providerSetting));
+    setSecureCookie('providers', JSON.stringify(providerSetting));
   }, [providers]);
 
   return {
