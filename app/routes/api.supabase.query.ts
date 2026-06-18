@@ -1,16 +1,10 @@
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.supabase.query');
 
-export async function action({ request }: ActionFunctionArgs) {
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-      status: 405,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
+async function supabaseQueryAction({ request }: ActionFunctionArgs) {
   const authHeader = request.headers.get('Authorization');
 
   if (!authHeader) {
@@ -95,3 +89,5 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 }
+
+export const action = withSecurity(supabaseQueryAction, { allowedMethods: ['POST'] });

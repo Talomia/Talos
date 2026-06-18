@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { readVault } from '~/lib/.server/api-key-vault';
 import { createDataStream, generateId } from 'ai';
 import { MAX_RESPONSE_SEGMENTS, MAX_TOKENS, type FileMap } from '~/lib/.server/llm/constants';
@@ -16,9 +17,7 @@ import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 
-export async function action(args: ActionFunctionArgs) {
-  return chatAction(args);
-}
+export const action = withSecurity(chatAction, { allowedMethods: ['POST'] });
 
 const logger = createScopedLogger('api.chat');
 

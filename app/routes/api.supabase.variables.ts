@@ -1,9 +1,10 @@
 import { json, type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.supabase.variables');
 
-export async function action({ request }: ActionFunctionArgs) {
+async function supabaseVariablesAction({ request }: ActionFunctionArgs) {
   try {
     // Add proper type assertion for the request body
     const body = (await request.json()) as { projectId?: string; token?: string };
@@ -33,3 +34,5 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ error: error instanceof Error ? error.message : 'Unknown error occurred' }, { status: 500 });
   }
 }
+
+export const action = withSecurity(supabaseVariablesAction, { allowedMethods: ['POST'] });

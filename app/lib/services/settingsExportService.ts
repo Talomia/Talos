@@ -73,9 +73,8 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
 
       // UI configuration
       ui: {
-        // Tab configuration
+        // Tab configuration (localStorage only — no cookie needed)
         bolt_tab_configuration: safeGetItem('bolt_tab_configuration'),
-        tabConfiguration: allCookies.tabConfiguration,
 
         // Prompt settings
         promptId: safeGetItem('promptId'),
@@ -302,7 +301,7 @@ async function importComprehensiveFormat(data: SettingsData): Promise<void> {
     }
 
     // Import UI cookies
-    const uiCookies = ['tabConfiguration', 'cachedPrompt'];
+    const uiCookies = ['cachedPrompt'];
     uiCookies.forEach((key) => {
       if (data.ui?.[key]) {
         try {
@@ -428,7 +427,7 @@ async function importLegacyFormat(data: SettingsData): Promise<void> {
           'selectedModel',
           'selectedProvider',
           'providers',
-          'tabConfiguration',
+          'tabConfiguration', // legacy: kept for backward compat import only
           'cachedPrompt',
           'isDebugEnabled',
           'eventLogs',

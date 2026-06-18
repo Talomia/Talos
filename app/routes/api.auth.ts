@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs, json } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createSupabaseServerClient } from '~/lib/.server/supabase';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -10,7 +11,7 @@ const logger = createScopedLogger('api.auth');
  * Handles auth actions: signup, login, logout, oauth
  * Body: { action: string, email?: string, password?: string, provider?: string }
  */
-export async function action({ request, context }: ActionFunctionArgs) {
+async function authAction({ request, context }: ActionFunctionArgs) {
   const { supabase, responseHeaders } = createSupabaseServerClient(request, context);
 
   const body = await request.json<{
@@ -104,3 +105,5 @@ export async function action({ request, context }: ActionFunctionArgs) {
     return json({ error: 'Internal server error' }, { status: 500, headers: responseHeaders });
   }
 }
+
+export const action = withSecurity(authAction, { allowedMethods: ['POST'] });

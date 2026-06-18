@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs, json } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.netlify-deploy');
@@ -43,7 +44,7 @@ async function readNetlifyError(response: Response) {
   }
 }
 
-export async function action({ request }: ActionFunctionArgs) {
+async function netlifyDeployAction({ request }: ActionFunctionArgs) {
   try {
     const { siteId, files, token, chatId } = (await request.json()) as DeployRequestBody & { token: string };
 
@@ -286,3 +287,5 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ error: 'Deployment failed' }, { status: 500 });
   }
 }
+
+export const action = withSecurity(netlifyDeployAction, { allowedMethods: ['POST'] });

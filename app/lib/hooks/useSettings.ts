@@ -171,9 +171,15 @@ export function useSettings(): UseSettingsReturn {
     [saveSettings],
   );
 
+  /*
+   * Mirror provider settings to a cookie so server-side API routes can read them.
+   * Source of truth is localStorage (`provider_settings` via providersStore).
+   * Server routes (api.chat.ts, api.enhancer.ts, api.llmcall.ts, api.models.ts) call
+   * getProviderSettingsFromCookie() since they can't access localStorage.
+   */
   useEffect(() => {
     const providers = providersStore.get();
-    const providerSetting: Record<string, IProviderSetting> = {}; // preserve the entire settings object for each provider
+    const providerSetting: Record<string, IProviderSetting> = {};
     Object.keys(providers).forEach((provider) => {
       providerSetting[provider] = providers[provider].settings;
     });

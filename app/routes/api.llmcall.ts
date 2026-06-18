@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { streamText } from '~/lib/.server/llm/stream-text';
 import type { IProviderSetting, ProviderInfo } from '~/types/model';
 import { generateText } from 'ai';
@@ -9,9 +10,7 @@ import type { ModelInfo } from '~/lib/modules/llm/types';
 import { getApiKeysFromVault, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 
-export async function action(args: ActionFunctionArgs) {
-  return llmCallAction(args);
-}
+export const action = withSecurity(llmCallAction, { allowedMethods: ['POST'] });
 
 async function getModelList(options: {
   apiKeys?: Record<string, string>;

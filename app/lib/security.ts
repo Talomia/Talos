@@ -10,19 +10,36 @@ const logger = createScopedLogger('Security');
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
-// Rate limit configuration
-const RATE_LIMITS = {
-  // General API endpoints
-  '/api/*': { windowMs: 15 * 60 * 1000, maxRequests: 100 }, // 100 requests per 15 minutes
+// Rate limit configuration — ordered by specificity (exact matches before wildcards)
+const RATE_LIMITS: Record<string, { windowMs: number; maxRequests: number }> = {
+  // LLM routes — most expensive, strictest limits
+  '/api/chat': { windowMs: 60 * 1000, maxRequests: 10 }, // 10 chats/min
+  '/api/enhancer': { windowMs: 60 * 1000, maxRequests: 15 }, // 15 enhances/min
+  '/api/llmcall': { windowMs: 60 * 1000, maxRequests: 10 }, // 10 calls/min
 
-  // LLM API (more restrictive)
-  '/api/llmcall': { windowMs: 60 * 1000, maxRequests: 10 }, // 10 requests per minute
+  // Deploy routes — expensive and slow
+  '/api/netlify-deploy': { windowMs: 5 * 60 * 1000, maxRequests: 10 }, // 10 deploys/5min
+  '/api/vercel-deploy': { windowMs: 5 * 60 * 1000, maxRequests: 10 }, // 10 deploys/5min
 
-  // GitHub API endpoints
-  '/api/github-*': { windowMs: 60 * 1000, maxRequests: 30 }, // 30 requests per minute
+  // Auth routes — brute force protection
+  '/api/auth': { windowMs: 15 * 60 * 1000, maxRequests: 30 }, // 30 auth/15min
 
-  // Netlify API endpoints
-  '/api/netlify-*': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 requests per minute
+  // Web search — potential SSRF, rate limit external fetches
+  '/api/web-search': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 searches/min
+
+  // Database query — sensitive
+  '/api/supabase/query': { windowMs: 60 * 1000, maxRequests: 30 }, // 30 queries/min
+  '/api/supabase/variables': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 requests/min
+
+  // Service API endpoints (wildcards)
+  '/api/github-*': { windowMs: 60 * 1000, maxRequests: 30 }, // 30 requests/min
+  '/api/gitlab-*': { windowMs: 60 * 1000, maxRequests: 30 }, // 30 requests/min
+  '/api/netlify-*': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 requests/min
+  '/api/vercel-*': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 requests/min
+  '/api/supabase-*': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 requests/min
+
+  // General API fallback — catches everything else
+  '/api/*': { windowMs: 15 * 60 * 1000, maxRequests: 100 }, // 100 requests/15min
 };
 
 /**
@@ -32,10 +49,26 @@ export function checkRateLimit(request: Request, endpoint: string): { allowed: b
   const clientIP = getClientIP(request);
   const key = `${clientIP}:${endpoint}`;
 
-  // Find matching rate limit rule
-  const rule = Object.entries(RATE_LIMITS).find(([pattern]) => {
+  // Find matching rate limit rule — sort by specificity (exact first, then longest wildcards)
+  const sortedRules = Object.entries(RATE_LIMITS).sort(([a], [b]) => {
+    const aIsWildcard = a.includes('*');
+    const bIsWildcard = b.includes('*');
+
+    if (aIsWildcard !== bIsWildcard) {
+      return aIsWildcard ? 1 : -1;
+    }
+
+    return b.length - a.length; // longer (more specific) patterns first
+  });
+
+  const rule = sortedRules.find(([pattern]) => {
     if (pattern.endsWith('/*')) {
       const basePattern = pattern.slice(0, -2);
+      return endpoint.startsWith(basePattern);
+    }
+
+    if (pattern.endsWith('-*')) {
+      const basePattern = pattern.slice(0, -1);
       return endpoint.startsWith(basePattern);
     }
 

@@ -1,5 +1,6 @@
 import { json } from '@remix-run/cloudflare';
 import type { ActionFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { isAllowedUrl } from '~/utils/url';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -50,11 +51,7 @@ function extractTextContent(html: string): string {
     .trim();
 }
 
-export async function action({ request }: ActionFunctionArgs) {
-  if (request.method !== 'POST') {
-    return json({ error: 'Method not allowed' }, { status: 405 });
-  }
-
+async function webSearchAction({ request }: ActionFunctionArgs) {
   try {
     const { url } = (await request.json()) as { url?: string };
 
@@ -105,3 +102,5 @@ export async function action({ request }: ActionFunctionArgs) {
     return json({ error: error instanceof Error ? error.message : 'Failed to fetch URL' }, { status: 500 });
   }
 }
+
+export const action = withSecurity(webSearchAction, { allowedMethods: ['POST'] });

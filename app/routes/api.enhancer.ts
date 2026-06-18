@@ -1,13 +1,12 @@
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { streamText } from '~/lib/.server/llm/stream-text';
 import { stripIndents } from '~/utils/stripIndent';
 import type { ProviderInfo } from '~/types/model';
 import { getApiKeysFromVault, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 
-export async function action(args: ActionFunctionArgs) {
-  return enhancerAction(args);
-}
+export const action = withSecurity(enhancerAction, { allowedMethods: ['POST'] });
 
 const logger = createScopedLogger('api.enhancer');
 
