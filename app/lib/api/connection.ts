@@ -46,7 +46,7 @@ export const checkConnection = async (): Promise<ConnectionStatus> => {
           break;
         }
       } catch (endpointError) {
-        console.debug(`Failed to connect to ${endpoint}:`, endpointError);
+        logger.debug(`Failed to connect to ${endpoint}:`, endpointError);
         continue;
       }
     }
