@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './Button';
 import { classNames } from '~/utils/classNames';
 
-
 interface BranchInfo {
   name: string;
   sha: string;

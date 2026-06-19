@@ -1,5 +1,11 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { createSecurityHeaders, checkRateLimit, withSecurity, validateApiKeyFormat, sanitizeErrorMessage } from '~/lib/security';
+import {
+  createSecurityHeaders,
+  checkRateLimit,
+  withSecurity,
+  validateApiKeyFormat,
+  sanitizeErrorMessage,
+} from '~/lib/security';
 
 // Suppress logger output during tests
 vi.mock('~/utils/logger', () => ({
@@ -117,8 +123,10 @@ describe('security', () => {
       // Blocked
       expect(checkRateLimit(makeRequest('http://localhost/api/chat', ip), '/api/chat').allowed).toBe(false);
 
-      // The cleanup condition is `resetTime < now - windowMs`.
-      // Since resetTime = creationTime + 60s, we need now > resetTime + 60s → advance > 120s.
+      /*
+       * The cleanup condition is `resetTime < now - windowMs`.
+       * Since resetTime = creationTime + 60s, we need now > resetTime + 60s → advance > 120s.
+       */
       vi.advanceTimersByTime(121_000);
 
       // Should be allowed again

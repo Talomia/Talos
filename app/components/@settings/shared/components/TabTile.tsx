@@ -89,6 +89,7 @@ export const TabTile: React.FC<TabTileProps> = ({
                     }
 
                     const IconComponent = iconEntry;
+
                     return (
                       <IconComponent
                         className={classNames(

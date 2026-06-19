@@ -3,7 +3,6 @@ import { classNames } from '~/utils/classNames';
 import { formatSize } from '~/utils/formatSize';
 import type { GitHubRepoInfo } from '~/types/GitHub';
 
-
 interface RepositoryCardProps {
   repository: GitHubRepoInfo;
   variant?: 'default' | 'compact' | 'detailed';

@@ -1,6 +1,5 @@
 import type { TabType } from './types';
 
-
 // GitLab icon component
 const GitLabIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4">

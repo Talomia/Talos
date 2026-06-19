@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '~/components/ui/Button';
 import { classNames } from '~/utils/classNames';
 
-
 interface ProgressiveLoaderProps {
   isLoading: boolean;
   isRefreshing?: boolean;

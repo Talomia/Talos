@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 
-
 export type SettingCategory = 'profile' | 'file_sharing' | 'connectivity' | 'system' | 'services' | 'preferences';
 
 export type TabType =

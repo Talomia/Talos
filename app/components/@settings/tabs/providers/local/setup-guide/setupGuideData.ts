@@ -1,5 +1,3 @@
-
-
 export interface HardwareSpec {
   icon: string;
   iconColor: string;

@@ -8,7 +8,6 @@ import { useGitLabConnection } from '~/lib/hooks';
 import { classNames } from '~/utils/classNames';
 import { createScopedLogger } from '~/utils/logger';
 
-
 const logger = createScopedLogger('GitLabRepositorySelector');
 
 interface GitLabRepositorySelectorProps {
