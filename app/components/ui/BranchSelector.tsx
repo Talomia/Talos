@@ -5,7 +5,7 @@ const logger = createScopedLogger('BranchSelector');
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from './Button';
 import { classNames } from '~/utils/classNames';
-import { GitBranch, Check, Shield, Star, RefreshCw, X } from 'lucide-react';
+
 
 interface BranchInfo {
   name: string;
@@ -147,7 +147,7 @@ export function BranchSelector({
           <div className="p-6 border-b border-bolt-elements-borderColor flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <GitBranch className="w-6 h-6 text-blue-600" />
+                <div className="i-ph:git-branch w-6 h-6 text-blue-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Select Branch</h3>
@@ -160,7 +160,7 @@ export function BranchSelector({
               onClick={onClose}
               className="p-2 rounded-lg hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-all"
             >
-              <X className="w-5 h-5" />
+              <div className="i-ph:x w-5 h-5" />
             </button>
           </div>
 
@@ -174,11 +174,11 @@ export function BranchSelector({
             ) : error ? (
               <div className="flex flex-col items-center justify-center p-8 space-y-4">
                 <div className="text-red-500 mb-2">
-                  <GitBranch className="w-8 h-8 mx-auto" />
+                  <div className="i-ph:git-branch w-8 h-8 mx-auto" />
                 </div>
                 <p className="text-sm text-red-600 text-center">{error}</p>
                 <Button onClick={fetchBranches} variant="outline" size="sm">
-                  <RefreshCw className="w-4 h-4 mr-2" />
+                  <div className="i-ph:arrows-clockwise w-4 h-4 mr-2" />
                   Retry
                 </Button>
               </div>
@@ -214,14 +214,14 @@ export function BranchSelector({
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 min-w-0">
-                              <GitBranch className="w-4 h-4 flex-shrink-0 text-bolt-elements-textSecondary" />
+                              <div className="i-ph:git-branch w-4 h-4 flex-shrink-0 text-bolt-elements-textSecondary" />
                               <span className="font-medium text-bolt-elements-textPrimary truncate">{branch.name}</span>
                               <div className="flex items-center gap-1 flex-shrink-0">
-                                {branch.isDefault && <Star className="w-3 h-3 text-yellow-500" />}
-                                {branch.protected && <Shield className="w-3 h-3 text-red-500" />}
+                                {branch.isDefault && <div className="i-ph:star w-3 h-3 text-yellow-500" />}
+                                {branch.protected && <div className="i-ph:shield w-3 h-3 text-red-500" />}
                               </div>
                             </div>
-                            {selectedBranch === branch.name && <Check className="w-4 h-4 text-blue-600" />}
+                            {selectedBranch === branch.name && <div className="i-ph:check w-4 h-4 text-blue-600" />}
                           </div>
                           <div className="text-xs text-bolt-elements-textSecondary mt-1 truncate">
                             {branch.sha.substring(0, 8)}

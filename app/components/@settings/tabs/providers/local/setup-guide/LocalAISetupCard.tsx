@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '~/components/ui/Card';
-import { Settings, CheckCircle, Download, Globe } from 'lucide-react';
 
 // LocalAI Setup Section
 function LocalAiSetupCard() {
@@ -9,7 +8,7 @@ function LocalAiSetupCard() {
       <CardHeader className="pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center ring-1 ring-green-500/30">
-            <Globe className="w-6 h-6 text-green-500" />
+            <div className="i-ph:globe w-6 h-6 text-green-500" />
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">LocalAI Setup</h3>
@@ -23,7 +22,7 @@ function LocalAiSetupCard() {
         {/* Installation */}
         <div className="space-y-4">
           <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-            <Download className="w-4 h-4" />
+            <div className="i-ph:download w-4 h-4" />
             Installation Options
           </h4>
           <div className="grid md:grid-cols-2 gap-4">
@@ -47,7 +46,7 @@ function LocalAiSetupCard() {
         {/* Configuration */}
         <div className="space-y-4">
           <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-            <Settings className="w-4 h-4" />
+            <div className="i-ph:gear w-4 h-4" />
             Configuration
           </h4>
           <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
@@ -68,7 +67,7 @@ function LocalAiSetupCard() {
         {/* Advantages */}
         <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
           <div className="flex items-center gap-2 mb-2">
-            <CheckCircle className="w-4 h-4 text-green-500" />
+            <div className="i-ph:check-circle w-4 h-4 text-green-500" />
             <span className="font-medium text-green-500">LocalAI Advantages</span>
           </div>
           <ul className="text-xs text-bolt-elements-textSecondary space-y-1 list-disc list-inside">

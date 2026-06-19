@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { User, Folder, Wifi, Settings, Box, Sliders } from 'lucide-react';
+
 
 export type SettingCategory = 'profile' | 'file_sharing' | 'connectivity' | 'system' | 'services' | 'preferences';
 
@@ -77,13 +77,13 @@ export const categoryLabels: Record<SettingCategory, string> = {
   preferences: 'Preferences',
 };
 
-export const categoryIcons: Record<SettingCategory, React.ComponentType<{ className?: string }>> = {
-  profile: User,
-  file_sharing: Folder,
-  connectivity: Wifi,
-  system: Settings,
-  services: Box,
-  preferences: Sliders,
+export const categoryIcons: Record<SettingCategory, string> = {
+  profile: 'i-ph:user',
+  file_sharing: 'i-ph:folder',
+  connectivity: 'i-ph:wifi-high',
+  system: 'i-ph:gear',
+  services: 'i-ph:cube',
+  preferences: 'i-ph:sliders',
 };
 
 export interface Profile {

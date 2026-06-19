@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '~/components/ui/Card';
-import { Wifi } from 'lucide-react';
+
 import { LOCAL_ALTERNATIVES, CLOUD_ALTERNATIVES } from './setupGuideData';
 
 // Alternative Options
@@ -10,7 +10,7 @@ function AlternativesCard() {
       <CardHeader className="pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 flex items-center justify-center ring-1 ring-orange-500/30">
-            <Wifi className="w-6 h-6 text-orange-500" />
+            <div className="i-ph:wifi-high w-6 h-6 text-orange-500" />
           </div>
           <div>
             <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">Alternative Options</h3>
@@ -26,7 +26,7 @@ function AlternativesCard() {
               {LOCAL_ALTERNATIVES.map((tool) => (
                 <div key={tool.name} className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <tool.icon className={`w-4 h-4 ${tool.iconColor}`} />
+                    <div className={`${tool.icon} w-4 h-4 ${tool.iconColor}`} />
                     <span className="font-medium text-bolt-elements-textPrimary">{tool.name}</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">{tool.description}</p>
@@ -40,7 +40,7 @@ function AlternativesCard() {
               {CLOUD_ALTERNATIVES.map((tool) => (
                 <div key={tool.name} className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <tool.icon className={`w-4 h-4 ${tool.iconColor}`} />
+                    <div className={`${tool.icon} w-4 h-4 ${tool.iconColor}`} />
                     <span className="font-medium text-bolt-elements-textPrimary">{tool.name}</span>
                   </div>
                   <p className="text-xs text-bolt-elements-textSecondary">{tool.description}</p>

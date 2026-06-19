@@ -1,6 +1,5 @@
 import React from 'react';
 import { Button } from '~/components/ui/Button';
-import { ArrowLeft } from 'lucide-react';
 import SystemRequirementsCard from './SystemRequirementsCard';
 import OllamaSetupCard from './OllamaSetupCard';
 import LmStudioSetupCard from './LMStudioSetupCard';
@@ -21,7 +20,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           className="bg-transparent hover:bg-transparent text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-all duration-200 p-2"
           aria-label="Back to Dashboard"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <div className="i-ph:arrow-left w-4 h-4" />
         </Button>
         <div>
           <h2 className="text-xl font-semibold text-bolt-elements-textPrimary">Local Provider Setup Guide</h2>

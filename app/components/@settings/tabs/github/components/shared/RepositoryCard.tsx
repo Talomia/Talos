@@ -2,21 +2,7 @@ import React from 'react';
 import { classNames } from '~/utils/classNames';
 import { formatSize } from '~/utils/formatSize';
 import type { GitHubRepoInfo } from '~/types/GitHub';
-import {
-  Star,
-  GitFork,
-  Clock,
-  Lock,
-  Archive,
-  GitBranch,
-  Users,
-  Database,
-  Tag,
-  Heart,
-  ExternalLink,
-  Circle,
-  GitPullRequest,
-} from 'lucide-react';
+
 
 interface RepositoryCardProps {
   repository: GitHubRepoInfo;
@@ -145,18 +131,18 @@ export function RepositoryCard({
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-medium text-bolt-elements-textPrimary">{repository.name}</h4>
-            {repository.private && <Lock className="w-3 h-3 text-bolt-elements-textTertiary" />}
-            {repository.fork && <GitFork className="w-3 h-3 text-bolt-elements-textTertiary" />}
-            {repository.archived && <Archive className="w-3 h-3 text-bolt-elements-textTertiary" />}
+            {repository.private && <div className="i-ph:lock w-3 h-3 text-bolt-elements-textTertiary" />}
+            {repository.fork && <div className="i-ph:git-fork w-3 h-3 text-bolt-elements-textTertiary" />}
+            {repository.archived && <div className="i-ph:archive w-3 h-3 text-bolt-elements-textTertiary" />}
           </div>
 
           <div className="flex items-center gap-3 text-xs text-bolt-elements-textSecondary">
             <span className="flex items-center gap-1">
-              <Star className="w-3 h-3" />
+              <div className="i-ph:star w-3 h-3" />
               {repository.stargazers_count}
             </span>
             <span className="flex items-center gap-1">
-              <GitFork className="w-3 h-3" />
+              <div className="i-ph:git-fork w-3 h-3" />
               {repository.forks_count}
             </span>
           </div>
@@ -178,7 +164,7 @@ export function RepositoryCard({
           </div>
 
           <span className="flex items-center gap-1 text-xs text-bolt-elements-textTertiary">
-            <Clock className="w-3 h-3" />
+            <div className="i-ph:clock w-3 h-3" />
             {formatTimeAgo()}
           </span>
         </div>
@@ -216,7 +202,7 @@ export function RepositoryCard({
       <div className="space-y-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
-            <GitBranch className="w-4 h-4 text-bolt-elements-icon-tertiary" />
+            <div className="i-ph:git-branch w-4 h-4 text-bolt-elements-icon-tertiary" />
             <h5
               className={classNames(
                 'text-sm font-medium text-bolt-elements-textPrimary',
@@ -227,33 +213,33 @@ export function RepositoryCard({
             </h5>
             {repository.fork && (
               <span title="Forked repository">
-                <GitFork className="w-3 h-3 text-bolt-elements-textTertiary" />
+                <div className="i-ph:git-fork w-3 h-3 text-bolt-elements-textTertiary" />
               </span>
             )}
             {repository.archived && (
               <span title="Archived repository">
-                <Archive className="w-3 h-3 text-bolt-elements-textTertiary" />
+                <div className="i-ph:archive w-3 h-3 text-bolt-elements-textTertiary" />
               </span>
             )}
           </div>
           <div className="flex items-center gap-3 text-xs text-bolt-elements-textSecondary">
             <span className="flex items-center gap-1" title="Stars">
-              <Star className="w-3.5 h-3.5 text-bolt-elements-icon-warning" />
+              <div className="i-ph:star w-3.5 h-3.5 text-bolt-elements-icon-warning" />
               {repository.stargazers_count.toLocaleString()}
             </span>
             <span className="flex items-center gap-1" title="Forks">
-              <GitFork className="w-3.5 h-3.5 text-bolt-elements-icon-info" />
+              <div className="i-ph:git-fork w-3.5 h-3.5 text-bolt-elements-icon-info" />
               {repository.forks_count.toLocaleString()}
             </span>
             {showExtendedMetrics && repository.issues_count !== undefined && (
               <span className="flex items-center gap-1" title="Open Issues">
-                <Circle className="w-3.5 h-3.5 text-bolt-elements-icon-error" />
+                <div className="i-ph:circle w-3.5 h-3.5 text-bolt-elements-icon-error" />
                 {repository.issues_count}
               </span>
             )}
             {showExtendedMetrics && repository.pull_requests_count !== undefined && (
               <span className="flex items-center gap-1" title="Pull Requests">
-                <GitPullRequest className="w-3.5 h-3.5 text-bolt-elements-icon-success" />
+                <div className="i-ph:git-pull-request w-3.5 h-3.5 text-bolt-elements-icon-success" />
                 {repository.pull_requests_count}
               </span>
             )}
@@ -297,34 +283,34 @@ export function RepositoryCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-xs text-bolt-elements-textSecondary">
             <span className="flex items-center gap-1" title="Default Branch">
-              <GitBranch className="w-3.5 h-3.5" />
+              <div className="i-ph:git-branch w-3.5 h-3.5" />
               {repository.default_branch}
             </span>
             {showExtendedMetrics && repository.branches_count && (
               <span className="flex items-center gap-1" title="Total Branches">
-                <GitFork className="w-3.5 h-3.5" />
+                <div className="i-ph:git-fork w-3.5 h-3.5" />
                 {repository.branches_count}
               </span>
             )}
             {showExtendedMetrics && repository.contributors_count && (
               <span className="flex items-center gap-1" title="Contributors">
-                <Users className="w-3.5 h-3.5" />
+                <div className="i-ph:users w-3.5 h-3.5" />
                 {repository.contributors_count}
               </span>
             )}
             {repository.size && (
               <span className="flex items-center gap-1" title="Size">
-                <Database className="w-3.5 h-3.5" />
+                <div className="i-ph:database w-3.5 h-3.5" />
                 {(repository.size / 1024).toFixed(1)}MB
               </span>
             )}
             <span className="flex items-center gap-1" title="Last Updated">
-              <Clock className="w-3.5 h-3.5" />
+              <div className="i-ph:clock w-3.5 h-3.5" />
               {formatTimeAgo()}
             </span>
             {repository.topics && repository.topics.length > 0 && (
               <span className="flex items-center gap-1" title={`Topics: ${repository.topics.join(', ')}`}>
-                <Tag className="w-3.5 h-3.5" />
+                <div className="i-ph:tag w-3.5 h-3.5" />
                 {repository.topics.length}
               </span>
             )}
@@ -337,7 +323,7 @@ export function RepositoryCard({
                 className="flex items-center gap-1"
                 title={`Health Score: ${health.percentage}% (${health.score}/${health.maxScore})`}
               >
-                <Heart className={`w-3.5 h-3.5 ${health.color}`} />
+                <div className={`i-ph:heart w-3.5 h-3.5 ${health.color}`} />
                 <span className={`text-xs font-medium ${health.color}`}>{health.percentage}%</span>
               </div>
             )}
@@ -349,7 +335,7 @@ export function RepositoryCard({
                   'group-hover:text-bolt-elements-item-contentAccent',
                 )}
               >
-                <ExternalLink className="w-3.5 h-3.5" />
+                <div className="i-ph:arrow-square-out w-3.5 h-3.5" />
                 View
               </span>
             )}

@@ -71,7 +71,24 @@ export const TabTile: React.FC<TabTileProps> = ({
                   )}
                 >
                   {(() => {
-                    const IconComponent = TAB_ICONS[tab.id];
+                    const iconEntry = TAB_ICONS[tab.id];
+
+                    if (typeof iconEntry === 'string') {
+                      return (
+                        <div
+                          className={classNames(
+                            iconEntry,
+                            'w-8 h-8',
+                            'text-gray-600 dark:text-gray-300',
+                            'group-hover:text-purple-500 dark:group-hover:text-purple-400/80',
+                            'transition-colors duration-100 ease-out',
+                            isActive ? 'text-purple-500 dark:text-purple-400/90' : '',
+                          )}
+                        />
+                      );
+                    }
+
+                    const IconComponent = iconEntry;
                     return (
                       <IconComponent
                         className={classNames(

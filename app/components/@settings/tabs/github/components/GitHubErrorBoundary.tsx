@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { Button } from '~/components/ui/Button';
-import { AlertTriangle } from 'lucide-react';
+
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('GitHubErrorBoundary');
@@ -48,7 +48,7 @@ export class GitHubErrorBoundary extends Component<Props, State> {
       return (
         <div className="flex flex-col items-center justify-center p-8 text-center space-y-4 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded-lg">
           <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-            <AlertTriangle className="w-6 h-6 text-red-500" />
+            <div className="i-ph:warning w-6 h-6 text-red-500" />
           </div>
 
           <div>

@@ -1,19 +1,6 @@
 import React from 'react';
 import { Button } from '~/components/ui/Button';
 import { Card, CardContent, CardHeader } from '~/components/ui/Card';
-import {
-  Server,
-  Settings,
-  ExternalLink,
-  Package,
-  Code,
-  AlertCircle,
-  Activity,
-  Download,
-  Globe,
-  Terminal,
-  Monitor,
-} from 'lucide-react';
 import { CODE_MODEL_COMMANDS, GENERAL_MODEL_COMMANDS } from './setupGuideData';
 
 // Ollama Setup Section
@@ -23,7 +10,7 @@ function OllamaSetupCard() {
       <CardHeader className="pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center ring-1 ring-purple-500/30">
-            <Server className="w-6 h-6 text-purple-500" />
+            <div className="i-ph:hard-drives w-6 h-6 text-purple-500" />
           </div>
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">Ollama Setup</h3>
@@ -40,14 +27,14 @@ function OllamaSetupCard() {
         {/* Installation Options */}
         <div className="space-y-4">
           <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-            <Download className="w-4 h-4" />
+            <div className="i-ph:download w-4 h-4" />
             1. Choose Installation Method
           </h4>
 
           {/* Desktop App - New and Recommended */}
           <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
             <div className="flex items-center gap-2 mb-3">
-              <Monitor className="w-5 h-5 text-green-500" />
+              <div className="i-ph:monitor w-5 h-5 text-green-500" />
               <h5 className="font-medium text-green-500">🆕 Desktop App (Recommended)</h5>
             </div>
             <p className="text-sm text-bolt-elements-textSecondary mb-3">
@@ -56,7 +43,7 @@ function OllamaSetupCard() {
             <div className="grid md:grid-cols-2 gap-4">
               <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                  <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                   <strong className="text-bolt-elements-textPrimary">macOS</strong>
                 </div>
                 <Button
@@ -71,15 +58,15 @@ function OllamaSetupCard() {
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2"
                   >
-                    <Download className="w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
+                    <div className="i-ph:download w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
                     <span className="flex-1 text-center font-medium">Download Desktop App</span>
-                    <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                    <div className="i-ph:arrow-square-out w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
                   </a>
                 </Button>
               </div>
               <div className="p-3 rounded-lg bg-bolt-elements-background-depth-3">
                 <div className="flex items-center gap-2 mb-2">
-                  <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                  <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                   <strong className="text-bolt-elements-textPrimary">Windows</strong>
                 </div>
                 <Button
@@ -94,16 +81,16 @@ function OllamaSetupCard() {
                     rel="noopener noreferrer"
                     className="flex items-center justify-center gap-2"
                   >
-                    <Download className="w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
+                    <div className="i-ph:download w-4 h-4 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 flex-shrink-0" />
                     <span className="flex-1 text-center font-medium">Download Desktop App</span>
-                    <ExternalLink className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
+                    <div className="i-ph:arrow-square-out w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 flex-shrink-0" />
                   </a>
                 </Button>
               </div>
             </div>
             <div className="mt-3 p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
               <div className="flex items-center gap-2 mb-1">
-                <Globe className="w-4 h-4 text-blue-500" />
+                <div className="i-ph:globe w-4 h-4 text-blue-500" />
                 <span className="font-medium text-blue-500 text-sm">Built-in Web Interface</span>
               </div>
               <p className="text-xs text-bolt-elements-textSecondary">
@@ -116,13 +103,13 @@ function OllamaSetupCard() {
           {/* CLI Installation */}
           <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
             <div className="flex items-center gap-2 mb-3">
-              <Terminal className="w-5 h-5 text-bolt-elements-textPrimary" />
+              <div className="i-ph:terminal w-5 h-5 text-bolt-elements-textPrimary" />
               <h5 className="font-medium text-bolt-elements-textPrimary">Command Line (Advanced)</h5>
             </div>
             <div className="grid md:grid-cols-3 gap-4">
               <div className="p-3 rounded-lg bg-bolt-elements-background-depth-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                  <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                   <strong className="text-bolt-elements-textPrimary">Windows</strong>
                 </div>
                 <div className="text-xs bg-bolt-elements-background-depth-4 p-2 rounded font-mono text-bolt-elements-textPrimary">
@@ -131,7 +118,7 @@ function OllamaSetupCard() {
               </div>
               <div className="p-3 rounded-lg bg-bolt-elements-background-depth-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Monitor className="w-4 h-4 text-bolt-elements-textPrimary" />
+                  <div className="i-ph:monitor w-4 h-4 text-bolt-elements-textPrimary" />
                   <strong className="text-bolt-elements-textPrimary">macOS</strong>
                 </div>
                 <div className="text-xs bg-bolt-elements-background-depth-4 p-2 rounded font-mono text-bolt-elements-textPrimary">
@@ -140,7 +127,7 @@ function OllamaSetupCard() {
               </div>
               <div className="p-3 rounded-lg bg-bolt-elements-background-depth-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <Terminal className="w-4 h-4 text-bolt-elements-textPrimary" />
+                  <div className="i-ph:terminal w-4 h-4 text-bolt-elements-textPrimary" />
                   <strong className="text-bolt-elements-textPrimary">Linux</strong>
                 </div>
                 <div className="text-xs bg-bolt-elements-background-depth-4 p-2 rounded font-mono text-bolt-elements-textPrimary">
@@ -154,13 +141,13 @@ function OllamaSetupCard() {
         {/* Latest Model Recommendations */}
         <div className="space-y-4">
           <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-            <Package className="w-4 h-4" />
+            <div className="i-ph:package w-4 h-4" />
             2. Download Latest Models
           </h4>
           <div className="grid md:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
               <h5 className="font-medium text-bolt-elements-textPrimary mb-3 flex items-center gap-2">
-                <Code className="w-4 h-4 text-green-500" />
+                <div className="i-ph:code w-4 h-4 text-green-500" />
                 Code &amp; Development
               </h5>
               <div className="space-y-2 text-xs bg-bolt-elements-background-depth-4 p-3 rounded font-mono text-bolt-elements-textPrimary">
@@ -172,7 +159,7 @@ function OllamaSetupCard() {
             </div>
             <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
               <h5 className="font-medium text-bolt-elements-textPrimary mb-3 flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-blue-500" />
+                <div className="i-ph:terminal w-4 h-4 text-blue-500" />
                 General Purpose &amp; Chat
               </h5>
               <div className="space-y-2 text-xs bg-bolt-elements-background-depth-4 p-3 rounded font-mono text-bolt-elements-textPrimary">
@@ -186,7 +173,7 @@ function OllamaSetupCard() {
           <div className="grid md:grid-cols-2 gap-4">
             <div className="p-4 rounded-lg bg-purple-500/5 border border-purple-500/20">
               <div className="flex items-center gap-2 mb-2">
-                <Activity className="w-4 h-4 text-purple-500" />
+                <div className="i-ph:activity w-4 h-4 text-purple-500" />
                 <span className="font-medium text-purple-500">Performance Optimized</span>
               </div>
               <ul className="text-xs text-bolt-elements-textSecondary space-y-1">
@@ -198,7 +185,7 @@ function OllamaSetupCard() {
             </div>
             <div className="p-4 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
               <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-4 h-4 text-yellow-500" />
+                <div className="i-ph:warning-circle w-4 h-4 text-yellow-500" />
                 <span className="font-medium text-yellow-500">Pro Tips</span>
               </div>
               <ul className="text-xs text-bolt-elements-textSecondary space-y-1">
@@ -214,7 +201,7 @@ function OllamaSetupCard() {
         {/* Desktop App Features */}
         <div className="space-y-4">
           <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-            <Monitor className="w-4 h-4" />
+            <div className="i-ph:monitor w-4 h-4" />
             3. Desktop App Features
           </h4>
           <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
@@ -244,7 +231,7 @@ function OllamaSetupCard() {
         {/* Troubleshooting */}
         <div className="space-y-4">
           <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-            <Settings className="w-4 h-4" />
+            <div className="i-ph:gear w-4 h-4" />
             4. Troubleshooting &amp; Commands
           </h4>
           <div className="grid md:grid-cols-2 gap-4">

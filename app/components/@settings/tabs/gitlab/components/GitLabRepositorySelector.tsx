@@ -7,7 +7,7 @@ import type { GitLabProjectInfo } from '~/types/GitLab';
 import { useGitLabConnection } from '~/lib/hooks';
 import { classNames } from '~/utils/classNames';
 import { createScopedLogger } from '~/utils/logger';
-import { Search, RefreshCw, GitBranch, Calendar, Filter } from 'lucide-react';
+
 
 const logger = createScopedLogger('GitLabRepositorySelector');
 
@@ -181,12 +181,12 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
     return (
       <div className="text-center p-8">
         <div className="text-red-500 mb-4">
-          <GitBranch className="w-12 h-12 mx-auto mb-2" />
+          <div className="i-ph:git-branch w-12 h-12 mx-auto mb-2" />
           <p className="font-medium">Failed to load repositories</p>
           <p className="text-sm text-bolt-elements-textSecondary mt-1">{error}</p>
         </div>
         <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
-          <RefreshCw className={classNames('w-4 h-4 mr-2', { 'animate-spin': isRefreshing })} />
+          <div className={classNames('i-ph:arrows-clockwise w-4 h-4 mr-2', { 'animate-spin': isRefreshing })} />
           Try Again
         </Button>
       </div>
@@ -205,10 +205,10 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
   if (!repositories.length && !isLoading) {
     return (
       <div className="text-center p-8">
-        <GitBranch className="w-12 h-12 text-bolt-elements-textTertiary mx-auto mb-4" />
+        <div className="i-ph:git-branch w-12 h-12 text-bolt-elements-textTertiary mx-auto mb-4" />
         <p className="text-bolt-elements-textSecondary mb-4">No repositories found</p>
         <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
-          <RefreshCw className={classNames('w-4 h-4 mr-2', { 'animate-spin': isRefreshing })} />
+          <div className={classNames('i-ph:arrows-clockwise w-4 h-4 mr-2', { 'animate-spin': isRefreshing })} />
           Refresh
         </Button>
       </div>
@@ -237,7 +237,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
           size="sm"
           className="flex items-center gap-2"
         >
-          <RefreshCw className={classNames('w-4 h-4', { 'animate-spin': isRefreshing })} />
+          <div className={classNames('i-ph:arrows-clockwise w-4 h-4', { 'animate-spin': isRefreshing })} />
           Refresh
         </Button>
       </div>
@@ -252,7 +252,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-bolt-elements-textTertiary" />
+          <div className="i-ph:magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-bolt-elements-textTertiary" />
           <input
             type="text"
             placeholder="Search repositories..."
@@ -264,7 +264,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
 
         {/* Sort */}
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-bolt-elements-textTertiary" />
+          <div className="i-ph:calendar w-4 h-4 text-bolt-elements-textTertiary" />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
@@ -279,7 +279,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
 
         {/* Filter */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-bolt-elements-textTertiary" />
+          <div className="i-ph:funnel w-4 h-4 text-bolt-elements-textTertiary" />
           <select
             value={filterBy}
             onChange={(e) => setFilterBy(e.target.value as FilterOption)}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { CardContent } from '~/components/ui/Card';
-import { Shield } from 'lucide-react';
+
 import { HARDWARE_SPECS } from './setupGuideData';
 
 // Hardware Requirements Overview
@@ -10,7 +10,7 @@ function SystemRequirementsCard() {
       <CardContent className="p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-blue-500" />
+            <div className="i-ph:shield w-5 h-5 text-blue-500" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">System Requirements</h3>
@@ -21,7 +21,7 @@ function SystemRequirementsCard() {
           {HARDWARE_SPECS.map((spec) => (
             <div key={spec.label} className="space-y-2">
               <div className="flex items-center gap-2">
-                <spec.icon className={`w-4 h-4 ${spec.iconColor}`} />
+                <div className={`${spec.icon} w-4 h-4 ${spec.iconColor}`} />
                 <span className="font-medium text-bolt-elements-textPrimary">{spec.label}</span>
               </div>
               <p className="text-bolt-elements-textSecondary">{spec.description}</p>

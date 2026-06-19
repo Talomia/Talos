@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '~/components/ui/Button';
 import { classNames } from '~/utils/classNames';
-import { Loader2, ChevronDown, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+
 
 interface ProgressiveLoaderProps {
   isLoading: boolean;
@@ -59,7 +59,7 @@ export function GitHubProgressiveLoader({
     return (
       <div className={classNames('flex flex-col items-center justify-center py-8', className)}>
         <div className="relative mb-4">
-          <Loader2 className="w-8 h-8 animate-spin text-bolt-elements-item-contentAccent" />
+          <div className="i-svg-spinners:90-ring-with-bg w-8 h-8 text-bolt-elements-item-contentAccent" />
           {showProgress && progress > 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-xs font-medium text-bolt-elements-item-contentAccent">{progress}%</span>
@@ -88,9 +88,9 @@ export function GitHubProgressiveLoader({
                 className="flex items-center justify-center gap-2 text-xs text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors"
               >
                 <span>Show details</span>
-                <ChevronDown
+                <div
                   className={classNames(
-                    'w-3 h-3 transform transition-transform duration-200',
+                    'i-ph:caret-down w-3 h-3 transform transition-transform duration-200',
                     isExpanded ? 'rotate-180' : '',
                   )}
                 />
@@ -109,11 +109,11 @@ export function GitHubProgressiveLoader({
                     {progressSteps.map((step) => (
                       <div key={step.key} className="flex items-center gap-2 text-xs">
                         {step.error ? (
-                          <AlertCircle className="w-3 h-3 text-red-500 flex-shrink-0" />
+                          <div className="i-ph:warning-circle w-3 h-3 text-red-500 flex-shrink-0" />
                         ) : step.completed ? (
-                          <CheckCircle className="w-3 h-3 text-green-500 flex-shrink-0" />
+                          <div className="i-ph:check-circle w-3 h-3 text-green-500 flex-shrink-0" />
                         ) : step.loading ? (
-                          <Loader2 className="w-3 h-3 animate-spin text-bolt-elements-item-contentAccent flex-shrink-0" />
+                          <div className="i-svg-spinners:90-ring-with-bg w-3 h-3 text-bolt-elements-item-contentAccent flex-shrink-0" />
                         ) : (
                           <div className="w-3 h-3 rounded-full border border-bolt-elements-borderColor flex-shrink-0" />
                         )}
@@ -147,7 +147,7 @@ export function GitHubProgressiveLoader({
     return (
       <div className={classNames('flex flex-col items-center justify-center py-8 text-center space-y-4', className)}>
         <div className="w-10 h-10 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
-          <AlertCircle className="w-5 h-5 text-red-500" />
+          <div className="i-ph:warning-circle w-5 h-5 text-red-500" />
         </div>
 
         <div>
@@ -158,13 +158,13 @@ export function GitHubProgressiveLoader({
         <div className="flex gap-2">
           {onRetry && (
             <Button variant="outline" size="sm" onClick={onRetry} className="text-xs">
-              <RefreshCw className="w-3 h-3 mr-1" />
+              <div className="i-ph:arrows-clockwise w-3 h-3 mr-1" />
               Try Again
             </Button>
           )}
           {onRefresh && (
             <Button variant="outline" size="sm" onClick={onRefresh} className="text-xs">
-              <RefreshCw className="w-3 h-3 mr-1" />
+              <div className="i-ph:arrows-clockwise w-3 h-3 mr-1" />
               Refresh
             </Button>
           )}
@@ -179,7 +179,7 @@ export function GitHubProgressiveLoader({
       {isRefreshing && (
         <div className="absolute top-0 right-0 z-10">
           <div className="flex items-center gap-2 px-2 py-1 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded-lg shadow-sm">
-            <Loader2 className="w-3 h-3 animate-spin text-bolt-elements-item-contentAccent" />
+            <div className="i-svg-spinners:90-ring-with-bg w-3 h-3 text-bolt-elements-item-contentAccent" />
             <span className="text-xs text-bolt-elements-textSecondary">{refreshingMessage}</span>
           </div>
         </div>

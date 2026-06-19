@@ -8,7 +8,7 @@ import { GitHubStats } from './components/GitHubStats';
 import { Button } from '~/components/ui/Button';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/components/ui/Collapsible';
 import { classNames } from '~/utils/classNames';
-import { ChevronDown } from 'lucide-react';
+
 import { GitHubErrorBoundary } from './components/GitHubErrorBoundary';
 import { GitHubProgressiveLoader } from './components/GitHubProgressiveLoader';
 import { GitHubCacheManager } from './components/GitHubCacheManager';
@@ -201,9 +201,9 @@ export default function GitHubTab() {
                       All Repositories ({stats.repos.length})
                     </span>
                   </div>
-                  <ChevronDown
+                  <div
                     className={classNames(
-                      'w-4 h-4 transform transition-transform duration-200 text-bolt-elements-textSecondary',
+                      'i-ph:caret-down w-4 h-4 transform transition-transform duration-200 text-bolt-elements-textSecondary',
                       isReposExpanded ? 'rotate-180' : '',
                     )}
                   />

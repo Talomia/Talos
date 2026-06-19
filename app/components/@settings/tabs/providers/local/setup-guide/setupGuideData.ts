@@ -1,17 +1,16 @@
-import type { LucideIcon } from 'lucide-react';
-import { Cpu, Database, Monitor, Package, Terminal, Cable, Globe, Server, Activity } from 'lucide-react';
+
 
 export interface HardwareSpec {
-  icon: LucideIcon;
+  icon: string;
   iconColor: string;
   label: string;
   description: string;
 }
 
 export const HARDWARE_SPECS: HardwareSpec[] = [
-  { icon: Cpu, iconColor: 'text-green-500', label: 'CPU', description: '8+ cores, modern architecture' },
-  { icon: Database, iconColor: 'text-blue-500', label: 'RAM', description: '16GB minimum, 32GB+ recommended' },
-  { icon: Monitor, iconColor: 'text-purple-500', label: 'GPU', description: 'NVIDIA RTX 30xx+ or AMD RX 6000+' },
+  { icon: 'i-ph:cpu', iconColor: 'text-green-500', label: 'CPU', description: '8+ cores, modern architecture' },
+  { icon: 'i-ph:database', iconColor: 'text-blue-500', label: 'RAM', description: '16GB minimum, 32GB+ recommended' },
+  { icon: 'i-ph:monitor', iconColor: 'text-purple-500', label: 'GPU', description: 'NVIDIA RTX 30xx+ or AMD RX 6000+' },
 ];
 
 export interface CodeModelCommands {
@@ -35,7 +34,7 @@ export const GENERAL_MODEL_COMMANDS: CodeModelCommands = {
 };
 
 export interface AlternativeTool {
-  icon: LucideIcon;
+  icon: string;
   iconColor: string;
   name: string;
   description: string;
@@ -43,19 +42,19 @@ export interface AlternativeTool {
 
 export const LOCAL_ALTERNATIVES: AlternativeTool[] = [
   {
-    icon: Package,
+    icon: 'i-ph:package',
     iconColor: 'text-blue-500',
     name: 'Jan.ai',
     description: 'Modern interface with built-in model marketplace',
   },
   {
-    icon: Terminal,
+    icon: 'i-ph:terminal',
     iconColor: 'text-green-500',
     name: 'Oobabooga',
     description: 'Advanced text generation web UI with extensions',
   },
   {
-    icon: Cable,
+    icon: 'i-ph:plug',
     iconColor: 'text-purple-500',
     name: 'KoboldAI',
     description: 'Focus on creative writing and storytelling',
@@ -64,19 +63,19 @@ export const LOCAL_ALTERNATIVES: AlternativeTool[] = [
 
 export const CLOUD_ALTERNATIVES: AlternativeTool[] = [
   {
-    icon: Globe,
+    icon: 'i-ph:globe',
     iconColor: 'text-orange-500',
     name: 'OpenRouter',
     description: 'Access to 100+ models through unified API',
   },
   {
-    icon: Server,
+    icon: 'i-ph:hard-drives',
     iconColor: 'text-red-500',
     name: 'Together AI',
     description: 'Fast inference with open-source models',
   },
   {
-    icon: Activity,
+    icon: 'i-ph:activity',
     iconColor: 'text-pink-500',
     name: 'Groq',
     description: 'Ultra-fast LPU inference for Llama models',

@@ -1,5 +1,5 @@
 import type { TabType } from './types';
-import { User, Settings, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List } from 'lucide-react';
+
 
 // GitLab icon component
 const GitLabIcon = () => (
@@ -38,21 +38,21 @@ const SupabaseIcon = () => (
   </svg>
 );
 
-export const TAB_ICONS: Record<TabType, React.ComponentType<{ className?: string }>> = {
-  profile: User,
-  settings: Settings,
-  notifications: Bell,
-  features: Star,
-  data: Database,
-  'cloud-providers': Cloud,
-  'local-providers': Laptop,
-  github: Github,
+export const TAB_ICONS: Record<TabType, string | React.ComponentType<{ className?: string }>> = {
+  profile: 'i-ph:user',
+  settings: 'i-ph:gear',
+  notifications: 'i-ph:bell',
+  features: 'i-ph:star',
+  data: 'i-ph:database',
+  'cloud-providers': 'i-ph:cloud',
+  'local-providers': 'i-ph:laptop',
+  github: 'i-ph:github-logo',
   gitlab: () => <GitLabIcon />,
   netlify: () => <NetlifyIcon />,
   vercel: () => <VercelIcon />,
   supabase: () => <SupabaseIcon />,
-  'event-logs': List,
-  mcp: Wrench,
+  'event-logs': 'i-ph:list',
+  mcp: 'i-ph:wrench',
 };
 
 export const TAB_LABELS: Record<TabType, string> = {

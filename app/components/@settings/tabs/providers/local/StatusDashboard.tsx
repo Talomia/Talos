@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from '~/components/ui/Button';
 import { Card, CardContent } from '~/components/ui/Card';
-import { Cable, Server, ArrowLeft } from 'lucide-react';
 import { useLocalModelHealth } from '~/lib/hooks/useLocalModelHealth';
 import HealthStatusBadge from './HealthStatusBadge';
 import { PROVIDER_ICONS } from './types';
@@ -21,7 +20,7 @@ function StatusDashboard({ onBack }: { onBack: () => void }) {
           className="bg-transparent hover:bg-transparent text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-all duration-200 p-2"
           aria-label="Back to Dashboard"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <div className="i-ph:arrow-left w-4 h-4" />
         </Button>
         <div>
           <h2 className="text-xl font-semibold text-bolt-elements-textPrimary">Provider Status</h2>
@@ -32,7 +31,7 @@ function StatusDashboard({ onBack }: { onBack: () => void }) {
       {healthStatuses.length === 0 ? (
         <Card className="bg-bolt-elements-background-depth-2">
           <CardContent className="p-8 text-center">
-            <Cable className="w-16 h-16 mx-auto text-bolt-elements-textTertiary mb-4" />
+            <div className="i-ph:plug w-16 h-16 mx-auto text-bolt-elements-textTertiary mb-4" />
             <h3 className="text-lg font-medium text-bolt-elements-textPrimary mb-2">No Endpoints Configured</h3>
             <p className="text-sm text-bolt-elements-textSecondary">
               Configure and enable local providers to see their endpoint status here.
@@ -47,8 +46,8 @@ function StatusDashboard({ onBack }: { onBack: () => void }) {
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-bolt-elements-background-depth-3 flex items-center justify-center">
-                      {React.createElement(PROVIDER_ICONS[status.provider as keyof typeof PROVIDER_ICONS] || Server, {
-                        className: 'w-5 h-5 text-bolt-elements-textPrimary',
+                      {React.createElement(PROVIDER_ICONS[status.provider as keyof typeof PROVIDER_ICONS] || 'div', {
+                        className: `w-5 h-5 text-bolt-elements-textPrimary ${!(status.provider in PROVIDER_ICONS) ? 'i-ph:hard-drives' : ''}`,
                       })}
                     </div>
                     <div>
