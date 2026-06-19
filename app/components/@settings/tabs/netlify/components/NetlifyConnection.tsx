@@ -5,7 +5,7 @@ import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { netlifyConnection, updateNetlifyConnection, initializeNetlifyConnection } from '~/lib/stores/netlify';
 import type { NetlifySite, NetlifyDeploy, NetlifyBuild, NetlifyUser } from '~/types/netlify';
-import { BuildingLibraryIcon, ClockIcon, RocketLaunchIcon } from '@heroicons/react/24/outline';
+
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/components/ui/Collapsible';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '~/components/ui/Badge';
@@ -291,14 +291,14 @@ export default function NetlifyConnection() {
                           variant="outline"
                           className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
                         >
-                          <BuildingLibraryIcon className="h-4 w-4 text-bolt-elements-item-contentAccent" />
+                          <div className="i-ph:buildings h-4 w-4 text-bolt-elements-item-contentAccent" />
                           <span>{connection.stats.totalSites} Sites</span>
                         </Badge>
                         <Badge
                           variant="outline"
                           className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
                         >
-                          <RocketLaunchIcon className="h-4 w-4 text-bolt-elements-item-contentAccent" />
+                          <div className="i-ph:rocket h-4 w-4 text-bolt-elements-item-contentAccent" />
                           <span>{deploymentCount} Deployments</span>
                         </Badge>
                         {lastUpdated && (
@@ -306,7 +306,7 @@ export default function NetlifyConnection() {
                             variant="outline"
                             className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
                           >
-                            <ClockIcon className="h-4 w-4 text-bolt-elements-item-contentAccent" />
+                            <div className="i-ph:clock h-4 w-4 text-bolt-elements-item-contentAccent" />
                             <span>Updated {formatDistanceToNow(new Date(lastUpdated))} ago</span>
                           </Badge>
                         )}

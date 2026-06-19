@@ -1,15 +1,5 @@
-import React from 'react';
 import { classNames } from '~/utils/classNames';
 import { formatDistanceToNow } from 'date-fns';
-import {
-  CloudIcon,
-  BuildingLibraryIcon,
-  ClockIcon,
-  CodeBracketIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-  ArrowPathIcon,
-} from '@heroicons/react/24/outline';
 import { Button } from '~/components/ui/Button';
 import { Badge } from '~/components/ui/Badge';
 import type { NetlifySite } from '~/types/netlify';
@@ -44,7 +34,7 @@ export default function NetlifySiteList({
     <div className="bg-bolt-elements-background dark:bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor rounded-lg p-4">
       <div className="flex items-center justify-between mb-4">
         <h4 className="text-sm font-medium flex items-center gap-2 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-          <BuildingLibraryIcon className="h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+          <div className="i-ph:buildings h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
           Your Sites
         </h4>
         <Button
@@ -54,9 +44,9 @@ export default function NetlifySiteList({
           disabled={fetchingStats}
           className="flex items-center gap-2 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary hover:bg-bolt-elements-item-backgroundActive/10"
         >
-          <ArrowPathIcon
+          <div
             className={classNames(
-              'h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent',
+              'i-ph:arrows-clockwise h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent',
               { 'animate-spin': fetchingStats },
             )}
           />
@@ -79,7 +69,7 @@ export default function NetlifySiteList({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <CloudIcon className="h-5 w-5 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                <div className="i-ph:cloud h-5 w-5 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
                 <span className="font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
                   {site.name}
                 </span>
@@ -90,9 +80,9 @@ export default function NetlifySiteList({
                   className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
                 >
                   {site.published_deploy?.state === 'ready' ? (
-                    <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                    <div className="i-ph:check-circle h-4 w-4 text-green-500" />
                   ) : (
-                    <XCircleIcon className="h-4 w-4 text-red-500" />
+                    <div className="i-ph:x-circle h-4 w-4 text-red-500" />
                   )}
                   <span className="text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
                     {site.published_deploy?.state || 'Unknown'}
@@ -109,7 +99,7 @@ export default function NetlifySiteList({
                 className="text-sm flex items-center gap-1 transition-colors text-bolt-elements-link-text hover:text-bolt-elements-link-textHover dark:text-white dark:hover:text-bolt-elements-link-textHover"
                 onClick={(e) => e.stopPropagation()}
               >
-                <CloudIcon className="h-3 w-3 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                <div className="i-ph:cloud h-3 w-3 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
                 <span className="underline decoration-1 underline-offset-2">{site.ssl_url || site.url}</span>
               </a>
             </div>
@@ -139,7 +129,12 @@ export default function NetlifySiteList({
                         disabled={isActionLoading}
                         className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
                       >
-                        <action.icon className="h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                        <div
+                          className={classNames(
+                            action.icon,
+                            'h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent',
+                          )}
+                        />
                         {action.name}
                       </Button>
                     ))}
@@ -148,14 +143,14 @@ export default function NetlifySiteList({
                 {site.published_deploy && (
                   <div className="mt-3 text-sm">
                     <div className="flex items-center gap-1">
-                      <ClockIcon className="h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                      <div className="i-ph:clock h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
                       <span className="text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
                         Published {formatDistanceToNow(new Date(site.published_deploy.published_at))} ago
                       </span>
                     </div>
                     {site.published_deploy.branch && (
                       <div className="flex items-center gap-1 mt-1">
-                        <CodeBracketIcon className="h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                        <div className="i-ph:brackets-curly h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
                         <span className="text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
                           Branch: {site.published_deploy.branch}
                         </span>

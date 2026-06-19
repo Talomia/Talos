@@ -1,13 +1,4 @@
-import type React from 'react';
 import { toast } from 'react-toastify';
-import {
-  ArrowPathIcon,
-  CogIcon,
-  RocketLaunchIcon,
-  CodeBracketIcon,
-  ChartBarIcon,
-  TrashIcon,
-} from '@heroicons/react/24/outline';
 import {
   fetchSiteDetails,
   triggerSiteBuild,
@@ -22,7 +13,7 @@ import {
 /** Describes a button action that can be performed on a Netlify site. */
 export interface SiteAction {
   name: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: string;
   action: (siteId: string) => Promise<void>;
   requiresConfirmation?: boolean;
   variant?: 'default' | 'destructive' | 'outline';
@@ -37,7 +28,7 @@ export function buildSiteActions(token: string, onRefresh: () => void): SiteActi
   return [
     {
       name: 'Clear Cache',
-      icon: ArrowPathIcon,
+      icon: 'i-ph:arrows-clockwise',
       action: async (siteId: string) => {
         try {
           const siteData = await fetchSiteDetails(token, siteId).catch((err: unknown) => {
@@ -106,7 +97,7 @@ export function buildSiteActions(token: string, onRefresh: () => void): SiteActi
     },
     {
       name: 'Manage Environment',
-      icon: CogIcon,
+      icon: 'i-ph:gear',
       action: async (siteId: string) => {
         try {
           const siteData = await fetchSiteDetails(token, siteId);
@@ -130,7 +121,7 @@ export function buildSiteActions(token: string, onRefresh: () => void): SiteActi
     },
     {
       name: 'Trigger Build',
-      icon: RocketLaunchIcon,
+      icon: 'i-ph:rocket',
       action: async (siteId: string) => {
         try {
           const buildData = await triggerSiteBuild(token, siteId);
@@ -143,7 +134,7 @@ export function buildSiteActions(token: string, onRefresh: () => void): SiteActi
     },
     {
       name: 'View Functions',
-      icon: CodeBracketIcon,
+      icon: 'i-ph:brackets-curly',
       action: async (siteId: string) => {
         try {
           const siteData = await fetchSiteDetails(token, siteId);
@@ -167,7 +158,7 @@ export function buildSiteActions(token: string, onRefresh: () => void): SiteActi
     },
     {
       name: 'Site Analytics',
-      icon: ChartBarIcon,
+      icon: 'i-ph:chart-bar',
       action: async (siteId: string) => {
         try {
           const siteData = await fetchSiteDetails(token, siteId);
@@ -191,7 +182,7 @@ export function buildSiteActions(token: string, onRefresh: () => void): SiteActi
     },
     {
       name: 'Delete Site',
-      icon: TrashIcon,
+      icon: 'i-ph:trash',
       action: async (siteId: string) => {
         try {
           await deleteSite(token, siteId);
