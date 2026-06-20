@@ -1,8 +1,8 @@
-# App
+# Talos
 
 **Build Recursively. Ship Infinitely.**
 
-App is an AI-native platform for generating, iterating, and deploying full-stack web applications using natural language. Describe what you want, and App builds it — live, in your browser.
+Talos is an AI-native platform for generating, iterating, and deploying full-stack web applications using natural language. Describe what you want, and Talos builds it — live, in your browser.
 
 ## Features
 
@@ -24,7 +24,7 @@ App is an AI-native platform for generating, iterating, and deploying full-stack
 
 ```bash
 # Clone the repository
-git clone https://github.com/h-khalid-h/app.git
+git clone https://github.com/Talomia/Talos.git
 cd app
 
 # Install dependencies
@@ -82,7 +82,7 @@ app/
 ├── components/        # React components
 │   ├── auth/          # Login/signup dialog
 │   ├── chat/          # Chat interface
-│   ├── header/        # App header
+│   ├── header/        # Talos header
 │   └── workbench/     # Code editor + preview
 ├── lib/
 │   ├── .server/       # Server-only code (Cloudflare Workers)

@@ -189,7 +189,7 @@ jobs:
       - name: Test Docker build (without push)
         run: |
           echo "Testing Docker build configuration..."
-          docker build --target app-production . --no-cache --progress=plain
+          docker build --target talos-production . --no-cache --progress=plain
           echo "✅ Docker build test completed"
 
   test-results-summary:

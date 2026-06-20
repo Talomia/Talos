@@ -1,4 +1,4 @@
-site_name: the application Docs
+site_name: Talos Documentation
 site_dir: ../site
 theme:
   name: material
@@ -31,25 +31,25 @@ theme:
     repo: fontawesome/brands/github
   # logo: assets/logo.png
   # favicon: assets/logo.png
-repo_name: the application
-repo_url: https://github.com/stackblitz-labs/the application
+repo_name: Talos
+repo_url: https://github.com/Talomia/Talos
 edit_uri: ''
 
 extra:
   generator: false
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/stackblitz-labs/the application
-      name: the application
+      link: https://github.com/Talomia/Talos
+      name: Talos
     - icon: fontawesome/brands/discourse
       link: https://thinktank.ottomator.ai/
-      name: the application Discourse
+      name: Talos Discourse
     - icon: fontawesome/brands/x-twitter
       link: 
-      name: the application on X
+      name: Talos on X
     - icon: fontawesome/brands/bluesky
-      link: https://bsky.app/profile/the application
-      name: the application on Bluesky
+      link: https://bsky.app/profile/talos
+      name: Talos on Bluesky
 
 markdown_extensions:
   - pymdownx.highlight:

@@ -1,6 +1,6 @@
 services:
   app-prod:
-    image: app:production
+    image: talos:production
     restart: unless-stopped
     build:
       context: .
@@ -37,7 +37,7 @@ services:
       - production
 
   app-dev:
-    image: app:development
+    image: talos:development
     restart: unless-stopped
     build:
       context: .
@@ -82,7 +82,7 @@ services:
     profiles: ['development', 'default']
 
   app-prebuild:
-    image: ghcr.io/h-khalid-h/app:latest
+    image: ghcr.io/Talomia/talos:latest
     ports:
       - '5173:5173'
     environment:

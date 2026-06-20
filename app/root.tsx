@@ -66,12 +66,12 @@ export const Head = createHead(() => (
   <>
     <meta charSet="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AI Development Platform</title>
+    <title>Talos</title>
     <meta
       name="description"
       content="Build full-stack web applications with AI-powered code generation, live preview, and one-click deployment."
     />
-    <meta property="og:title" content="AI Development Platform" />
+    <meta property="og:title" content="Talos" />
     <meta property="og:description" content="Build full-stack web applications with AI-powered code generation." />
     <meta property="og:image" content="/social_preview_index.jpg" />
     <meta property="og:type" content="website" />

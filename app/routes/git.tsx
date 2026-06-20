@@ -8,7 +8,7 @@ import BackgroundRays from '~/components/ui/BackgroundRays';
 import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 
 export const meta: MetaFunction = () => {
-  return [{ title: 'App' }, { name: 'description', content: 'AI-native full-stack application platform' }];
+  return [{ title: 'Talos' }, { name: 'description', content: 'AI-native full-stack application platform' }];
 };
 
 export async function loader(args: LoaderFunctionArgs) {

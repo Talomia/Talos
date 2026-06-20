@@ -23,7 +23,7 @@ This implementation adds persistent file and folder locking functionality to the
 
 - Utility functions for checking if a file or folder is locked
 - Helps avoid circular dependencies between components and stores
-- Provides a consistent interface for lock checking across the application
+- Provides a consistent interface for lock checking across Talos
 - Extracts chat ID from URL for project-specific lock scoping
 
 ## Modified Files

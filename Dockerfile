@@ -37,7 +37,7 @@ RUN pnpm prune --prod --ignore-scripts
 
 
 # ---- production stage ----
-FROM prod-deps AS app-production
+FROM prod-deps AS talos-production
 WORKDIR /app
 
 ENV NODE_ENV=production

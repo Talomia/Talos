@@ -1,5 +1,5 @@
 #:schema node_modules/wrangler/config-schema.json
-name = "app"
+name = "talos"
 compatibility_flags = ["nodejs_compat"]
 compatibility_date = "2025-03-28"
 pages_build_output_dir = "./build/client"
@@ -18,7 +18,7 @@ NODE_ENV = "staging"
 # Environment: Production
 # ==========================================
 [env.production]
-name = "app"
+name = "talos"
 
 [env.production.vars]
 NODE_ENV = "production"

@@ -1,5 +1,5 @@
 {
-  "name": "app",
+  "name": "talos",
   "description": "AI-native full-stack application platform",
   "private": true,
   "license": "MIT",
@@ -7,7 +7,7 @@
   "type": "module",
   "version": "1.0.0",
   "author": {
-    "name": "App team"
+    "name": "Talomia"
   },
   "scripts": {
     "deploy": "pnpm run build && wrangler pages deploy",

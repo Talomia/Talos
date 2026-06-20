@@ -1,6 +1,6 @@
 # Contribution Guidelines
 
-Welcome! This guide provides all the details you need to contribute effectively to the project. Thank you for helping us make **the application** a better tool for developers worldwide. 💡
+Welcome! This guide provides all the details you need to contribute effectively to the project. Thank you for helping us make **Talos** a better tool for developers worldwide. 💡
 
 ---
 
@@ -80,7 +80,7 @@ Interested in maintaining and growing the project? Fill out our [Contributor App
 
 - Clone the repository:
   ```bash
-  git clone https://github.com/stackblitz-labs/the application.git
+  git clone https://github.com/Talomia/Talos.git
   ```
 - Install dependencies:
   ```bash
@@ -144,7 +144,7 @@ Ensure you have required permissions and that Wrangler is configured.
 
 ## 🐳 Docker Deployment
 
-This section outlines the methods for deploying the application using Docker. The processes for **Development** and **Production** are provided separately for clarity.
+This section outlines the methods for deploying Talos using Docker. The processes for **Development** and **Production** are provided separately for clarity.
 
 ---
 
@@ -162,7 +162,7 @@ npm run dockerbuild
 **Option 2: Direct Docker Build Command**
 
 ```bash
-docker build . --target app-development
+docker build . --target talos-development
 ```
 
 **Option 3: Docker Compose Profile**
@@ -174,7 +174,7 @@ docker compose --profile development up
 #### Running the Development Container
 
 ```bash
-docker run -p 5173:5173 --env-file .env.local app:development
+docker run -p 5173:5173 --env-file .env.local talos:development
 ```
 
 ---
@@ -193,7 +193,7 @@ npm run dockerbuild:prod
 **Option 2: Direct Docker Build Command**
 
 ```bash
-docker build . --target app-production
+docker build . --target talos-production
 ```
 
 **Option 3: Docker Compose Profile**
@@ -205,7 +205,7 @@ docker compose --profile production up
 #### Running the Production Container
 
 ```bash
-docker run -p 5173:5173 --env-file .env.local app:production
+docker run -p 5173:5173 --env-file .env.local talos:production
 ```
 
 ---

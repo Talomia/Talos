@@ -5,7 +5,7 @@ const logger = createScopedLogger('WebContainerConnect');
 
 export const loader: LoaderFunction = async ({ request }) => {
   const url = new URL(request.url);
-  const editorOrigin = url.searchParams.get('editorOrigin') || 'https://stackblitz.com';
+  const editorOrigin = url.searchParams.get('editorOrigin') || 'https://talos.dev';
   logger.trace('editorOrigin', editorOrigin);
 
   const htmlContent = `

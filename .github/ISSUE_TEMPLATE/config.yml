@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: the platform related issues
-    url: https://github.com/stackblitz/the platform/issues/new/choose
-    about: Report issues related to the platform (not the application)
+  - name: upstream platform issues
+    url: https://github.com/Talomia/Talos/issues/new/choose
+    about: Report upstream platform issues
   - name: Chat
     url: https://thinktank.ottomator.ai
-    about: Ask questions and discuss with other the application users.
+    about: Ask questions and discuss with other Talos users.
