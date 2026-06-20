@@ -11,12 +11,23 @@ export const action = withSecurity(enhancerAction, { allowedMethods: ['POST'] })
 const logger = createScopedLogger('api.enhancer');
 
 async function enhancerAction({ context, request }: ActionFunctionArgs) {
-  const { message, model, provider } = await request.json<{
-    message: string;
-    model: string;
-    provider: ProviderInfo;
-    apiKeys?: Record<string, string>;
-  }>();
+  let message: string;
+  let model: string;
+  let provider: ProviderInfo;
+
+  try {
+    ({ message, model, provider } = await request.json<{
+      message: string;
+      model: string;
+      provider: ProviderInfo;
+      apiKeys?: Record<string, string>;
+    }>());
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid or malformed JSON in request body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const { name: providerName } = provider;
 

@@ -39,7 +39,10 @@
     "electron:build:mac": "rm -rf dist && pnpm electron:build:renderer && pnpm electron:build:deps && electron-builder --mac",
     "electron:build:win": "rm -rf dist && pnpm electron:build:renderer && pnpm electron:build:deps && electron-builder --win",
     "electron:build:linux": "rm -rf dist && pnpm electron:build:renderer && pnpm electron:build:deps && electron-builder --linux",
-    "electron:build:dist": "rm -rf dist && pnpm electron:build:renderer && pnpm electron:build:deps && electron-builder --mwl"
+    "electron:build:dist": "rm -rf dist && pnpm electron:build:renderer && pnpm electron:build:deps && electron-builder --mwl",
+    "runtime:server": "npx tsx app/lib/runtime/engines/runtime-ws-server.ts",
+    "dev:docker": "VITE_RUNTIME_ENGINE=docker VITE_RUNTIME_WS_URL=ws://localhost:3001 remix vite:dev",
+    "docker:engine": "docker compose --profile docker-engine up"
   },
   "engines": {
     "node": ">=18.18.0"
@@ -156,6 +159,7 @@
     "unist-util-visit": "^5.0.0",
     "use-debounce": "^10.0.4",
     "vite-plugin-node-polyfills": "^0.22.0",
+    "ws": "^8.18.0",
     "zod": "^3.24.1",
     "zustand": "^5.0.3"
   },
@@ -204,7 +208,8 @@
     "vite-plugin-optimize-css-modules": "^1.1.0",
     "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^2.1.7",
-    "wrangler": "^4.44.0"
+    "wrangler": "^4.44.0",
+    "@types/ws": "^8.5.13"
   },
   "resolutions": {
     "@typescript-eslint/utils": "^8.0.0-alpha.30"

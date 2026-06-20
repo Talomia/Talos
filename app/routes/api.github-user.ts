@@ -201,10 +201,11 @@ async function githubUserAction({ request, context }: { request: Request; contex
     }
 
     if (action === 'get_token') {
-      // Return the GitHub token for git authentication
-      return json({
-        token: githubToken,
-      });
+      /*
+       * SECURITY: Never expose raw tokens to the client.
+       * Git authentication uses the token from server-side cookies directly.
+       */
+      return json({ error: 'Direct token access is not permitted' }, { status: 403 });
     }
 
     if (action === 'search_repos') {

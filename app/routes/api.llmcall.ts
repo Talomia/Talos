@@ -64,13 +64,26 @@ function validateTokenLimits(modelDetails: ModelInfo, requestedTokens: number): 
 }
 
 async function llmCallAction({ context, request }: ActionFunctionArgs) {
-  const { system, message, model, provider, streamOutput } = await request.json<{
-    system: string;
-    message: string;
-    model: string;
-    provider: ProviderInfo;
-    streamOutput?: boolean;
-  }>();
+  let system: string;
+  let message: string;
+  let model: string;
+  let provider: ProviderInfo;
+  let streamOutput: boolean | undefined;
+
+  try {
+    ({ system, message, model, provider, streamOutput } = await request.json<{
+      system: string;
+      message: string;
+      model: string;
+      provider: ProviderInfo;
+      streamOutput?: boolean;
+    }>());
+  } catch {
+    return new Response(JSON.stringify({ error: true, message: 'Invalid or malformed JSON in request body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const { name: providerName } = provider;
 

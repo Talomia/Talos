@@ -41,12 +41,6 @@ export let runtime: Promise<RuntimeEngine> = new Promise(() => {
   // noop for SSR — runtime only exists on the client
 });
 
-/**
- * @deprecated Use `runtime` instead. This alias exists only for migration convenience
- * and will be removed once all consumers are migrated.
- */
-export { runtime as webcontainer };
-
 if (!import.meta.env.SSR) {
   runtime =
     import.meta.hot?.data.runtime ??
@@ -92,6 +86,3 @@ if (!import.meta.env.SSR) {
     import.meta.hot.data.runtime = runtime;
   }
 }
-
-// Re-export context under the old name for backward compat during migration
-export { runtimeContext as webcontainerContext };

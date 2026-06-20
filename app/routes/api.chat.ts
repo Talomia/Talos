@@ -48,24 +48,42 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     },
   });
 
-  const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps } =
-    await request.json<{
-      messages: Messages;
-      files: any;
-      promptId?: string;
-      contextOptimization: boolean;
-      chatMode: 'discuss' | 'build';
-      designScheme?: DesignScheme;
-      supabase?: {
-        isConnected: boolean;
-        hasSelectedProject: boolean;
-        credentials?: {
-          anonKey?: string;
-          supabaseUrl?: string;
+  let messages: Messages;
+  let files: any;
+  let promptId: string | undefined;
+  let contextOptimization: boolean;
+  let supabase:
+    | { isConnected: boolean; hasSelectedProject: boolean; credentials?: { anonKey?: string; supabaseUrl?: string } }
+    | undefined;
+  let chatMode: 'discuss' | 'build';
+  let designScheme: DesignScheme | undefined;
+  let maxLLMSteps: number;
+
+  try {
+    ({ messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps } =
+      await request.json<{
+        messages: Messages;
+        files: any;
+        promptId?: string;
+        contextOptimization: boolean;
+        chatMode: 'discuss' | 'build';
+        designScheme?: DesignScheme;
+        supabase?: {
+          isConnected: boolean;
+          hasSelectedProject: boolean;
+          credentials?: {
+            anonKey?: string;
+            supabaseUrl?: string;
+          };
         };
-      };
-      maxLLMSteps: number;
-    }>();
+        maxLLMSteps: number;
+      }>());
+  } catch {
+    return new Response(JSON.stringify({ error: true, message: 'Invalid or malformed JSON in request body' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const cookieHeader = request.headers.get('Cookie');
 

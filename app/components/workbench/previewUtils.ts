@@ -62,15 +62,19 @@ export interface DeviceFrameOptions {
  */
 export function openDeviceFramePopup(options: DeviceFrameOptions): void {
   const { baseUrl, size, isLandscape, showDeviceFrame, getFrameColor } = options;
-  const match = baseUrl.match(/^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/);
 
-  if (!match) {
-    logger.warn('Invalid WebContainer URL:', baseUrl);
+  // Extract preview ID from either WebContainer or Docker URLs
+  const wcMatch = baseUrl.match(/^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/);
+  const dockerMatch = baseUrl.match(/^https?:\/\/localhost:(\d+)/);
+  const previewId = wcMatch?.[1] || dockerMatch?.[1];
+
+  if (!previewId) {
+    logger.warn('Cannot extract preview ID from URL:', baseUrl);
     return;
   }
 
-  const previewId = match[1];
-  const previewUrl = `/webcontainer/preview/${previewId}`;
+  // For WebContainer, use the internal preview route; for Docker, use the direct URL
+  const previewUrl = wcMatch ? `/webcontainer/preview/${previewId}` : baseUrl;
 
   // Adjust dimensions for landscape mode if applicable
   let width = size.width;

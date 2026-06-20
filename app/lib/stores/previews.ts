@@ -143,10 +143,27 @@ export class PreviewsStore {
     });
   }
 
-  // Helper to extract preview ID from URL
+  /**
+   * Extract preview ID from URL. Handles both engine types:
+   * - WebContainer: https://{port}.local-credentialless.webcontainer-api.io → port
+   * - Docker: http://localhost:{port} → port
+   */
   getPreviewId(url: string): string | null {
-    const match = url.match(/^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/);
-    return match ? match[1] : null;
+    // WebContainer URLs: port is the subdomain
+    const wcMatch = url.match(/^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/);
+
+    if (wcMatch) {
+      return wcMatch[1];
+    }
+
+    // Docker engine URLs: port is in the URL
+    const dockerMatch = url.match(/^https?:\/\/localhost:(\d+)/);
+
+    if (dockerMatch) {
+      return dockerMatch[1];
+    }
+
+    return null;
   }
 
   // Broadcast state change to all tabs

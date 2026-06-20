@@ -223,17 +223,20 @@ export const PreviewToolbar = memo(
                             return;
                           }
 
-                          const match = activePreview.baseUrl.match(
+                          // Extract preview ID from either WebContainer or Docker URLs
+                          const wcMatch = activePreview.baseUrl.match(
                             /^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/,
                           );
+                          const dockerMatch = activePreview.baseUrl.match(/^https?:\/\/localhost:(\d+)/);
+                          const previewId = wcMatch?.[1] || dockerMatch?.[1];
 
-                          if (!match) {
-                            logger.warn('Invalid WebContainer URL:', activePreview.baseUrl);
+                          if (!previewId) {
+                            logger.warn('Cannot extract preview ID from URL:', activePreview.baseUrl);
                             return;
                           }
 
-                          const previewId = match[1];
-                          const previewUrl = `/webcontainer/preview/${previewId}`;
+                          // WC uses internal preview route; Docker uses direct URL
+                          const previewUrl = wcMatch ? `/webcontainer/preview/${previewId}` : activePreview.baseUrl;
 
                           // Open in a new window with simple parameters
                           window.open(

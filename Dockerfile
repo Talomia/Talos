@@ -37,7 +37,7 @@ RUN pnpm prune --prod --ignore-scripts
 
 
 # ---- production stage ----
-FROM prod-deps AS talos-production
+FROM prod-deps AS app-production
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -134,9 +134,6 @@ RUN pnpm fetch
 
 COPY . .
 RUN pnpm install --offline --frozen-lockfile
-
-# Install ws package for WebSocket server
-RUN pnpm add ws && pnpm add -D @types/ws
 
 ENV NODE_ENV=production
 ENV RUNTIME_WS_PORT=3001

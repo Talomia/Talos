@@ -1,22 +1,23 @@
 import type { ActionFunctionArgs, LoaderFunction } from '@remix-run/cloudflare';
 import { json } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('disk-info');
 
-// Only import child_process if we're not in a Cloudflare environment
-let execSync: any;
+/*
+ * execSync is only available in Node.js environments (local dev, Docker).
+ * In Cloudflare Workers, this remains null and we fall back to mock/unavailable data.
+ */
+let execSync: ((cmd: string, opts?: { encoding: string }) => string) | null = null;
 
 try {
-  // Check if we're in a Node.js environment
-  if (typeof process !== 'undefined' && process.platform) {
-    // Using dynamic import to avoid require()
-    const childProcess = { execSync: null };
-    execSync = childProcess.execSync;
+  if (typeof process !== 'undefined' && process.platform && typeof require === 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    execSync = require('node:child_process').execSync;
   }
 } catch {
-  // In Cloudflare environment, this will fail, which is expected
-  logger.debug('Running in Cloudflare environment, child_process not available');
+  logger.debug('child_process not available (expected in Cloudflare Workers)');
 }
 
 // For development environments, we'll always provide mock data if real data isn't available
@@ -84,6 +85,22 @@ const getDiskInfo = (): DiskInfo[] => {
     // Different commands for different operating systems
     const platform = process.platform;
     let disks: DiskInfo[] = [];
+
+    if (!execSync) {
+      // No child_process available (Cloudflare Workers) — return unavailable data
+      return [
+        {
+          filesystem: 'N/A',
+          size: 0,
+          used: 0,
+          available: 0,
+          percentage: 0,
+          mountpoint: '/',
+          timestamp: new Date().toISOString(),
+          error: 'Disk info not available in this environment',
+        },
+      ];
+    }
 
     if (platform === 'darwin') {
       // macOS - use df command to get disk information
@@ -267,7 +284,7 @@ const getDiskInfo = (): DiskInfo[] => {
   }
 };
 
-export const loader: LoaderFunction = async ({ request: _request }) => {
+export const loader: LoaderFunction = withSecurity(async ({ request: _request }) => {
   try {
     return json(getDiskInfo());
   } catch (error) {
@@ -288,9 +305,9 @@ export const loader: LoaderFunction = async ({ request: _request }) => {
       { status: 500 },
     );
   }
-};
+});
 
-export const action = async ({ request: _request }: ActionFunctionArgs) => {
+export const action = withSecurity(async ({ request: _request }: ActionFunctionArgs) => {
   try {
     return json(getDiskInfo());
   } catch (error) {
@@ -311,4 +328,4 @@ export const action = async ({ request: _request }: ActionFunctionArgs) => {
       { status: 500 },
     );
   }
-};
+});

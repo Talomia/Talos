@@ -64,16 +64,29 @@ const storage =
 const savedConnection = storage ? storage.getItem('supabase_connection') : null;
 const savedCredentials = storage ? storage.getItem('supabaseCredentials') : null;
 
-const initialState: SupabaseConnectionState = savedConnection
-  ? JSON.parse(savedConnection)
-  : {
-      user: null,
-      token: '',
-      stats: undefined,
-      selectedProjectId: undefined,
-      isConnected: false,
-      project: undefined,
-    };
+let initialState: SupabaseConnectionState;
+
+try {
+  initialState = savedConnection
+    ? JSON.parse(savedConnection)
+    : {
+        user: null,
+        token: '',
+        stats: undefined,
+        selectedProjectId: undefined,
+        isConnected: false,
+        project: undefined,
+      };
+} catch {
+  initialState = {
+    user: null,
+    token: '',
+    stats: undefined,
+    selectedProjectId: undefined,
+    isConnected: false,
+    project: undefined,
+  };
+}
 
 if (savedCredentials && !initialState.credentials) {
   try {

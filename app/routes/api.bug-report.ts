@@ -42,10 +42,26 @@ function sanitizeInput(input: string): string {
     .replace(/\//g, '&#x2F;');
 }
 
+// Maximum number of entries to keep in the rate limit store to prevent unbounded growth
+const MAX_RATE_LIMIT_STORE_SIZE = 10000;
+
 // Rate limiting check
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const key = ip;
+
+  // Cleanup expired entries to prevent memory leak
+  for (const [storedKey, data] of rateLimitStore.entries()) {
+    if (now > data.resetTime) {
+      rateLimitStore.delete(storedKey);
+    }
+  }
+
+  // Safety cap: if store is still too large after cleanup, clear it entirely
+  if (rateLimitStore.size > MAX_RATE_LIMIT_STORE_SIZE) {
+    rateLimitStore.clear();
+  }
+
   const limit = rateLimitStore.get(key);
 
   if (!limit || now > limit.resetTime) {

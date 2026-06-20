@@ -84,6 +84,32 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     const domain = parts[1];
     const remainingPath = parts[2] || '';
 
+    /*
+     * SECURITY: Only allow proxying to known Git hosting providers.
+     * This prevents SSRF attacks where an attacker could proxy requests to internal services.
+     */
+    const ALLOWED_DOMAINS = [
+      'github.com',
+      'api.github.com',
+      'gitlab.com',
+      'bitbucket.org',
+      'api.bitbucket.org',
+      'codeberg.org',
+      'gitea.com',
+      'sourcehut.org',
+    ];
+
+    const isDomainAllowed = ALLOWED_DOMAINS.some((allowed) => domain === allowed || domain.endsWith(`.${allowed}`));
+
+    if (!isDomainAllowed) {
+      logger.warn(`Blocked proxy request to disallowed domain: ${domain}`);
+
+      return json(
+        { error: `Domain '${domain}' is not allowed. Only Git hosting providers are permitted.` },
+        { status: 403 },
+      );
+    }
+
     // Reconstruct the target URL with query parameters
     const url = new URL(request.url);
     const targetURL = `https://${domain}/${remainingPath}${url.search}`;
