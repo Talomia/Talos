@@ -18,7 +18,7 @@ export function VercelProjectList({
 }: VercelProjectListProps) {
   if (!projects.length) {
     return (
-      <div className="text-sm text-bolt-elements-textSecondary flex items-center gap-2 p-4">
+      <div className="text-sm text-ui-textSecondary flex items-center gap-2 p-4">
         <div className="i-ph:info w-4 h-4" />
         No projects found in your Vercel account
       </div>
@@ -30,18 +30,18 @@ export function VercelProjectList({
       {projects.map((project) => (
         <div
           key={project.id}
-          className="p-4 rounded-lg border border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive/70 transition-colors bg-bolt-elements-background-depth-1"
+          className="p-4 rounded-lg border border-ui-borderColor hover:border-ui-borderColorActive/70 transition-colors bg-ui-background-depth-1"
         >
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h5 className="text-sm font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-                <div className="i-ph:globe w-4 h-4 text-bolt-elements-borderColorActive" />
+              <h5 className="text-sm font-medium text-ui-textPrimary flex items-center gap-2">
+                <div className="i-ph:globe w-4 h-4 text-ui-borderColorActive" />
                 {project.name}
               </h5>
               <ProjectUrl project={project} />
 
               {/* Project Details Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-3 pt-3 border-t border-bolt-elements-borderColor">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-3 pt-3 border-t border-ui-borderColor">
                 <DetailCell icon="i-ph:rocket" label="Deployments" value="--" />
                 <DetailCell icon="i-ph:globe" label="Domains" value="--" />
                 <DetailCell icon="i-ph:users" label="Team" value="--" />
@@ -51,7 +51,7 @@ export function VercelProjectList({
             <div className="flex items-center gap-2">
               <DeploymentBadge project={project} />
               {project.framework && (
-                <div className="text-xs text-bolt-elements-textSecondary px-2 py-1 rounded-md bg-bolt-elements-background-depth-2">
+                <div className="text-xs text-ui-textSecondary px-2 py-1 rounded-md bg-ui-background-depth-2">
                   <span className="flex items-center gap-1">
                     <div className="i-ph:code w-3 h-3" />
                     {project.framework}
@@ -62,7 +62,7 @@ export function VercelProjectList({
                 variant="outline"
                 size="sm"
                 onClick={() => window.open(`https://vercel.com/dashboard/${project.id}`, '_blank')}
-                className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
               >
                 <div className="i-ph:arrow-square-out w-3 h-3" />
                 View
@@ -70,7 +70,7 @@ export function VercelProjectList({
             </div>
           </div>
 
-          <div className="flex items-center flex-wrap gap-1 mt-3 pt-3 border-t border-bolt-elements-borderColor">
+          <div className="flex items-center flex-wrap gap-1 mt-3 pt-3 border-t border-ui-borderColor">
             {projectActions.map((action) => (
               <Button
                 key={action.name}
@@ -78,7 +78,7 @@ export function VercelProjectList({
                 size="sm"
                 onClick={() => onProjectAction(project.id, action)}
                 disabled={isProjectActionLoading}
-                className="flex items-center gap-1 text-xs px-2 py-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                className="flex items-center gap-1 text-xs px-2 py-1 text-ui-textPrimary dark:text-ui-textPrimary"
               >
                 <div className={`${action.icon} w-2.5 h-2.5`} />
                 {action.name}
@@ -99,12 +99,12 @@ function ProjectUrl({ project }: { project: VercelProject }) {
       ) || project.targets.production.alias[0];
 
     return (
-      <div className="flex items-center gap-2 mt-2 text-xs text-bolt-elements-textSecondary">
+      <div className="flex items-center gap-2 mt-2 text-xs text-ui-textSecondary">
         <a
           href={`https://${displayAlias}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-bolt-elements-borderColorActive underline"
+          className="hover:text-ui-borderColorActive underline"
         >
           {displayAlias}
         </a>
@@ -119,12 +119,12 @@ function ProjectUrl({ project }: { project: VercelProject }) {
 
   if (project.latestDeployments && project.latestDeployments.length > 0) {
     return (
-      <div className="flex items-center gap-2 mt-2 text-xs text-bolt-elements-textSecondary">
+      <div className="flex items-center gap-2 mt-2 text-xs text-ui-textSecondary">
         <a
           href={`https://${project.latestDeployments[0].url}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-bolt-elements-borderColorActive underline"
+          className="hover:text-ui-borderColorActive underline"
         >
           {project.latestDeployments[0].url}
         </a>
@@ -172,11 +172,11 @@ function DeploymentBadge({ project }: { project: VercelProject }) {
 function DetailCell({ icon, label, value }: { icon: string; label: string; value: string }) {
   return (
     <div className="text-center">
-      <div className="text-sm font-semibold text-bolt-elements-textPrimary">
+      <div className="text-sm font-semibold text-ui-textPrimary">
         {/* {label} - This would be fetched from API */}
         {value}
       </div>
-      <div className="text-xs text-bolt-elements-textSecondary flex items-center justify-center gap-1">
+      <div className="text-xs text-ui-textSecondary flex items-center justify-center gap-1">
         <div className={`${icon} w-3 h-3`} />
         {label}
       </div>

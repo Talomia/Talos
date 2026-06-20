@@ -3,14 +3,14 @@ import { stripCodeFenceFromArtifact } from './Markdown';
 
 describe('stripCodeFenceFromArtifact', () => {
   it('should remove code fences around artifact element', () => {
-    const input = "```xml\n<div class='__recurrsiveArtifact__'></div>\n```";
-    const expected = "\n<div class='__recurrsiveArtifact__'></div>\n";
+    const input = "```xml\n<div class='__codeArtifact__'></div>\n```";
+    const expected = "\n<div class='__codeArtifact__'></div>\n";
     expect(stripCodeFenceFromArtifact(input)).toBe(expected);
   });
 
   it('should handle code fence with language specification', () => {
-    const input = "```typescript\n<div class='__recurrsiveArtifact__'></div>\n```";
-    const expected = "\n<div class='__recurrsiveArtifact__'></div>\n";
+    const input = "```typescript\n<div class='__codeArtifact__'></div>\n```";
+    const expected = "\n<div class='__codeArtifact__'></div>\n";
     expect(stripCodeFenceFromArtifact(input)).toBe(expected);
   });
 
@@ -24,7 +24,7 @@ describe('stripCodeFenceFromArtifact', () => {
   });
 
   it('should handle artifact without code fences', () => {
-    const input = "<div class='__recurrsiveArtifact__'></div>";
+    const input = "<div class='__codeArtifact__'></div>";
     expect(stripCodeFenceFromArtifact(input)).toBe(input);
   });
 
@@ -32,22 +32,16 @@ describe('stripCodeFenceFromArtifact', () => {
     const input = [
       'Some text',
       '```typescript',
-      "<div class='__recurrsiveArtifact__'></div>",
+      "<div class='__codeArtifact__'></div>",
       '```',
       '```',
       'regular code',
       '```',
     ].join('\n');
 
-    const expected = [
-      'Some text',
-      '',
-      "<div class='__recurrsiveArtifact__'></div>",
-      '',
-      '```',
-      'regular code',
-      '```',
-    ].join('\n');
+    const expected = ['Some text', '', "<div class='__codeArtifact__'></div>", '', '```', 'regular code', '```'].join(
+      '\n',
+    );
 
     expect(stripCodeFenceFromArtifact(input)).toBe(expected);
   });

@@ -30,9 +30,9 @@ export interface SupabaseAction extends BaseAction {
   projectId?: string;
 }
 
-export type RecurrsiveAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction;
+export type CodeAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction;
 
-export type RecurrsiveActionData = RecurrsiveAction | BaseAction;
+export type CodeActionData = CodeAction | BaseAction;
 
 export interface ActionAlert {
   type: string;

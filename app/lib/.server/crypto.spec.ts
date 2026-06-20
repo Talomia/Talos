@@ -6,7 +6,7 @@ describe('crypto', { timeout: 30_000 }, () => {
 
   describe('encrypt / decrypt round-trip', () => {
     it('should encrypt and decrypt a simple string', async () => {
-      const plaintext = 'Hello, Recurrsive!';
+      const plaintext = 'Hello, World!';
       const encrypted = await encrypt(plaintext, TEST_SECRET);
       const decrypted = await decrypt(encrypted, TEST_SECRET);
 
@@ -112,7 +112,7 @@ describe('crypto', { timeout: 30_000 }, () => {
 
       const secret = getVaultSecret({});
 
-      expect(secret).toBe('recurrsive-dev-secret-change-in-production');
+      expect(secret).toBe('dev-secret-change-in-production');
     });
 
     it('should prefer env record over process.env', () => {

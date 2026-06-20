@@ -12,10 +12,10 @@ export default function NetlifyBuildList({ builds }: NetlifyBuildListProps) {
   }
 
   return (
-    <div className="bg-bolt-elements-background dark:bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor rounded-lg p-4">
+    <div className="bg-ui-background dark:bg-ui-background-depth-1 border border-ui-borderColor dark:border-ui-borderColor rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-medium flex items-center gap-2 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-          <div className="i-ph:brackets-curly h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+        <h4 className="text-sm font-medium flex items-center gap-2 text-ui-textPrimary dark:text-ui-textPrimary">
+          <div className="i-ph:brackets-curly h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
           Recent Builds
         </h4>
       </div>
@@ -23,7 +23,7 @@ export default function NetlifyBuildList({ builds }: NetlifyBuildListProps) {
         {builds.map((build) => (
           <div
             key={build.id}
-            className="bg-bolt-elements-background dark:bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor rounded-lg p-3"
+            className="bg-ui-background dark:bg-ui-background-depth-1 border border-ui-borderColor dark:border-ui-borderColor rounded-lg p-3"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -38,18 +38,18 @@ export default function NetlifyBuildList({ builds }: NetlifyBuildListProps) {
                   ) : (
                     <div className="i-ph:brackets-curly h-4 w-4" />
                   )}
-                  <span className="text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                  <span className="text-ui-textPrimary dark:text-ui-textPrimary">
                     {build.done ? (build.error ? 'Failed' : 'Completed') : 'In Progress'}
                   </span>
                 </Badge>
               </div>
-              <span className="text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+              <span className="text-xs text-ui-textSecondary dark:text-ui-textSecondary">
                 {formatDistanceToNow(new Date(build.created_at))} ago
               </span>
             </div>
             {build.error && (
-              <div className="mt-2 text-xs text-bolt-elements-textDestructive dark:text-bolt-elements-textDestructive flex items-center gap-1">
-                <div className="i-ph:x-circle h-3 w-3 text-bolt-elements-textDestructive dark:text-bolt-elements-textDestructive" />
+              <div className="mt-2 text-xs text-ui-textDestructive dark:text-ui-textDestructive flex items-center gap-1">
+                <div className="i-ph:x-circle h-3 w-3 text-ui-textDestructive dark:text-ui-textDestructive" />
                 Error: {build.error}
               </div>
             )}

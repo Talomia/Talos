@@ -21,10 +21,10 @@ export default function NetlifyDeployList({
   }
 
   return (
-    <div className="bg-bolt-elements-background dark:bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor rounded-lg p-4">
+    <div className="bg-ui-background dark:bg-ui-background-depth-1 border border-ui-borderColor dark:border-ui-borderColor rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-sm font-medium flex items-center gap-2 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-          <div className="i-ph:buildings h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+        <h4 className="text-sm font-medium flex items-center gap-2 text-ui-textPrimary dark:text-ui-textPrimary">
+          <div className="i-ph:buildings h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
           Recent Deployments
         </h4>
       </div>
@@ -32,7 +32,7 @@ export default function NetlifyDeployList({
         {deploys.map((deploy) => (
           <div
             key={deploy.id}
-            className="bg-bolt-elements-background dark:bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor rounded-lg p-3"
+            className="bg-ui-background dark:bg-ui-background-depth-1 border border-ui-borderColor dark:border-ui-borderColor rounded-lg p-3"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -45,23 +45,19 @@ export default function NetlifyDeployList({
                   ) : deploy.state === 'error' ? (
                     <div className="i-ph:x-circle h-4 w-4 text-red-500" />
                   ) : (
-                    <div className="i-ph:buildings h-4 w-4 text-bolt-elements-item-contentAccent" />
+                    <div className="i-ph:buildings h-4 w-4 text-ui-item-contentAccent" />
                   )}
-                  <span className="text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-                    {deploy.state}
-                  </span>
+                  <span className="text-ui-textPrimary dark:text-ui-textPrimary">{deploy.state}</span>
                 </Badge>
               </div>
-              <span className="text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+              <span className="text-xs text-ui-textSecondary dark:text-ui-textSecondary">
                 {formatDistanceToNow(new Date(deploy.created_at))} ago
               </span>
             </div>
             {deploy.branch && (
-              <div className="mt-2 text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary flex items-center gap-1">
-                <div className="i-ph:brackets-curly h-3 w-3 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
-                <span className="text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
-                  Branch: {deploy.branch}
-                </span>
+              <div className="mt-2 text-xs text-ui-textSecondary dark:text-ui-textSecondary flex items-center gap-1">
+                <div className="i-ph:brackets-curly h-3 w-3 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
+                <span className="text-ui-textSecondary dark:text-ui-textSecondary">Branch: {deploy.branch}</span>
               </div>
             )}
             {deploy.deploy_url && (
@@ -70,10 +66,10 @@ export default function NetlifyDeployList({
                   href={deploy.deploy_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 transition-colors text-bolt-elements-link-text hover:text-bolt-elements-link-textHover dark:text-white dark:hover:text-bolt-elements-link-textHover"
+                  className="flex items-center gap-1 transition-colors text-ui-link-text hover:text-ui-link-textHover dark:text-white dark:hover:text-ui-link-textHover"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="i-ph:cloud h-3 w-3 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                  <div className="i-ph:cloud h-3 w-3 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
                   <span className="underline decoration-1 underline-offset-2">{deploy.deploy_url}</span>
                 </a>
               </div>
@@ -84,9 +80,9 @@ export default function NetlifyDeployList({
                 size="sm"
                 onClick={() => onDeployAction(activeSiteId, deploy.id, 'publish')}
                 disabled={isActionLoading}
-                className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
               >
-                <div className="i-ph:buildings h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                <div className="i-ph:buildings h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
                 Publish
               </Button>
               {deploy.state === 'ready' ? (
@@ -95,9 +91,9 @@ export default function NetlifyDeployList({
                   size="sm"
                   onClick={() => onDeployAction(activeSiteId, deploy.id, 'lock')}
                   disabled={isActionLoading}
-                  className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                  className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
                 >
-                  <div className="i-ph:lock h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                  <div className="i-ph:lock h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
                   Lock
                 </Button>
               ) : (
@@ -106,9 +102,9 @@ export default function NetlifyDeployList({
                   size="sm"
                   onClick={() => onDeployAction(activeSiteId, deploy.id, 'unlock')}
                   disabled={isActionLoading}
-                  className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                  className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
                 >
-                  <div className="i-ph:lock-open h-4 w-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
+                  <div className="i-ph:lock-open h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
                   Unlock
                 </Button>
               )}

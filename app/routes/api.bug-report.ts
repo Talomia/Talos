@@ -24,7 +24,7 @@ const bugReportSchema = z.object({
       browser: z.string().optional(),
       os: z.string().optional(),
       screenResolution: z.string().optional(),
-      boltVersion: z.string().optional(),
+      appVersion: z.string().optional(),
       aiProviders: z.string().optional(),
       projectType: z.string().optional(),
       currentModel: z.string().optional(),
@@ -116,8 +116,8 @@ function formatIssueBody(data: z.infer<typeof bugReportSchema>): string {
       body += `- Screen: ${data.environmentInfo.screenResolution}\n`;
     }
 
-    if (data.environmentInfo.boltVersion) {
-      body += `- Recurrsive: ${data.environmentInfo.boltVersion}\n`;
+    if (data.environmentInfo.appVersion) {
+      body += `- Version: ${data.environmentInfo.appVersion}\n`;
     }
 
     if (data.environmentInfo.aiProviders) {
@@ -139,7 +139,7 @@ function formatIssueBody(data: z.infer<typeof bugReportSchema>): string {
     body += `**Contact:** ${data.contactEmail}\n\n`;
   }
 
-  body += '---\n*Submitted via Recurrsive bug report feature*';
+  body += '---\n*Submitted via bug report feature*';
 
   return body;
 }
@@ -195,8 +195,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     // Get GitHub configuration
     const githubToken = context?.cloudflare?.env?.GITHUB_BUG_REPORT_TOKEN || process.env.GITHUB_BUG_REPORT_TOKEN;
-    const targetRepo =
-      context?.cloudflare?.env?.BUG_REPORT_REPO || process.env.BUG_REPORT_REPO || 'recurrsive/recurrsive';
+    const targetRepo = context?.cloudflare?.env?.BUG_REPORT_REPO || process.env.BUG_REPORT_REPO || 'app/app';
 
     if (!githubToken) {
       logger.error('GitHub bug report token not configured');
@@ -209,7 +208,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
     // Initialize GitHub client
     const octokit = new Octokit({
       auth: githubToken,
-      userAgent: 'recurrsive',
+      userAgent: 'app',
     });
 
     // Create GitHub issue

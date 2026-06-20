@@ -94,7 +94,7 @@ export default function GitHubTab() {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <GithubLogo />
-          <h2 className="text-lg font-medium text-bolt-elements-textPrimary">GitHub Integration</h2>
+          <h2 className="text-lg font-medium text-ui-textPrimary">GitHub Integration</h2>
         </div>
         <LoadingState message="Checking GitHub connection..." />
       </div>
@@ -107,7 +107,7 @@ export default function GitHubTab() {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <GithubLogo />
-          <h2 className="text-lg font-medium text-bolt-elements-textPrimary">GitHub Integration</h2>
+          <h2 className="text-lg font-medium text-ui-textPrimary">GitHub Integration</h2>
         </div>
         <ErrorState
           title="Connection Error"
@@ -125,9 +125,9 @@ export default function GitHubTab() {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <GithubLogo />
-          <h2 className="text-lg font-medium text-bolt-elements-textPrimary">GitHub Integration</h2>
+          <h2 className="text-lg font-medium text-ui-textPrimary">GitHub Integration</h2>
         </div>
-        <p className="text-sm text-bolt-elements-textSecondary">
+        <p className="text-sm text-ui-textSecondary">
           Connect your GitHub account to enable advanced repository management features, statistics, and seamless
           integration.
         </p>
@@ -148,15 +148,13 @@ export default function GitHubTab() {
         >
           <div className="flex items-center gap-2">
             <GithubLogo />
-            <h2 className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-              GitHub Integration
-            </h2>
+            <h2 className="text-lg font-medium text-ui-textPrimary dark:text-ui-textPrimary">GitHub Integration</h2>
           </div>
           <div className="flex items-center gap-2">
             {connection?.rateLimit && (
-              <div className="flex items-center gap-2 px-3 py-1 bg-bolt-elements-background-depth-1 rounded-lg text-xs">
-                <div className="i-ph:cloud w-4 h-4 text-bolt-elements-textSecondary" />
-                <span className="text-bolt-elements-textSecondary">
+              <div className="flex items-center gap-2 px-3 py-1 bg-ui-background-depth-1 rounded-lg text-xs">
+                <div className="i-ph:cloud w-4 h-4 text-ui-textSecondary" />
+                <span className="text-ui-textSecondary">
                   API: {connection.rateLimit.remaining}/{connection.rateLimit.limit}
                 </span>
               </div>
@@ -164,7 +162,7 @@ export default function GitHubTab() {
           </div>
         </motion.div>
 
-        <p className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+        <p className="text-sm text-ui-textSecondary dark:text-ui-textSecondary">
           Manage your GitHub integration with advanced repository features and comprehensive statistics
         </p>
 
@@ -190,20 +188,20 @@ export default function GitHubTab() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="border-t border-bolt-elements-borderColor pt-6"
+            className="border-t border-ui-borderColor pt-6"
           >
             <Collapsible open={isReposExpanded} onOpenChange={setIsReposExpanded}>
               <CollapsibleTrigger asChild>
-                <div className="flex items-center justify-between p-4 rounded-lg bg-bolt-elements-background dark:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive/70 dark:hover:border-bolt-elements-borderColorActive/70 transition-all duration-200">
+                <div className="flex items-center justify-between p-4 rounded-lg bg-ui-background dark:bg-ui-background-depth-2 border border-ui-borderColor dark:border-ui-borderColor hover:border-ui-borderColorActive/70 dark:hover:border-ui-borderColorActive/70 transition-all duration-200">
                   <div className="flex items-center gap-2">
-                    <div className="i-ph:folder w-4 h-4 text-bolt-elements-item-contentAccent" />
-                    <span className="text-sm font-medium text-bolt-elements-textPrimary">
+                    <div className="i-ph:folder w-4 h-4 text-ui-item-contentAccent" />
+                    <span className="text-sm font-medium text-ui-textPrimary">
                       All Repositories ({stats.repos.length})
                     </span>
                   </div>
                   <div
                     className={classNames(
-                      'i-ph:caret-down w-4 h-4 transform transition-transform duration-200 text-bolt-elements-textSecondary',
+                      'i-ph:caret-down w-4 h-4 transform transition-transform duration-200 text-ui-textSecondary',
                       isReposExpanded ? 'rotate-180' : '',
                     )}
                   />
@@ -230,7 +228,7 @@ export default function GitHubTab() {
                       <Button
                         variant="outline"
                         onClick={() => setIsReposExpanded(true)}
-                        className="text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary"
+                        className="text-ui-textSecondary hover:text-ui-textPrimary"
                       >
                         Show {stats.repos.length - 12} more repositories
                       </Button>
@@ -271,7 +269,7 @@ export default function GitHubTab() {
 
         {/* Cache Management Section - Only show when connected */}
         {isConnected && connection && (
-          <div className="mt-8 pt-6 border-t border-bolt-elements-borderColor">
+          <div className="mt-8 pt-6 border-t border-ui-borderColor">
             <GitHubCacheManager showStats={true} />
           </div>
         )}

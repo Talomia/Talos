@@ -3,14 +3,10 @@ import ignore from 'ignore';
 import type { IProviderSetting } from '~/types/model';
 import { IGNORE_PATTERNS, type FileMap } from './constants';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constants';
-import {
-  createFilesContext,
-  extractCurrentContext,
-  extractPropertiesFromMessage,
-  simplifyRecurrsiveActions,
-} from './utils';
+import { createFilesContext, extractCurrentContext, extractPropertiesFromMessage, simplifyActions } from './utils';
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
+import { CSS_CLASS_THOUGHT } from '~/lib/app-config';
 
 // Common patterns to ignore, similar to .gitignore
 
@@ -41,9 +37,9 @@ export async function selectContext(props: {
     } else if (message.role === 'assistant') {
       let content = message.content;
 
-      content = simplifyRecurrsiveActions(content);
+      content = simplifyActions(content);
 
-      content = content.replace(/<div class=\\"__recurrsiveThought__\\">.*?<\/div>/s, '');
+      content = content.replace(new RegExp(`<div class=\\\\"${CSS_CLASS_THOUGHT}\\\\">.*?</div>`, 's'), '');
       content = content.replace(/<think>.*?<\/think>/s, '');
 
       return { ...message, content };
@@ -230,7 +226,7 @@ export async function selectContext(props: {
   logger.info(`Total files: ${totalFiles}`);
 
   if (totalFiles === 0) {
-    throw new Error(`Bolt failed to select files`);
+    throw new Error(`Failed to select files`);
   }
 
   return filteredFiles;

@@ -3,6 +3,7 @@ import type { LinksFunction } from '@remix-run/cloudflare';
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
 import tailwindReset from '@unocss/reset/tailwind-compat.css?url';
 import { themeStore } from './lib/stores/theme';
+import { STORAGE_KEYS } from '~/lib/app-config';
 import { stripIndents } from './utils/stripIndent';
 import { createHead } from 'remix-island';
 import { useEffect } from 'react';
@@ -51,7 +52,7 @@ const inlineThemeCode = stripIndents`
   setTutorialKitTheme();
 
   function setTutorialKitTheme() {
-    let theme = localStorage.getItem('bolt_theme');
+    let theme = localStorage.getItem('${STORAGE_KEYS.theme}');
 
     if (!theme) {
       theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -65,6 +66,18 @@ export const Head = createHead(() => (
   <>
     <meta charSet="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Development Platform</title>
+    <meta
+      name="description"
+      content="Build full-stack web applications with AI-powered code generation, live preview, and one-click deployment."
+    />
+    <meta property="og:title" content="AI Development Platform" />
+    <meta property="og:description" content="Build full-stack web applications with AI-powered code generation." />
+    <meta property="og:image" content="/social_preview_index.jpg" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/social_preview_index.jpg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <Meta />
     <Links />
     <script dangerouslySetInnerHTML={{ __html: inlineThemeCode }} />
@@ -100,10 +113,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         icon={({ type }) => {
           switch (type) {
             case 'success': {
-              return <div className="i-ph:check-bold text-bolt-elements-icon-success text-2xl" />;
+              return <div className="i-ph:check-bold text-ui-icon-success text-2xl" />;
             }
             case 'error': {
-              return <div className="i-ph:warning-circle-bold text-bolt-elements-icon-error text-2xl" />;
+              return <div className="i-ph:warning-circle-bold text-ui-icon-error text-2xl" />;
             }
           }
 

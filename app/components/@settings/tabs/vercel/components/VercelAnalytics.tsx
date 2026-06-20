@@ -64,7 +64,7 @@ export function VercelAnalytics({ stats }: VercelAnalyticsProps) {
 
   return (
     <div className="mb-6 space-y-4">
-      <h4 className="text-sm font-medium text-bolt-elements-textPrimary">Performance Analytics</h4>
+      <h4 className="text-sm font-medium text-ui-textPrimary">Performance Analytics</h4>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <AnalyticsPanel icon="i-ph:rocket" title="Deployment Health" metrics={deploymentHealth} />
         <AnalyticsPanel icon="i-ph:chart-bar" title="Framework Distribution" metrics={frameworkDistribution} />
@@ -82,16 +82,16 @@ interface AnalyticsPanelProps {
 
 function AnalyticsPanel({ icon, title, metrics }: AnalyticsPanelProps) {
   return (
-    <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor">
-      <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2 mb-2">
-        <div className={`${icon} w-4 h-4 text-bolt-elements-item-contentAccent`} />
+    <div className="bg-ui-background-depth-2 p-3 rounded-lg border border-ui-borderColor">
+      <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2 mb-2">
+        <div className={`${icon} w-4 h-4 text-ui-item-contentAccent`} />
         {title}
       </h6>
       <div className="space-y-1">
         {metrics.map((item, idx) => (
           <div key={idx} className="flex justify-between text-xs">
-            <span className="text-bolt-elements-textSecondary">{item.label}:</span>
-            <span className="text-bolt-elements-textPrimary font-medium">{item.value}</span>
+            <span className="text-ui-textSecondary">{item.label}:</span>
+            <span className="text-ui-textPrimary font-medium">{item.value}</span>
           </div>
         ))}
       </div>

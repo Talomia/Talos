@@ -87,8 +87,8 @@ export function EmptyState({
     <div
       className={classNames(
         'flex flex-col items-center justify-center',
-        'text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark',
-        'bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg',
+        'text-ui-textSecondary dark:text-ui-textSecondary-dark',
+        'bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg',
         styles.container,
         className,
       )}
@@ -96,17 +96,11 @@ export function EmptyState({
       {/* Icon */}
       <div
         className={classNames(
-          'rounded-full bg-bolt-elements-background-depth-3 dark:bg-bolt-elements-background-depth-4 flex items-center justify-center',
+          'rounded-full bg-ui-background-depth-3 dark:bg-ui-background-depth-4 flex items-center justify-center',
           styles.icon.container,
         )}
       >
-        <span
-          className={classNames(
-            icon,
-            styles.icon.size,
-            'text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark',
-          )}
-        />
+        <span className={classNames(icon, styles.icon.size, 'text-ui-textTertiary dark:text-ui-textTertiary-dark')} />
       </div>
 
       {/* Title */}
@@ -116,7 +110,7 @@ export function EmptyState({
       {description && (
         <p
           className={classNames(
-            'text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark text-center max-w-xs',
+            'text-ui-textTertiary dark:text-ui-textTertiary-dark text-center max-w-xs',
             styles.description,
           )}
         >

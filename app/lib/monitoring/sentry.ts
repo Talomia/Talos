@@ -27,7 +27,7 @@ export async function initSentry(): Promise<void> {
     sentryModule.init({
       dsn,
       environment: import.meta.env.MODE || 'development',
-      release: `recurrsive@${import.meta.env.VITE_APP_VERSION || 'dev'}`,
+      release: `app@${import.meta.env.VITE_APP_VERSION || 'dev'}`,
       tracesSampleRate: import.meta.env.MODE === 'production' ? 0.1 : 1.0,
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: import.meta.env.MODE === 'production' ? 0.5 : 0,

@@ -7,16 +7,16 @@ interface SupabaseUserProfileProps {
 
 export function SupabaseUserProfile({ user, stats }: SupabaseUserProfileProps) {
   return (
-    <div className="flex items-center gap-4 p-4 bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 rounded-lg">
+    <div className="flex items-center gap-4 p-4 bg-ui-background-depth-1 dark:bg-ui-background-depth-1 rounded-lg">
       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
         <div className="i-ph:user w-6 h-6 text-white" />
       </div>
       <div className="flex-1">
-        <h4 className="text-sm font-medium text-bolt-elements-textPrimary">{user.email}</h4>
-        <p className="text-sm text-bolt-elements-textSecondary">
+        <h4 className="text-sm font-medium text-ui-textPrimary">{user.email}</h4>
+        <p className="text-sm text-ui-textSecondary">
           {user.role} • Member since {new Date(user.created_at).toLocaleDateString()}
         </p>
-        <div className="flex items-center gap-4 mt-2 text-xs text-bolt-elements-textSecondary">
+        <div className="flex items-center gap-4 mt-2 text-xs text-ui-textSecondary">
           <span className="flex items-center gap-1">
             <div className="i-ph:buildings w-3 h-3" />
             {stats?.totalProjects || 0} Projects

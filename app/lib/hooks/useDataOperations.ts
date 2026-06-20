@@ -131,7 +131,7 @@ export function useDataOperations({
       // Step 2: Download file
       showProgress('Downloading template', 75);
 
-      downloadJsonFile(templateData, 'bolt-api-keys-template.json');
+      downloadJsonFile(templateData, 'app-api-keys-template.json');
 
       // Step 3: Complete
       showProgress('Completing download', 100);

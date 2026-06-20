@@ -3,6 +3,13 @@ import type { ProviderInfo } from '~/types/model';
 import type { Template } from '~/types/template';
 import { STARTER_TEMPLATES } from './constants';
 import { createScopedLogger } from '~/utils/logger';
+import {
+  ARTIFACT_TAG_OPEN,
+  ARTIFACT_TAG_CLOSE,
+  ACTION_TAG_OPEN,
+  ACTION_TAG_CLOSE,
+  CONFIG_FOLDER,
+} from '~/lib/app-config';
 
 const logger = createScopedLogger('StarterTemplate');
 
@@ -157,11 +164,11 @@ export async function getTemplates(templateName: string, title?: string) {
    * (previously excluded via comminLockFiles filter)
    */
 
-  // exclude    .bolt
-  filteredFiles = filteredFiles.filter((x) => !x.path.startsWith('.bolt'));
+  // exclude config folder
+  filteredFiles = filteredFiles.filter((x) => !x.path.startsWith(CONFIG_FOLDER));
 
-  // check for ignore file in .bolt folder
-  const templateIgnoreFile = files.find((x) => x.path.startsWith('.bolt') && x.name === 'ignore');
+  // check for ignore file in config folder
+  const templateIgnoreFile = files.find((x) => x.path.startsWith(CONFIG_FOLDER) && x.name === 'ignore');
 
   const filesToImport = {
     files: filteredFiles,
@@ -181,20 +188,20 @@ export async function getTemplates(templateName: string, title?: string) {
   }
 
   const assistantMessage = `
-Recurrsive is initializing your project with the required files using the ${template.name} template.
-<recurrsiveArtifact id="imported-files" title="${title || 'Create initial files'}" type="bundled">
+Initializing your project with the required files using the ${template.name} template.
+${ARTIFACT_TAG_OPEN} id="imported-files" title="${title || 'Create initial files'}" type="bundled">
 ${filesToImport.files
   .map(
     (file) =>
-      `<recurrsiveAction type="file" filePath="${file.path}">
+      `${ACTION_TAG_OPEN} type="file" filePath="${file.path}">
 ${file.content}
-</recurrsiveAction>`,
+${ACTION_TAG_CLOSE}`,
   )
   .join('\n')}
-</recurrsiveArtifact>
+${ARTIFACT_TAG_CLOSE}
 `;
   let userMessage = ``;
-  const templatePromptFile = files.filter((x) => x.path.startsWith('.bolt')).find((x) => x.name === 'prompt');
+  const templatePromptFile = files.filter((x) => x.path.startsWith(CONFIG_FOLDER)).find((x) => x.name === 'prompt');
 
   if (templatePromptFile) {
     userMessage = `

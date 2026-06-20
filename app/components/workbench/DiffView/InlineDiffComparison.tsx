@@ -50,7 +50,7 @@ export const InlineDiffComparison = memo(({ beforeCode, afterCode, filename, lan
   if (!highlighter) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-bolt-elements-textTertiary">Loading diff...</div>
+        <div className="text-ui-textTertiary">Loading diff...</div>
       </div>
     );
   }

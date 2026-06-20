@@ -1,6 +1,7 @@
 import type { Message } from 'ai';
 import { generateId } from './fileUtils';
 import { createScopedLogger } from '~/utils/logger';
+import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 
 const logger = createScopedLogger('ProjectCommands');
 
@@ -119,12 +120,12 @@ export function createCommandsMessage(commands: ProjectCommands): Message | null
 
   if (commands.setupCommand) {
     commandString += `
-<recurrsiveAction type="shell">${commands.setupCommand}</recurrsiveAction>`;
+${ACTION_TAG_OPEN} type="shell">${commands.setupCommand}${ACTION_TAG_CLOSE}`;
   }
 
   if (commands.startCommand) {
     commandString += `
-<recurrsiveAction type="start">${commands.startCommand}</recurrsiveAction>
+${ACTION_TAG_OPEN} type="start">${commands.startCommand}${ACTION_TAG_CLOSE}
 `;
   }
 
@@ -132,17 +133,17 @@ export function createCommandsMessage(commands: ProjectCommands): Message | null
     role: 'assistant',
     content: `
 ${commands.followupMessage ? `\n\n${commands.followupMessage}` : ''}
-<recurrsiveArtifact id="project-setup" title="Project Setup">
+${ARTIFACT_TAG_OPEN} id="project-setup" title="Project Setup">
 ${commandString}
-</recurrsiveArtifact>`,
+${ARTIFACT_TAG_CLOSE}`,
     id: generateId(),
     createdAt: new Date(),
   };
 }
 
-export function escapeRecurrsiveArtifactTags(input: string) {
-  // Regular expression to match recurrsiveArtifact tags and their content
-  const regex = /(<recurrsiveArtifact[^>]*>)([\s\S]*?)(<\/recurrsiveArtifact>)/g;
+export function escapeArtifactTags(input: string) {
+  // Regular expression to match artifact tags and their content
+  const regex = /(\<artifact[^\>]*\>)([\s\S]*?)(\<\/artifact\>)/g;
 
   return input.replace(regex, (match, openTag, content, closeTag) => {
     // Escape the opening tag
@@ -156,9 +157,9 @@ export function escapeRecurrsiveArtifactTags(input: string) {
   });
 }
 
-export function escapeRecurrsiveActionTags(input: string) {
-  // Regular expression to match recurrsiveArtifact tags and their content
-  const regex = /(<recurrsiveAction[^>]*>)([\s\S]*?)(<\/recurrsiveAction>)/g;
+export function escapeActionTags(input: string) {
+  // Regular expression to match action tags and their content
+  const regex = /(\<action[^\>]*\>)([\s\S]*?)(\<\/action\>)/g;
 
   return input.replace(regex, (match, openTag, content, closeTag) => {
     // Escape the opening tag
@@ -172,8 +173,8 @@ export function escapeRecurrsiveActionTags(input: string) {
   });
 }
 
-export function escapeRecurrsiveTags(input: string) {
-  return escapeRecurrsiveArtifactTags(escapeRecurrsiveActionTags(input));
+export function escapeXmlTags(input: string) {
+  return escapeArtifactTags(escapeActionTags(input));
 }
 
 // We have this seperate function to simplify the restore snapshot process in to one single artifact.
@@ -187,12 +188,12 @@ export function createCommandActionsString(commands: ProjectCommands): string {
 
   if (commands.setupCommand) {
     commandString += `
-<recurrsiveAction type="shell">${commands.setupCommand}</recurrsiveAction>`;
+${ACTION_TAG_OPEN} type="shell">${commands.setupCommand}${ACTION_TAG_CLOSE}`;
   }
 
   if (commands.startCommand) {
     commandString += `
-<recurrsiveAction type="start">${commands.startCommand}</recurrsiveAction>
+${ACTION_TAG_OPEN} type="start">${commands.startCommand}${ACTION_TAG_CLOSE}
 `;
   }
 

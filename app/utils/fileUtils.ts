@@ -1,5 +1,6 @@
 import ignore from 'ignore';
 import { createScopedLogger } from '~/utils/logger';
+import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 
 const logger = createScopedLogger('FileUtils');
 
@@ -109,16 +110,16 @@ export const detectProjectType = async (
 
 export const filesToArtifacts = (files: { [path: string]: { content: string } }, id: string): string => {
   return `
-<recurrsiveArtifact id="${id}" title="User Updated Files">
+${ARTIFACT_TAG_OPEN} id="${id}" title="User Updated Files">
 ${Object.keys(files)
   .map(
     (filePath) => `
-<recurrsiveAction type="file" filePath="${filePath}">
+${ACTION_TAG_OPEN} type="file" filePath="${filePath}">
 ${files[filePath].content}
-</recurrsiveAction>
+${ACTION_TAG_CLOSE}
 `,
   )
   .join('\n')}
-</recurrsiveArtifact>
+${ARTIFACT_TAG_CLOSE}
   `;
 };

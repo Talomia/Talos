@@ -1,6 +1,7 @@
 import type { Message } from 'ai';
 import { generateId } from './fileUtils';
-import { detectProjectCommands, createCommandsMessage, escapeRecurrsiveTags } from './projectCommands';
+import { detectProjectCommands, createCommandsMessage, escapeXmlTags } from './projectCommands';
+import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 
 export const createChatFromFolder = async (
   files: File[],
@@ -38,15 +39,15 @@ export const createChatFromFolder = async (
     role: 'assistant',
     content: `I've imported the contents of the "${folderName}" folder.${binaryFilesMessage}
 
-<recurrsiveArtifact id="imported-files" title="Imported Files" type="bundled" >
+${ARTIFACT_TAG_OPEN} id="imported-files" title="Imported Files" type="bundled" >
 ${fileArtifacts
   .map(
-    (file) => `<recurrsiveAction type="file" filePath="${file.path}">
-${escapeRecurrsiveTags(file.content)}
-</recurrsiveAction>`,
+    (file) => `${ACTION_TAG_OPEN} type="file" filePath="${file.path}">
+${escapeXmlTags(file.content)}
+${ACTION_TAG_CLOSE}`,
   )
   .join('\n\n')}
-</recurrsiveArtifact>`,
+${ARTIFACT_TAG_CLOSE}`,
     id: generateId(),
     createdAt: new Date(),
   };

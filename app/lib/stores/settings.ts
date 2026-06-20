@@ -5,6 +5,7 @@ import type { TabVisibilityConfig, TabWindowConfig, UserTabConfig } from '~/comp
 import { DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
 import { toggleTheme } from './theme';
 import { createScopedLogger } from '~/utils/logger';
+import { STORAGE_KEYS } from '~/lib/app-config';
 
 const logger = createScopedLogger('SettingsStore');
 
@@ -338,7 +339,7 @@ const getInitialTabConfiguration = (): TabWindowConfig => {
   }
 
   try {
-    const saved = localStorage.getItem('bolt_tab_configuration');
+    const saved = localStorage.getItem(STORAGE_KEYS.tabConfiguration);
 
     if (!saved) {
       return defaultConfig;
@@ -371,5 +372,5 @@ export const resetTabConfiguration = () => {
   };
 
   tabConfigurationStore.set(defaultConfig);
-  localStorage.setItem('bolt_tab_configuration', JSON.stringify(defaultConfig));
+  localStorage.setItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(defaultConfig));
 };

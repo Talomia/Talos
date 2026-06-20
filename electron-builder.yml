@@ -1,5 +1,5 @@
-appId: com.recurrsive.app
-productName: Recurrsive
+appId: com.app.ide
+productName: App
 directories:
   buildResources: build
   output: dist
@@ -56,7 +56,7 @@ npmRebuild: false
 publish:
   provider: github
   owner: h-khalid-h
-  repo: recurrsive-app
+  repo: app
   private: true
   releaseType: release
 

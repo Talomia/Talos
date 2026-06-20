@@ -5,15 +5,15 @@ import { Card, CardContent, CardHeader } from '~/components/ui/Card';
 // LM Studio Setup Section
 function LmStudioSetupCard() {
   return (
-    <Card className="bg-bolt-elements-background-depth-2 shadow-sm">
+    <Card className="bg-ui-background-depth-2 shadow-sm">
       <CardHeader className="pb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center ring-1 ring-blue-500/30">
             <div className="i-ph:monitor w-6 h-6 text-blue-500" />
           </div>
           <div className="flex-1">
-            <h3 className="text-xl font-semibold text-bolt-elements-textPrimary">LM Studio Setup</h3>
-            <p className="text-sm text-bolt-elements-textSecondary">
+            <h3 className="text-xl font-semibold text-ui-textPrimary">LM Studio Setup</h3>
+            <p className="text-sm text-ui-textSecondary">
               User-friendly GUI for running local models with excellent model management
             </p>
           </div>
@@ -22,12 +22,12 @@ function LmStudioSetupCard() {
       <CardContent className="space-y-6">
         {/* Installation */}
         <div className="space-y-4">
-          <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
+          <h4 className="font-medium text-ui-textPrimary flex items-center gap-2">
             <div className="i-ph:download w-4 h-4" />
             1. Download &amp; Install
           </h4>
-          <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
-            <p className="text-sm text-bolt-elements-textSecondary mb-3">
+          <div className="p-4 rounded-lg bg-ui-background-depth-3">
+            <p className="text-sm text-ui-textSecondary mb-3">
               Download LM Studio for Windows, macOS, or Linux from the official website.
             </p>
             <Button
@@ -52,14 +52,14 @@ function LmStudioSetupCard() {
 
         {/* Configuration */}
         <div className="space-y-4">
-          <h4 className="font-medium text-bolt-elements-textPrimary flex items-center gap-2">
+          <h4 className="font-medium text-ui-textPrimary flex items-center gap-2">
             <div className="i-ph:gear w-4 h-4" />
             2. Configure Local Server
           </h4>
           <div className="space-y-3">
-            <div className="p-4 rounded-lg bg-bolt-elements-background-depth-3">
-              <h5 className="font-medium text-bolt-elements-textPrimary mb-2">Start Local Server</h5>
-              <ol className="text-xs text-bolt-elements-textSecondary space-y-1 list-decimal list-inside">
+            <div className="p-4 rounded-lg bg-ui-background-depth-3">
+              <h5 className="font-medium text-ui-textPrimary mb-2">Start Local Server</h5>
+              <ol className="text-xs text-ui-textSecondary space-y-1 list-decimal list-inside">
                 <li>Download a model from the &quot;My Models&quot; tab</li>
                 <li>Go to &quot;Local Server&quot; tab</li>
                 <li>Select your downloaded model</li>
@@ -74,15 +74,15 @@ function LmStudioSetupCard() {
                 <span className="font-medium text-red-500">Critical: Enable CORS</span>
               </div>
               <div className="space-y-2">
-                <p className="text-xs text-bolt-elements-textSecondary">
-                  To work with Bolt DIY, you MUST enable CORS in LM Studio:
+                <p className="text-xs text-ui-textSecondary">
+                  To work with this application, you MUST enable CORS in LM Studio:
                 </p>
-                <ol className="text-xs text-bolt-elements-textSecondary space-y-1 list-decimal list-inside ml-2">
+                <ol className="text-xs text-ui-textSecondary space-y-1 list-decimal list-inside ml-2">
                   <li>In Server Settings, check &quot;Enable CORS&quot;</li>
                   <li>Set Network Interface to &quot;0.0.0.0&quot; for external access</li>
                   <li>
                     Alternatively, use CLI:{' '}
-                    <code className="bg-bolt-elements-background-depth-4 px-1 rounded">lms server start --cors</code>
+                    <code className="bg-ui-background-depth-4 px-1 rounded">lms server start --cors</code>
                   </li>
                 </ol>
               </div>
@@ -96,7 +96,7 @@ function LmStudioSetupCard() {
             <div className="i-ph:check-circle w-4 h-4 text-blue-500" />
             <span className="font-medium text-blue-500">LM Studio Advantages</span>
           </div>
-          <ul className="text-xs text-bolt-elements-textSecondary space-y-1 list-disc list-inside">
+          <ul className="text-xs text-ui-textSecondary space-y-1 list-disc list-inside">
             <li>Built-in model downloader with search</li>
             <li>Easy model switching and management</li>
             <li>Built-in chat interface for testing</li>

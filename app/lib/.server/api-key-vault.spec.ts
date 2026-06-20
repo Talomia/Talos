@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { readVault, writeVault, clearLegacyCookie, type VaultData } from './api-key-vault';
+import { readVault, writeVault, type VaultData } from './api-key-vault';
 
 // Mock the crypto module
 vi.mock('./crypto', () => ({
@@ -50,25 +50,8 @@ describe('api-key-vault', () => {
       expect(result.updatedAt).toBe('2024-01-01T00:00:00Z');
     });
 
-    it('should migrate legacy plaintext apiKeys cookie', async () => {
-      const legacyKeys = { openai: 'sk-legacy', anthropic: 'ant-legacy' };
-      const cookieHeader = `apiKeys=${encodeURIComponent(JSON.stringify(legacyKeys))}`;
-
-      const result = await readVault(cookieHeader);
-
-      expect(result.apiKeys).toEqual(legacyKeys);
-    });
-
     it('should return empty vault on decryption failure', async () => {
       const cookieHeader = `rc_vault=${encodeURIComponent('invalid-data')}`;
-
-      const result = await readVault(cookieHeader);
-
-      expect(result.apiKeys).toEqual({});
-    });
-
-    it('should return empty vault when legacy cookie has invalid JSON', async () => {
-      const cookieHeader = 'apiKeys=not-valid-json';
 
       const result = await readVault(cookieHeader);
 
@@ -136,14 +119,6 @@ describe('api-key-vault', () => {
       expect(cookie).not.toContain('Secure');
 
       process.env.NODE_ENV = originalEnv;
-    });
-  });
-
-  describe('clearLegacyCookie', () => {
-    it('should return a cookie that deletes the legacy apiKeys cookie', () => {
-      const cookie = clearLegacyCookie();
-
-      expect(cookie).toBe('apiKeys=; Max-Age=0; Path=/');
     });
   });
 });

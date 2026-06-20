@@ -73,9 +73,7 @@ export default function NetlifyTab() {
           <div className="text-[#00AD9F]">
             <NetlifyLogo />
           </div>
-          <h2 className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
-            Netlify Integration
-          </h2>
+          <h2 className="text-lg font-medium text-ui-textPrimary dark:text-ui-textPrimary">Netlify Integration</h2>
         </div>
         <div className="flex items-center gap-2">
           {connection.user && (
@@ -83,7 +81,7 @@ export default function NetlifyTab() {
               onClick={testConnection}
               disabled={connectionTest?.status === 'testing'}
               variant="outline"
-              className="flex items-center gap-2 hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:bg-bolt-elements-item-backgroundActive/10 dark:hover:text-bolt-elements-textPrimary transition-colors"
+              className="flex items-center gap-2 hover:bg-ui-item-backgroundActive/10 hover:text-ui-textPrimary dark:hover:bg-ui-item-backgroundActive/10 dark:hover:text-ui-textPrimary transition-colors"
             >
               {connectionTest?.status === 'testing' ? (
                 <>
@@ -101,7 +99,7 @@ export default function NetlifyTab() {
         </div>
       </motion.div>
 
-      <p className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+      <p className="text-sm text-ui-textSecondary dark:text-ui-textSecondary">
         Connect and manage your Netlify sites with advanced deployment controls and site management
       </p>
 

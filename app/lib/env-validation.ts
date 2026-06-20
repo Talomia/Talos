@@ -3,7 +3,7 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('env-validation');
 
 /**
- * Environment variable validation for Recurrsive.
+ * Environment variable validation.
  *
  * Validates that required environment variables are set based on the
  * deployment environment. Logs warnings for missing optional vars
@@ -65,7 +65,7 @@ export function validateEnv(env?: Record<string, string>): void {
 
     if (isProduction) {
       logger.error(message);
-      throw new Error(`Recurrsive cannot start: ${missingRequired.length} required env var(s) missing`);
+      throw new Error(`Application cannot start: ${missingRequired.length} required env var(s) missing`);
     } else {
       logger.warn(`${message}\n  (Not enforced in development)`);
     }

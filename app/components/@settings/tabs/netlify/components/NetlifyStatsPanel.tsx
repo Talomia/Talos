@@ -23,26 +23,26 @@ export default function NetlifyStatsPanel({
   return (
     <div className="space-y-4">
       {/* Netlify Overview Dashboard */}
-      <div className="mb-6 p-4 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
-        <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-3">Netlify Overview</h4>
+      <div className="mb-6 p-4 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
+        <h4 className="text-sm font-medium text-ui-textPrimary mb-3">Netlify Overview</h4>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-bolt-elements-textPrimary">{totalSites}</div>
-            <div className="text-xs text-bolt-elements-textSecondary">Total Sites</div>
+            <div className="text-2xl font-bold text-ui-textPrimary">{totalSites}</div>
+            <div className="text-xs text-ui-textSecondary">Total Sites</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-bolt-elements-textPrimary">{totalDeploys}</div>
-            <div className="text-xs text-bolt-elements-textSecondary">Total Deployments</div>
+            <div className="text-2xl font-bold text-ui-textPrimary">{totalDeploys}</div>
+            <div className="text-xs text-ui-textSecondary">Total Deployments</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-bolt-elements-textPrimary">{totalBuilds}</div>
-            <div className="text-xs text-bolt-elements-textSecondary">Total Builds</div>
+            <div className="text-2xl font-bold text-ui-textPrimary">{totalBuilds}</div>
+            <div className="text-xs text-ui-textSecondary">Total Builds</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-bolt-elements-textPrimary">
+            <div className="text-2xl font-bold text-ui-textPrimary">
               {sites.filter((site) => site.published_deploy?.state === 'ready').length}
             </div>
-            <div className="text-xs text-bolt-elements-textSecondary">Live Sites</div>
+            <div className="text-xs text-ui-textSecondary">Live Sites</div>
           </div>
         </div>
       </div>
@@ -82,11 +82,11 @@ function DeploymentAnalytics({ deploys, sites }: DeploymentAnalyticsProps) {
 
   return (
     <div className="mb-6 space-y-4">
-      <h4 className="text-sm font-medium text-bolt-elements-textPrimary">Deployment Analytics</h4>
+      <h4 className="text-sm font-medium text-ui-textPrimary">Deployment Analytics</h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor">
-          <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2 mb-2">
-            <div className="i-ph:chart-pie w-4 h-4 text-bolt-elements-item-contentAccent" />
+        <div className="bg-ui-background-depth-2 p-3 rounded-lg border border-ui-borderColor">
+          <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2 mb-2">
+            <div className="i-ph:chart-pie w-4 h-4 text-ui-item-contentAccent" />
             Success Rate
           </h6>
           <div className="space-y-1">
@@ -96,16 +96,16 @@ function DeploymentAnalytics({ deploys, sites }: DeploymentAnalyticsProps) {
               { label: 'Failed', value: failedDeploys },
             ].map((item, idx) => (
               <div key={idx} className="flex justify-between text-xs">
-                <span className="text-bolt-elements-textSecondary">{item.label}:</span>
-                <span className="text-bolt-elements-textPrimary font-medium">{item.value}</span>
+                <span className="text-ui-textSecondary">{item.label}:</span>
+                <span className="text-ui-textPrimary font-medium">{item.value}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor">
-          <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2 mb-2">
-            <div className="i-ph:clock w-4 h-4 text-bolt-elements-item-contentAccent" />
+        <div className="bg-ui-background-depth-2 p-3 rounded-lg border border-ui-borderColor">
+          <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2 mb-2">
+            <div className="i-ph:clock w-4 h-4 text-ui-item-contentAccent" />
             Recent Activity
           </h6>
           <div className="space-y-1">
@@ -115,8 +115,8 @@ function DeploymentAnalytics({ deploys, sites }: DeploymentAnalyticsProps) {
               { label: 'Active sites', value: activeSites },
             ].map((item, idx) => (
               <div key={idx} className="flex justify-between text-xs">
-                <span className="text-bolt-elements-textSecondary">{item.label}:</span>
-                <span className="text-bolt-elements-textPrimary font-medium">{item.value}</span>
+                <span className="text-ui-textSecondary">{item.label}:</span>
+                <span className="text-ui-textPrimary font-medium">{item.value}</span>
               </div>
             ))}
           </div>
@@ -177,16 +177,16 @@ const HEALTH_METRICS = [
 function SiteHealthOverview({ sites }: { sites: NetlifySite[] }) {
   return (
     <div className="mb-6">
-      <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Site Health Overview</h4>
+      <h4 className="text-sm font-medium text-ui-textPrimary mb-2">Site Health Overview</h4>
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {HEALTH_METRICS.map((metric) => (
           <div
             key={metric.label}
-            className={`flex flex-col p-3 rounded-lg border border-bolt-elements-borderColor ${metric.bgColor}`}
+            className={`flex flex-col p-3 rounded-lg border border-ui-borderColor ${metric.bgColor}`}
           >
             <div className="flex items-center gap-2 mb-1">
               <div className={`${metric.icon} w-4 h-4 ${metric.color}`} />
-              <span className="text-xs text-bolt-elements-textSecondary">{metric.label}</span>
+              <span className="text-xs text-ui-textSecondary">{metric.label}</span>
             </div>
             <span className={`text-lg font-medium ${metric.textColor}`}>{metric.compute(sites)}</span>
           </div>

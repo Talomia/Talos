@@ -35,12 +35,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
     return (
       <div className={classNames('relative flex items-center w-full', containerClassName)}>
         {/* Search icon or loading spinner */}
-        <div
-          className={classNames(
-            'absolute left-3 top-1/2 -translate-y-1/2 text-bolt-elements-textTertiary',
-            iconClassName,
-          )}
-        >
+        <div className={classNames('absolute left-3 top-1/2 -translate-y-1/2 text-ui-textTertiary', iconClassName)}>
           {loading ? (
             <span className="i-ph:spinner-gap animate-spin w-4 h-4" />
           ) : (
@@ -65,7 +60,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
               transition={{ duration: 0.15 }}
               type="button"
               onClick={onClear}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-bolt-elements-textTertiary hover:text-bolt-elements-textSecondary p-1 rounded-full hover:bg-bolt-elements-background-depth-2"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-ui-textTertiary hover:text-ui-textSecondary p-1 rounded-full hover:bg-ui-background-depth-2"
               aria-label="Clear search"
             >
               <span className="i-ph:x w-3.5 h-3.5" />

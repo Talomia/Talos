@@ -22,6 +22,7 @@ import type { FileMap } from '~/lib/stores/files';
 import type { Snapshot } from './types';
 import { webcontainer } from '~/lib/webcontainer';
 import { detectProjectCommands, createCommandActionsString } from '~/utils/projectCommands';
+import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 import type { ContextAnnotation } from '~/types/context';
 
 const logger = createScopedLogger('ChatHistory');
@@ -192,15 +193,15 @@ export function useChatHistory() {
                   role: 'assistant',
 
                   // Combine followup message and the artifact with files and command actions
-                  content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
-                  <recurrsiveArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
+                  content: `Your chat has been restored from a snapshot. You can revert this message to load the full chat history.
+                  ${ARTIFACT_TAG_OPEN} id="restored-project-setup" title="Restored Project & Setup" type="bundled">
                   ${Object.entries(snapshot?.files || {})
                     .map(([key, value]) => {
                       if (value?.type === 'file') {
                         return `
-                      <recurrsiveAction type="file" filePath="${key}">
+                      ${ACTION_TAG_OPEN} type="file" filePath="${key}">
 ${value.content}
-                      </recurrsiveAction>
+                      ${ACTION_TAG_CLOSE}
                       `;
                       } else {
                         return ``;
@@ -208,7 +209,7 @@ ${value.content}
                     })
                     .join('\n')}
                   ${commandActionsString} 
-                  </recurrsiveArtifact>
+                  ${ARTIFACT_TAG_CLOSE}
                   `, // Added commandActionsString, followupMessage, updated id and title
                   annotations: [
                     'no-store',

@@ -13,8 +13,8 @@ function SystemRequirementsCard() {
             <div className="i-ph:shield w-5 h-5 text-blue-500" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">System Requirements</h3>
-            <p className="text-sm text-bolt-elements-textSecondary">Recommended hardware for optimal performance</p>
+            <h3 className="text-lg font-semibold text-ui-textPrimary">System Requirements</h3>
+            <p className="text-sm text-ui-textSecondary">Recommended hardware for optimal performance</p>
           </div>
         </div>
         <div className="grid md:grid-cols-3 gap-4 text-sm">
@@ -22,9 +22,9 @@ function SystemRequirementsCard() {
             <div key={spec.label} className="space-y-2">
               <div className="flex items-center gap-2">
                 <div className={`${spec.icon} w-4 h-4 ${spec.iconColor}`} />
-                <span className="font-medium text-bolt-elements-textPrimary">{spec.label}</span>
+                <span className="font-medium text-ui-textPrimary">{spec.label}</span>
               </div>
-              <p className="text-bolt-elements-textSecondary">{spec.description}</p>
+              <p className="text-ui-textSecondary">{spec.description}</p>
             </div>
           ))}
         </div>

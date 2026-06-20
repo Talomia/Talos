@@ -26,7 +26,7 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
   return (
     <div className="flex items-center gap-2">
       <PopoverPrimitive.Root>
-        <PopoverPrimitive.Trigger className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-bolt-elements-background-depth-2 hover:bg-bolt-elements-background-depth-3 transition-colors text-bolt-elements-item-contentDefault">
+        <PopoverPrimitive.Trigger className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-ui-background-depth-2 hover:bg-ui-background-depth-3 transition-colors text-ui-item-contentDefault">
           <span>File Changes</span>
           {hasChanges && (
             <span className="w-5 h-5 rounded-full bg-accent-500/20 text-accent-500 text-xs flex items-center justify-center border border-accent-500/30">
@@ -38,7 +38,7 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
           <PopoverPrimitive.Content
             align="end"
             sideOffset={8}
-            className="z-20 w-80 rounded-xl bg-bolt-elements-background-depth-2 shadow-xl border border-bolt-elements-borderColor animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
+            className="z-20 w-80 rounded-xl bg-ui-background-depth-2 shadow-xl border border-ui-borderColor animate-in fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2"
           >
             <div className="p-2">
               <div className="relative mx-2 mb-2">
@@ -47,9 +47,9 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
                   placeholder="Search files..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  className="w-full pl-8 pr-3 py-1.5 text-sm rounded-lg bg-ui-background-depth-1 border border-ui-borderColor focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                 />
-                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-bolt-elements-textTertiary">
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 text-ui-textTertiary">
                   <div className="i-ph:magnifying-glass" />
                 </div>
               </div>
@@ -64,19 +64,19 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
                       <button
                         key={filePath}
                         onClick={() => onSelectFile(filePath)}
-                        className="w-full px-3 py-2 text-left rounded-md hover:bg-bolt-elements-background-depth-1 transition-colors group bg-transparent"
+                        className="w-full px-3 py-2 text-left rounded-md hover:bg-ui-background-depth-1 transition-colors group bg-transparent"
                       >
                         <div className="flex items-center gap-2">
-                          <div className="shrink-0 w-5 h-5 text-bolt-elements-textTertiary">
+                          <div className="shrink-0 w-5 h-5 text-ui-textTertiary">
                             <FileIcon language={language} />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex flex-col min-w-0">
-                                <span className="truncate text-sm font-medium text-bolt-elements-textPrimary">
+                                <span className="truncate text-sm font-medium text-ui-textPrimary">
                                   {filePath.split('/').pop()}
                                 </span>
-                                <span className="truncate text-xs text-bolt-elements-textTertiary">{filePath}</span>
+                                <span className="truncate text-xs text-ui-textTertiary">{filePath}</span>
                               </div>
                               <DiffStats history={history} />
                             </div>
@@ -87,13 +87,13 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
                   })
                 ) : (
                   <div className="flex flex-col items-center justify-center p-4 text-center">
-                    <div className="w-12 h-12 mb-2 text-bolt-elements-textTertiary">
+                    <div className="w-12 h-12 mb-2 text-ui-textTertiary">
                       <div className="i-ph:file-dashed" />
                     </div>
-                    <p className="text-sm font-medium text-bolt-elements-textPrimary">
+                    <p className="text-sm font-medium text-ui-textPrimary">
                       {searchQuery ? 'No matching files' : 'No modified files'}
                     </p>
-                    <p className="text-xs text-bolt-elements-textTertiary mt-1">
+                    <p className="text-xs text-ui-textTertiary mt-1">
                       {searchQuery ? 'Try another search' : 'Changes will appear here as you edit'}
                     </p>
                   </div>
@@ -102,7 +102,7 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
             </div>
 
             {hasChanges && (
-              <div className="border-t border-bolt-elements-borderColor p-2">
+              <div className="border-t border-ui-borderColor p-2">
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(filteredFiles.map(([filePath]) => filePath).join('\n'));
@@ -110,7 +110,7 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
                       icon: <div className="i-ph:check-circle text-accent-500" />,
                     });
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-bolt-elements-background-depth-1 hover:bg-bolt-elements-background-depth-3 transition-colors text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-sm rounded-lg bg-ui-background-depth-1 hover:bg-ui-background-depth-3 transition-colors text-ui-textTertiary hover:text-ui-textPrimary"
                 >
                   Copy File List
                 </button>

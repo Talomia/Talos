@@ -40,8 +40,8 @@ export function Breadcrumbs({
         <span
           className={classNames(
             isLast
-              ? 'font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark'
-              : 'text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary-dark',
+              ? 'font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark'
+              : 'text-ui-textSecondary dark:text-ui-textSecondary-dark hover:text-ui-textPrimary dark:hover:text-ui-textPrimary-dark',
             item.onClick || item.href ? 'cursor-pointer' : '',
           )}
         >
@@ -86,10 +86,7 @@ export function Breadcrumbs({
               {renderItem ? renderItem(item, index, isLast) : defaultRenderItem(item, index, isLast)}
               {!isLast && (
                 <span
-                  className={classNames(
-                    separator,
-                    'w-3 h-3 mx-1 text-bolt-elements-textTertiary dark:text-bolt-elements-textTertiary-dark',
-                  )}
+                  className={classNames(separator, 'w-3 h-3 mx-1 text-ui-textTertiary dark:text-ui-textTertiary-dark')}
                 />
               )}
             </li>

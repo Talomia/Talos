@@ -8,7 +8,7 @@ interface FullscreenButtonProps {
 export const FullscreenButton = memo(({ onClick, isFullscreen }: FullscreenButtonProps) => (
   <button
     onClick={onClick}
-    className="ml-4 p-1 rounded hover:bg-bolt-elements-background-depth-3 text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary transition-colors"
+    className="ml-4 p-1 rounded hover:bg-ui-background-depth-3 text-ui-textTertiary hover:text-ui-textPrimary transition-colors"
     title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
   >
     <div className={isFullscreen ? 'i-ph:corners-in' : 'i-ph:corners-out'} />
@@ -23,7 +23,7 @@ export const FullscreenOverlay = memo(
 
     return (
       <div className="fixed inset-0 z-[9999] bg-black/50 flex items-center justify-center p-6">
-        <div className="w-full h-full max-w-[90vw] max-h-[90vh] bg-bolt-elements-background-depth-2 rounded-lg border border-bolt-elements-borderColor shadow-xl overflow-hidden">
+        <div className="w-full h-full max-w-[90vw] max-h-[90vh] bg-ui-background-depth-2 rounded-lg border border-ui-borderColor shadow-xl overflow-hidden">
           {children}
         </div>
       </div>

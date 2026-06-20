@@ -1,6 +1,7 @@
 import Cookies from 'js-cookie';
 import { getAllChats, deleteChat } from '~/lib/persistence/db';
 import { createScopedLogger } from '~/utils/logger';
+import { STORAGE_KEYS } from '~/lib/app-config';
 import {
   safeGetItem,
   safeSetItem,
@@ -26,9 +27,9 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       // Core settings
       core: {
         // User profile and main settings
-        bolt_user_profile: safeGetItem('bolt_user_profile'),
-        bolt_settings: safeGetItem('bolt_settings'),
-        bolt_profile: safeGetItem('bolt_profile'),
+        user_profile: safeGetItem(STORAGE_KEYS.userProfile),
+        settings: safeGetItem('app_settings'),
+        profile: safeGetItem(STORAGE_KEYS.profile),
         theme: safeGetItem('theme'),
       },
 
@@ -51,8 +52,8 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       // Feature settings
       features: {
         // Feature flags
-        viewed_features: safeGetItem('bolt_viewed_features'),
-        developer_mode: safeGetItem('bolt_developer_mode'),
+        viewed_features: safeGetItem('viewed_features'),
+        developer_mode: safeGetItem('developer_mode'),
 
         // Context optimization
         contextOptimizationEnabled: safeGetItem('contextOptimizationEnabled'),
@@ -74,7 +75,7 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       // UI configuration
       ui: {
         // Tab configuration (localStorage only — no cookie needed)
-        bolt_tab_configuration: safeGetItem('bolt_tab_configuration'),
+        tab_configuration: safeGetItem(STORAGE_KEYS.tabConfiguration),
 
         // Prompt settings
         promptId: safeGetItem('promptId'),
@@ -94,12 +95,12 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       debug: {
         // Debug settings
         isDebugEnabled: allCookies.isDebugEnabled,
-        acknowledged_debug_issues: safeGetItem('bolt_acknowledged_debug_issues'),
-        acknowledged_connection_issue: safeGetItem('bolt_acknowledged_connection_issue'),
+        acknowledged_debug_issues: safeGetItem('acknowledged_debug_issues'),
+        acknowledged_connection_issue: safeGetItem('acknowledged_connection_issue'),
 
         // Error logs
         error_logs: safeGetItem('error_logs'),
-        bolt_read_logs: safeGetItem('bolt_read_logs'),
+        read_logs: safeGetItem(STORAGE_KEYS.readLogs),
 
         // Event logs
         eventLogs: allCookies.eventLogs,
@@ -108,7 +109,7 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       // Update settings
       updates: {
         update_settings: safeGetItem('update_settings'),
-        last_acknowledged_update: safeGetItem('bolt_last_acknowledged_version'),
+        last_acknowledged_update: safeGetItem('last_acknowledged_version'),
       },
 
       // Chat snapshots (for chat history)
@@ -284,9 +285,9 @@ async function importComprehensiveFormat(data: SettingsData): Promise<void> {
   // Import UI configuration
   if (data.ui) {
     // Import localStorage UI settings
-    if (data.ui.bolt_tab_configuration) {
+    if (data.ui.tab_configuration) {
       try {
-        safeSetItem('bolt_tab_configuration', data.ui.bolt_tab_configuration);
+        safeSetItem(STORAGE_KEYS.tabConfiguration, data.ui.tab_configuration);
       } catch (err) {
         logger.error('Error importing tab configuration:', err);
       }
@@ -340,10 +341,10 @@ async function importComprehensiveFormat(data: SettingsData): Promise<void> {
   if (data.debug) {
     // Import debug localStorage settings
     const debugLocalStorageKeys = [
-      'bolt_acknowledged_debug_issues',
-      'bolt_acknowledged_connection_issue',
+      'acknowledged_debug_issues',
+      'acknowledged_connection_issue',
       'error_logs',
-      'bolt_read_logs',
+      STORAGE_KEYS.readLogs,
     ];
 
     debugLocalStorageKeys.forEach((key) => {
@@ -381,7 +382,7 @@ async function importComprehensiveFormat(data: SettingsData): Promise<void> {
 
     if (data.updates.last_acknowledged_update) {
       try {
-        safeSetItem('bolt_last_acknowledged_version', data.updates.last_acknowledged_update);
+        safeSetItem('last_acknowledged_version', data.updates.last_acknowledged_update);
       } catch (err) {
         logger.error('Error importing last acknowledged update:', err);
       }

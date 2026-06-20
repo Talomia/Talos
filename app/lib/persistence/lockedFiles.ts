@@ -3,7 +3,7 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('LockedFiles');
 
 // Key for storing locked files in localStorage
-export const LOCKED_FILES_KEY = 'bolt.lockedFiles';
+export const LOCKED_FILES_KEY = 'app.lockedFiles';
 
 export interface LockedItem {
   chatId: string; // Chat ID to scope locks to a specific project
@@ -371,54 +371,6 @@ export function getLockedFoldersForChat(chatId: string): LockedItem[] {
 export function isPathInLockedFolder(chatId: string, path: string): { locked: boolean; lockedBy?: string } {
   // This is already optimized by using checkParentFolderLocks
   return checkParentFolderLocks(chatId, path);
-}
-
-/**
- * Migrate legacy locks (without chatId or isFolder) to the new format
- * @param currentChatId The current chat ID to assign to legacy locks
- */
-export function migrateLegacyLocks(currentChatId: string): void {
-  try {
-    // Force a fresh read from localStorage
-    clearCache();
-
-    // Get the items directly from localStorage
-    if (typeof localStorage !== 'undefined') {
-      const lockedItemsJson = localStorage.getItem(LOCKED_FILES_KEY);
-
-      if (lockedItemsJson) {
-        const lockedItems = JSON.parse(lockedItemsJson);
-
-        if (Array.isArray(lockedItems)) {
-          let hasLegacyItems = false;
-
-          // Check if any locks are in the old format (missing chatId or isFolder)
-          const updatedItems = lockedItems.map((item) => {
-            const needsUpdate = !item.chatId || item.isFolder === undefined;
-
-            if (needsUpdate) {
-              hasLegacyItems = true;
-              return {
-                ...item,
-                chatId: item.chatId || currentChatId,
-                isFolder: item.isFolder !== undefined ? item.isFolder : false,
-              };
-            }
-
-            return item;
-          });
-
-          // Only save if we found and updated legacy items
-          if (hasLegacyItems) {
-            saveLockedItems(updatedItems);
-            logger.info(`Migrated ${updatedItems.length} legacy locks to chat ID: ${currentChatId}`);
-          }
-        }
-      }
-    }
-  } catch (error) {
-    logger.error('Failed to migrate legacy locks', error);
-  }
 }
 
 /**

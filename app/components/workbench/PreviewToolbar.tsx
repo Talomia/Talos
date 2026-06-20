@@ -104,17 +104,17 @@ export const PreviewToolbar = memo(
     };
 
     return (
-      <div className="bg-bolt-elements-background-depth-2 p-2 flex items-center gap-2">
+      <div className="bg-ui-background-depth-2 p-2 flex items-center gap-2">
         <div className="flex items-center gap-2">
           <IconButton icon="i-ph:arrow-clockwise" onClick={reloadPreview} />
           <IconButton
             icon="i-ph:selection"
             onClick={() => setIsSelectionMode(!isSelectionMode)}
-            className={isSelectionMode ? 'bg-bolt-elements-background-depth-3' : ''}
+            className={isSelectionMode ? 'bg-ui-background-depth-3' : ''}
           />
         </div>
 
-        <div className="flex-grow flex items-center gap-1 bg-bolt-elements-preview-addressBar-background border border-bolt-elements-borderColor text-bolt-elements-preview-addressBar-text rounded-full px-1 py-1 text-sm hover:bg-bolt-elements-preview-addressBar-backgroundHover hover:focus-within:bg-bolt-elements-preview-addressBar-backgroundActive focus-within:bg-bolt-elements-preview-addressBar-backgroundActive focus-within-border-bolt-elements-borderColorActive focus-within:text-bolt-elements-preview-addressBar-textActive">
+        <div className="flex-grow flex items-center gap-1 bg-ui-preview-addressBar-background border border-ui-borderColor text-ui-preview-addressBar-text rounded-full px-1 py-1 text-sm hover:bg-ui-preview-addressBar-backgroundHover hover:focus-within:bg-ui-preview-addressBar-backgroundActive focus-within:bg-ui-preview-addressBar-backgroundActive focus-within-border-ui-borderColorActive focus-within:text-ui-preview-addressBar-textActive">
           <PortDropdown
             activePreviewIndex={activePreviewIndex}
             setActivePreviewIndex={setActivePreviewIndex}
@@ -181,9 +181,7 @@ export const PreviewToolbar = memo(
           <IconButton
             icon="i-ph:cursor-click"
             onClick={toggleInspectorMode}
-            className={
-              isInspectorMode ? 'bg-bolt-elements-background-depth-3 !text-bolt-elements-item-contentAccent' : ''
-            }
+            className={isInspectorMode ? 'bg-ui-background-depth-3 !text-ui-item-contentAccent' : ''}
             title={isInspectorMode ? 'Disable Element Inspector' : 'Enable Element Inspector'}
           />
           <IconButton
@@ -209,7 +207,7 @@ export const PreviewToolbar = memo(
                     </div>
                     <div className="flex flex-col gap-2">
                       <button
-                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary`}
+                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-ui-textTertiary hover:text-ui-textPrimary`}
                         onClick={() => {
                           openInNewTab();
                         }}
@@ -218,7 +216,7 @@ export const PreviewToolbar = memo(
                         <div className="i-ph:arrow-square-out h-5 w-4" />
                       </button>
                       <button
-                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary`}
+                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-ui-textTertiary hover:text-ui-textPrimary`}
                         onClick={() => {
                           if (!activePreview?.baseUrl) {
                             logger.warn('No active preview available');
@@ -249,7 +247,7 @@ export const PreviewToolbar = memo(
                         <div className="i-ph:browser h-5 w-4" />
                       </button>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-bolt-elements-textTertiary">Show Device Frame</span>
+                        <span className="text-xs text-ui-textTertiary">Show Device Frame</span>
                         <button
                           className={`w-10 h-5 rounded-full transition-colors duration-200 ${
                             showDeviceFrame ? 'bg-[#6D28D9]' : 'bg-gray-300 dark:bg-gray-700'
@@ -267,7 +265,7 @@ export const PreviewToolbar = memo(
                         </button>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-bolt-elements-textTertiary">Landscape Mode</span>
+                        <span className="text-xs text-ui-textTertiary">Landscape Mode</span>
                         <button
                           className={`w-10 h-5 rounded-full transition-colors duration-200 ${
                             isLandscape ? 'bg-[#6D28D9]' : 'bg-gray-300 dark:bg-gray-700'

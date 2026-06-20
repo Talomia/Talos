@@ -15,7 +15,7 @@ export const GripIcon = memo(() => (
   >
     <div
       style={{
-        color: 'var(--bolt-elements-textSecondary, rgba(0,0,0,0.5))',
+        color: 'var(--ui-textSecondary, rgba(0,0,0,0.5))',
         fontSize: '10px',
         lineHeight: '5px',
         userSelect: 'none',
@@ -50,7 +50,7 @@ export const ResizeHandle = memo(({ side, onPointerDown }: ResizeHandleProps) =>
         width: '15px',
         height: '100%',
         cursor: 'ew-resize',
-        background: 'var(--bolt-elements-background-depth-4, rgba(0,0,0,.3))',
+        background: 'var(--ui-background-depth-4, rgba(0,0,0,.3))',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -59,12 +59,8 @@ export const ResizeHandle = memo(({ side, onPointerDown }: ResizeHandleProps) =>
         touchAction: 'none',
         zIndex: 10,
       }}
-      onMouseOver={(e) =>
-        (e.currentTarget.style.background = 'var(--bolt-elements-background-depth-4, rgba(0,0,0,.3))')
-      }
-      onMouseOut={(e) =>
-        (e.currentTarget.style.background = 'var(--bolt-elements-background-depth-3, rgba(0,0,0,.15))')
-      }
+      onMouseOver={(e) => (e.currentTarget.style.background = 'var(--ui-background-depth-4, rgba(0,0,0,.3))')}
+      onMouseOut={(e) => (e.currentTarget.style.background = 'var(--ui-background-depth-3, rgba(0,0,0,.15))')}
       title="Drag to resize width"
     >
       <GripIcon />

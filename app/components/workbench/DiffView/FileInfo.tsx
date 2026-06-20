@@ -50,7 +50,7 @@ export const FileInfo = memo(
     const showStats = additions > 0 || deletions > 0;
 
     return (
-      <div className="flex items-center bg-bolt-elements-background-depth-1 p-2 text-sm text-bolt-elements-textPrimary shrink-0">
+      <div className="flex items-center bg-ui-background-depth-1 p-2 text-sm text-ui-textPrimary shrink-0">
         <div className="i-ph:file mr-2 h-4 w-4 shrink-0" />
         <span className="truncate">{filename}</span>
         <span className="ml-auto shrink-0 flex items-center gap-2">
@@ -63,7 +63,7 @@ export const FileInfo = memo(
                 </div>
               )}
               <span className="text-yellow-600 dark:text-yellow-400">Modified</span>
-              <span className="text-bolt-elements-textTertiary text-xs">{new Date().toLocaleTimeString()}</span>
+              <span className="text-ui-textTertiary text-xs">{new Date().toLocaleTimeString()}</span>
             </>
           ) : (
             <span className="text-green-700 dark:text-green-400">No Changes</span>

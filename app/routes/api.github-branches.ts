@@ -76,7 +76,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
-        'User-Agent': 'recurrsive',
+        'User-Agent': 'app',
       },
     });
 
@@ -100,7 +100,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
-        'User-Agent': 'recurrsive',
+        'User-Agent': 'app',
       },
     });
 

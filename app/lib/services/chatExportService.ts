@@ -61,7 +61,7 @@ export async function exportAllChats(
  */
 export async function deleteAllChats(db: IDBDatabase): Promise<void> {
   // Clear chat history from localStorage
-  localStorage.removeItem('bolt_chat_history');
+  localStorage.removeItem('app_chat_history');
 
   // Clear chats from IndexedDB
   if (!db) {

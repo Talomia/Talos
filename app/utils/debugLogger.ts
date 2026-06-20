@@ -2,6 +2,7 @@ import { isMac, isWindows, isLinux } from './os';
 import { isMobile } from './mobile';
 import { PROVIDER_LIST, DEFAULT_MODEL } from './constants';
 import { logger } from './logger';
+import { STORAGE_KEYS, WINDOW_WORKBENCH_STORE } from '~/lib/app-config';
 
 // Lazy import to avoid circular dependencies
 let logStore: any = null;
@@ -827,7 +828,7 @@ class DebugLogger {
               };
             }
           >
-        ).__bolt_workbench_store;
+        )[WINDOW_WORKBENCH_STORE];
 
         if (workbenchStore) {
           const state = workbenchStore.get?.() || {};
@@ -873,7 +874,7 @@ class DebugLogger {
     try {
       // Try to get from localStorage or environment
       if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('bolt_current_model');
+        const stored = localStorage.getItem(STORAGE_KEYS.currentModel);
 
         if (stored) {
           return stored;
@@ -889,7 +890,7 @@ class DebugLogger {
   private _getCurrentProvider(): string {
     try {
       if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('bolt_current_provider');
+        const stored = localStorage.getItem(STORAGE_KEYS.currentProvider);
 
         if (stored) {
           return stored;
@@ -905,7 +906,7 @@ class DebugLogger {
   private _getProjectType(): string {
     try {
       if (typeof window !== 'undefined') {
-        const stored = localStorage.getItem('bolt_project_type');
+        const stored = localStorage.getItem(STORAGE_KEYS.projectType);
 
         if (stored) {
           return stored;
@@ -956,7 +957,7 @@ class DebugLogger {
   private _getGitInfoFallback(): AppInfo['gitInfo'] {
     try {
       // Try to get from localStorage (could be set by the app)
-      const stored = localStorage.getItem('bolt_git_info');
+      const stored = localStorage.getItem(STORAGE_KEYS.gitInfo);
 
       if (stored) {
         return JSON.parse(stored);
@@ -1052,7 +1053,7 @@ class DebugLogger {
               };
             }
           >
-        ).__bolt_workbench_store;
+        )[WINDOW_WORKBENCH_STORE];
 
         if (workbenchStore) {
           const state = workbenchStore.get?.() || {};
@@ -1175,7 +1176,7 @@ export async function downloadDebugLog(filename?: string): Promise<void> {
 
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename || `recurrsive-debug-${new Date().toISOString().split('T')[0]}.txt`;
+    link.download = filename || `app-debug-${new Date().toISOString().split('T')[0]}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

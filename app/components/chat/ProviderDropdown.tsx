@@ -151,11 +151,11 @@ export const ProviderDropdown = ({
     <div className="relative flex w-full" onKeyDown={handleKeyDown} ref={dropdownRef}>
       <div
         className={classNames(
-          'w-full p-2 rounded-lg border border-bolt-elements-borderColor',
-          'bg-bolt-elements-prompt-background text-bolt-elements-textPrimary',
-          'focus-within:outline-none focus-within:ring-2 focus-within:ring-bolt-elements-focus',
+          'w-full p-2 rounded-lg border border-ui-borderColor',
+          'bg-ui-prompt-background text-ui-textPrimary',
+          'focus-within:outline-none focus-within:ring-2 focus-within:ring-ui-focus',
           'transition-all cursor-pointer',
-          isOpen ? 'ring-2 ring-bolt-elements-focus' : undefined,
+          isOpen ? 'ring-2 ring-ui-focus' : undefined,
         )}
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={(e) => {
@@ -180,7 +180,7 @@ export const ProviderDropdown = ({
                     ? 'bg-green-500'
                     : localProviderStatus[provider.name] === 'disconnected'
                       ? 'bg-red-400'
-                      : 'bg-bolt-elements-textTertiary',
+                      : 'bg-ui-textTertiary',
                 )}
                 title={
                   localProviderStatus[provider.name] === 'connected'
@@ -195,7 +195,7 @@ export const ProviderDropdown = ({
           </div>
           <div
             className={classNames(
-              'i-ph:caret-down w-4 h-4 text-bolt-elements-textSecondary opacity-75',
+              'i-ph:caret-down w-4 h-4 text-ui-textSecondary opacity-75',
               isOpen ? 'rotate-180' : undefined,
             )}
           />
@@ -204,7 +204,7 @@ export const ProviderDropdown = ({
 
       {isOpen && (
         <div
-          className="absolute z-20 w-full mt-1 py-1 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 shadow-lg"
+          className="absolute z-20 w-full mt-1 py-1 rounded-lg border border-ui-borderColor bg-ui-background-depth-2 shadow-lg"
           role="listbox"
           id="provider-listbox"
         >
@@ -218,9 +218,9 @@ export const ProviderDropdown = ({
                 placeholder="Search providers... (⌘K to clear)"
                 className={classNames(
                   'w-full pl-8 pr-8 py-1.5 rounded-md text-sm',
-                  'bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor',
-                  'text-bolt-elements-textPrimary placeholder:text-bolt-elements-textTertiary',
-                  'focus:outline-none focus:ring-2 focus:ring-bolt-elements-focus',
+                  'bg-ui-background-depth-2 border border-ui-borderColor',
+                  'text-ui-textPrimary placeholder:text-ui-textTertiary',
+                  'focus:outline-none focus:ring-2 focus:ring-ui-focus',
                   'transition-all',
                 )}
                 onClick={(e) => e.stopPropagation()}
@@ -228,7 +228,7 @@ export const ProviderDropdown = ({
                 aria-label="Search providers"
               />
               <div className="absolute left-2.5 top-1/2 -translate-y-1/2">
-                <span className="i-ph:magnifying-glass text-bolt-elements-textTertiary" />
+                <span className="i-ph:magnifying-glass text-ui-textTertiary" />
               </div>
               {searchQuery && (
                 <button
@@ -237,10 +237,10 @@ export const ProviderDropdown = ({
                     e.stopPropagation();
                     clearSearch();
                   }}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-bolt-elements-background-depth-3 transition-colors"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-ui-background-depth-3 transition-colors"
                   aria-label="Clear search"
                 >
-                  <span className="i-ph:x text-bolt-elements-textTertiary text-xs" />
+                  <span className="i-ph:x text-ui-textTertiary text-xs" />
                 </button>
               )}
             </div>
@@ -249,11 +249,11 @@ export const ProviderDropdown = ({
           <div className={classNames(...SCROLLBAR_CLASSES)}>
             {filteredProviders.length === 0 ? (
               <div className="px-3 py-3 text-sm">
-                <div className="text-bolt-elements-textTertiary mb-1">
+                <div className="text-ui-textTertiary mb-1">
                   {debouncedSearchQuery ? `No providers match "${debouncedSearchQuery}"` : 'No providers found'}
                 </div>
                 {debouncedSearchQuery && (
-                  <div className="text-xs text-bolt-elements-textTertiary">
+                  <div className="text-xs text-ui-textTertiary">
                     Try searching for provider names like "OpenAI", "Anthropic", or "Google"
                   </div>
                 )}
@@ -267,13 +267,13 @@ export const ProviderDropdown = ({
                   aria-selected={provider?.name === providerOption.name}
                   className={classNames(
                     'px-3 py-2 text-sm cursor-pointer',
-                    'hover:bg-bolt-elements-background-depth-3',
-                    'text-bolt-elements-textPrimary',
+                    'hover:bg-ui-background-depth-3',
+                    'text-ui-textPrimary',
                     'outline-none',
                     provider?.name === providerOption.name || focusedIndex === index
-                      ? 'bg-bolt-elements-background-depth-2'
+                      ? 'bg-ui-background-depth-2'
                       : undefined,
-                    focusedIndex === index ? 'ring-1 ring-inset ring-bolt-elements-focus' : undefined,
+                    focusedIndex === index ? 'ring-1 ring-inset ring-ui-focus' : undefined,
                   )}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -290,7 +290,7 @@ export const ProviderDropdown = ({
                             ? 'bg-green-500'
                             : localProviderStatus[providerOption.name] === 'disconnected'
                               ? 'bg-red-400'
-                              : 'bg-bolt-elements-textTertiary',
+                              : 'bg-ui-textTertiary',
                         )}
                       />
                     )}

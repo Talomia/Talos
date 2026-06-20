@@ -1,5 +1,6 @@
 import { createScopedLogger } from '~/utils/logger';
 import { StreamingMessageParser, type StreamingMessageParserOptions } from './message-parser';
+import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 
 const logger = createScopedLogger('EnhancedMessageParser');
 
@@ -51,7 +52,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   }
 
   private _hasDetectedArtifacts(input: string): boolean {
-    return input.includes('<recurrsiveArtifact') || input.includes('</recurrsiveArtifact>');
+    return input.includes(ARTIFACT_TAG_OPEN) || input.includes(ARTIFACT_TAG_CLOSE);
   }
 
   private _detectAndWrapCodeBlocks(messageId: string, input: string): string {
@@ -204,21 +205,21 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   private _wrapInArtifact(artifactId: string, filePath: string, content: string): string {
     const title = filePath.split('/').pop() || 'File';
 
-    return `<recurrsiveArtifact id="${artifactId}" title="${title}" type="bundled">
-<recurrsiveAction type="file" filePath="${filePath}">
+    return `${ARTIFACT_TAG_OPEN} id="${artifactId}" title="${title}" type="bundled">
+${ACTION_TAG_OPEN} type="file" filePath="${filePath}">
 ${content}
-</recurrsiveAction>
-</recurrsiveArtifact>`;
+${ACTION_TAG_CLOSE}
+${ARTIFACT_TAG_CLOSE}`;
   }
 
   private _wrapInShellAction(content: string, messageId: string): string {
     const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
 
-    return `<recurrsiveArtifact id="${artifactId}" title="Shell Command" type="shell">
-<recurrsiveAction type="shell">
+    return `${ARTIFACT_TAG_OPEN} id="${artifactId}" title="Shell Command" type="shell">
+${ACTION_TAG_OPEN} type="shell">
 ${content.trim()}
-</recurrsiveAction>
-</recurrsiveArtifact>`;
+${ACTION_TAG_CLOSE}
+${ARTIFACT_TAG_CLOSE}`;
   }
 
   private _normalizeFilePath(filePath: string): string {

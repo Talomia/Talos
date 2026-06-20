@@ -58,23 +58,23 @@ export function GitHubProgressiveLoader({
     return (
       <div className={classNames('flex flex-col items-center justify-center py-8', className)}>
         <div className="relative mb-4">
-          <div className="i-svg-spinners:90-ring-with-bg w-8 h-8 text-bolt-elements-item-contentAccent" />
+          <div className="i-svg-spinners:90-ring-with-bg w-8 h-8 text-ui-item-contentAccent" />
           {showProgress && progress > 0 && (
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-medium text-bolt-elements-item-contentAccent">{progress}%</span>
+              <span className="text-xs font-medium text-ui-item-contentAccent">{progress}%</span>
             </div>
           )}
         </div>
 
         <div className="text-center space-y-2">
-          <p className="text-sm font-medium text-bolt-elements-textPrimary">{loadingMessage}</p>
+          <p className="text-sm font-medium text-ui-textPrimary">{loadingMessage}</p>
 
           {showProgress && progressSteps.length > 0 && (
             <div className="w-full max-w-sm">
               {/* Progress bar */}
-              <div className="w-full bg-bolt-elements-background-depth-2 rounded-full h-2 mb-3">
+              <div className="w-full bg-ui-background-depth-2 rounded-full h-2 mb-3">
                 <motion.div
-                  className="bg-bolt-elements-item-contentAccent h-2 rounded-full"
+                  className="bg-ui-item-contentAccent h-2 rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -84,7 +84,7 @@ export function GitHubProgressiveLoader({
               {/* Steps toggle */}
               <button
                 onClick={handleToggleExpanded}
-                className="flex items-center justify-center gap-2 text-xs text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-colors"
+                className="flex items-center justify-center gap-2 text-xs text-ui-textSecondary hover:text-ui-textPrimary transition-colors"
               >
                 <span>Show details</span>
                 <div
@@ -112,9 +112,9 @@ export function GitHubProgressiveLoader({
                         ) : step.completed ? (
                           <div className="i-ph:check-circle w-3 h-3 text-green-500 flex-shrink-0" />
                         ) : step.loading ? (
-                          <div className="i-svg-spinners:90-ring-with-bg w-3 h-3 text-bolt-elements-item-contentAccent flex-shrink-0" />
+                          <div className="i-svg-spinners:90-ring-with-bg w-3 h-3 text-ui-item-contentAccent flex-shrink-0" />
                         ) : (
-                          <div className="w-3 h-3 rounded-full border border-bolt-elements-borderColor flex-shrink-0" />
+                          <div className="w-3 h-3 rounded-full border border-ui-borderColor flex-shrink-0" />
                         )}
                         <span
                           className={classNames(
@@ -123,8 +123,8 @@ export function GitHubProgressiveLoader({
                               : step.completed
                                 ? 'text-green-600 dark:text-green-400'
                                 : step.loading
-                                  ? 'text-bolt-elements-textPrimary'
-                                  : 'text-bolt-elements-textSecondary',
+                                  ? 'text-ui-textPrimary'
+                                  : 'text-ui-textSecondary',
                           )}
                         >
                           {step.label}
@@ -150,8 +150,8 @@ export function GitHubProgressiveLoader({
         </div>
 
         <div>
-          <h3 className="text-sm font-medium text-bolt-elements-textPrimary mb-1">Failed to Load</h3>
-          <p className="text-xs text-bolt-elements-textSecondary mb-4 max-w-sm">{error}</p>
+          <h3 className="text-sm font-medium text-ui-textPrimary mb-1">Failed to Load</h3>
+          <p className="text-xs text-ui-textSecondary mb-4 max-w-sm">{error}</p>
         </div>
 
         <div className="flex gap-2">
@@ -177,9 +177,9 @@ export function GitHubProgressiveLoader({
     <div className={classNames('relative', className)}>
       {isRefreshing && (
         <div className="absolute top-0 right-0 z-10">
-          <div className="flex items-center gap-2 px-2 py-1 bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor rounded-lg shadow-sm">
-            <div className="i-svg-spinners:90-ring-with-bg w-3 h-3 text-bolt-elements-item-contentAccent" />
-            <span className="text-xs text-bolt-elements-textSecondary">{refreshingMessage}</span>
+          <div className="flex items-center gap-2 px-2 py-1 bg-ui-background-depth-1 border border-ui-borderColor rounded-lg shadow-sm">
+            <div className="i-svg-spinners:90-ring-with-bg w-3 h-3 text-ui-item-contentAccent" />
+            <span className="text-xs text-ui-textSecondary">{refreshingMessage}</span>
           </div>
         </div>
       )}

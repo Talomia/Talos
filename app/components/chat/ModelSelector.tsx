@@ -69,7 +69,7 @@ export const ModelSelector = ({
 
   if (providerList.length === 0) {
     return (
-      <div className="mb-2 p-4 rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-prompt-background text-bolt-elements-textPrimary">
+      <div className="mb-2 p-4 rounded-lg border border-ui-borderColor bg-ui-prompt-background text-ui-textPrimary">
         <p className="text-center">
           No providers are currently enabled. Please enable at least one provider in the settings to start using the
           chat.

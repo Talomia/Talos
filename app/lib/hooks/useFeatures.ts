@@ -17,7 +17,7 @@ const markFeatureViewed = async (_featureId: string): Promise<void> => {
   // TODO: Implement when feature flags backend is available
 };
 
-const VIEWED_FEATURES_KEY = 'bolt_viewed_features';
+const VIEWED_FEATURES_KEY = 'app_viewed_features';
 
 const getViewedFeatures = (): string[] => {
   try {

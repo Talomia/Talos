@@ -17,7 +17,7 @@ async function deriveKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt: encoder.encode('recurrsive-vault-v1'),
+      salt: encoder.encode('vault-v1'),
       iterations: 100000,
       hash: 'SHA-256',
     },
@@ -77,7 +77,7 @@ export function getVaultSecret(env?: Record<string, string>): string {
 
     logger.warn('VAULT_SECRET not set — using development fallback. Set VAULT_SECRET env var for production.');
 
-    return 'recurrsive-dev-secret-change-in-production';
+    return 'dev-secret-change-in-production';
   }
 
   return secret;

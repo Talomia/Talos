@@ -13,7 +13,7 @@ export function StatsDisplay({ stats, onRefresh, isRefreshing }: StatsDisplayPro
     <div className="space-y-4">
       {/* Repository Stats */}
       <div>
-        <h5 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Repository Stats</h5>
+        <h5 className="text-sm font-medium text-ui-textPrimary mb-2">Repository Stats</h5>
         <div className="grid grid-cols-2 gap-4">
           {[
             {
@@ -27,10 +27,10 @@ export function StatsDisplay({ stats, onRefresh, isRefreshing }: StatsDisplayPro
           ].map((stat, index) => (
             <div
               key={index}
-              className="flex flex-col p-3 rounded-lg bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor"
+              className="flex flex-col p-3 rounded-lg bg-ui-background-depth-2 border border-ui-borderColor"
             >
-              <span className="text-xs text-bolt-elements-textSecondary">{stat.label}</span>
-              <span className="text-lg font-medium text-bolt-elements-textPrimary">{stat.value}</span>
+              <span className="text-xs text-ui-textSecondary">{stat.label}</span>
+              <span className="text-lg font-medium text-ui-textPrimary">{stat.value}</span>
             </div>
           ))}
         </div>
@@ -38,34 +38,34 @@ export function StatsDisplay({ stats, onRefresh, isRefreshing }: StatsDisplayPro
 
       {/* Contribution Stats */}
       <div>
-        <h5 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Contribution Stats</h5>
+        <h5 className="text-sm font-medium text-ui-textPrimary mb-2">Contribution Stats</h5>
         <div className="grid grid-cols-3 gap-4">
           {[
             {
               label: 'Stars',
               value: stats.stars || 0,
               icon: 'i-ph:star',
-              iconColor: 'text-bolt-elements-icon-warning',
+              iconColor: 'text-ui-icon-warning',
             },
             {
               label: 'Forks',
               value: stats.forks || 0,
               icon: 'i-ph:git-fork',
-              iconColor: 'text-bolt-elements-icon-info',
+              iconColor: 'text-ui-icon-info',
             },
             {
               label: 'Followers',
               value: stats.followers || 0,
               icon: 'i-ph:users',
-              iconColor: 'text-bolt-elements-icon-success',
+              iconColor: 'text-ui-icon-success',
             },
           ].map((stat, index) => (
             <div
               key={index}
-              className="flex flex-col p-3 rounded-lg bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor"
+              className="flex flex-col p-3 rounded-lg bg-ui-background-depth-2 border border-ui-borderColor"
             >
-              <span className="text-xs text-bolt-elements-textSecondary">{stat.label}</span>
-              <span className="text-lg font-medium text-bolt-elements-textPrimary flex items-center gap-1">
+              <span className="text-xs text-ui-textSecondary">{stat.label}</span>
+              <span className="text-lg font-medium text-ui-textPrimary flex items-center gap-1">
                 <div className={`${stat.icon} w-4 h-4 ${stat.iconColor}`} />
                 {stat.value}
               </span>
@@ -74,9 +74,9 @@ export function StatsDisplay({ stats, onRefresh, isRefreshing }: StatsDisplayPro
         </div>
       </div>
 
-      <div className="pt-2 border-t border-bolt-elements-borderColor">
+      <div className="pt-2 border-t border-ui-borderColor">
         <div className="flex items-center justify-between">
-          <span className="text-xs text-bolt-elements-textSecondary">
+          <span className="text-xs text-ui-textSecondary">
             Last updated: {new Date(stats.lastUpdated).toLocaleString()}
           </span>
           {onRefresh && (

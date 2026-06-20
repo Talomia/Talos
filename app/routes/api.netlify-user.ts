@@ -26,7 +26,7 @@ async function netlifyUserLoader({ request, context }: { request: Request; conte
     const response = await fetch('https://api.netlify.com/api/v1/user', {
       headers: {
         Authorization: `Bearer ${netlifyToken}`,
-        'User-Agent': 'recurrsive',
+        'User-Agent': 'app',
       },
     });
 
@@ -96,7 +96,7 @@ async function netlifyUserAction({ request, context }: { request: Request; conte
         headers: {
           Authorization: `Bearer ${netlifyToken}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'recurrsive',
+          'User-Agent': 'app',
         },
       });
 

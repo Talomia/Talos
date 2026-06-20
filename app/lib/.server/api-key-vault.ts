@@ -25,20 +25,6 @@ export async function readVault(cookieHeader: string | null, env?: Record<string
   const vaultCookie = cookies[COOKIE_NAME];
 
   if (!vaultCookie) {
-    // Fallback: try reading legacy plaintext 'apiKeys' cookie for migration
-    const legacyKeys = cookies.apiKeys;
-
-    if (legacyKeys) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(legacyKeys));
-        logger.info('Migrating legacy apiKeys cookie to encrypted vault');
-
-        return { apiKeys: parsed, updatedAt: new Date().toISOString() };
-      } catch {
-        return empty;
-      }
-    }
-
     return empty;
   }
 
@@ -75,13 +61,6 @@ export async function writeVault(data: VaultData, env?: Record<string, string>):
   }
 
   return parts.join('; ');
-}
-
-/**
- * Creates a Set-Cookie header that deletes the legacy plaintext apiKeys cookie.
- */
-export function clearLegacyCookie(): string {
-  return 'apiKeys=; Max-Age=0; Path=/';
 }
 
 function parseCookieHeader(header: string): Record<string, string> {

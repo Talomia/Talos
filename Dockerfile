@@ -37,7 +37,7 @@ RUN pnpm prune --prod --ignore-scripts
 
 
 # ---- production stage ----
-FROM prod-deps AS recurrsive-production
+FROM prod-deps AS app-production
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -81,9 +81,9 @@ HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
   CMD curl -fsS http://localhost:5173/ || exit 1
 
 # Run as non-root user for security
-RUN addgroup --gid 1001 --system recurrsive && \
-    adduser --uid 1001 --system --ingroup recurrsive recurrsive
-USER recurrsive
+RUN addgroup --gid 1001 --system appuser && \
+    adduser --uid 1001 --system --ingroup appuser appuser
+USER appuser
 
 # Start using dockerstart script with Wrangler
 CMD ["pnpm", "run", "dockerstart"]
@@ -107,8 +107,8 @@ ENV VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
 RUN mkdir -p /app/run
 
 # Run as non-root user for security
-RUN addgroup --gid 1001 --system recurrsive && \
-    adduser --uid 1001 --system --ingroup recurrsive recurrsive
-USER recurrsive
+RUN addgroup --gid 1001 --system appuser && \
+    adduser --uid 1001 --system --ingroup appuser appuser
+USER appuser
 
 CMD ["pnpm", "run", "dev", "--host"]

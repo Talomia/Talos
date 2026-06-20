@@ -1,6 +1,7 @@
 import { atom, map } from 'nanostores';
 import { setSecureCookie, getCookie } from '~/lib/api/secureCookies';
 import { createScopedLogger } from '~/utils/logger';
+import { STORAGE_KEYS } from '~/lib/app-config';
 
 const logger = createScopedLogger('LogStore');
 
@@ -84,7 +85,7 @@ class LogStore {
       return;
     }
 
-    const savedReadLogs = localStorage.getItem('bolt_read_logs');
+    const savedReadLogs = localStorage.getItem(STORAGE_KEYS.readLogs);
 
     if (savedReadLogs) {
       try {
@@ -106,7 +107,7 @@ class LogStore {
       return;
     }
 
-    localStorage.setItem('bolt_read_logs', JSON.stringify(Array.from(this._readLogs)));
+    localStorage.setItem(STORAGE_KEYS.readLogs, JSON.stringify(Array.from(this._readLogs)));
   }
 
   private _generateId(): string {

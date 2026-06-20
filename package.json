@@ -1,14 +1,13 @@
 {
-  "name": "recurrsive",
-  "description": "Recurrsive — AI-native full-stack application platform",
+  "name": "app",
+  "description": "AI-native full-stack application platform",
   "private": true,
   "license": "MIT",
   "sideEffects": false,
   "type": "module",
   "version": "1.0.0",
   "author": {
-    "name": "Recurrsive team",
-    "email": "maintainers@recurrsive.dev"
+    "name": "App team"
   },
   "scripts": {
     "deploy": "pnpm run build && wrangler pages deploy",
@@ -22,9 +21,9 @@
     "start:unix": "bindings=$(./bindings.sh) && wrangler pages dev ./build/client $bindings",
     "start": "node -e \"const { spawn } = require('child_process'); const isWindows = process.platform === 'win32'; const cmd = isWindows ? 'npm run start:windows' : 'npm run start:unix'; const child = spawn(cmd, { shell: true, stdio: 'inherit' }); child.on('exit', code => process.exit(code));\"",
     "dockerstart": "bindings=$(./bindings.sh) && wrangler pages dev ./build/client $bindings --ip 0.0.0.0 --port 5173 --no-show-interactive-dev-session",
-    "dockerrun": "docker run -it -d --name recurrsive-live -p 5173:5173 --env-file .env.local recurrsive",
-    "dockerbuild:prod": "docker build -t recurrsive:production -t recurrsive:latest --target recurrsive-production .",
-    "dockerbuild": "docker build -t recurrsive:development -t recurrsive:latest --target development .",
+    "dockerrun": "docker run -it -d --name app-live -p 5173:5173 --env-file .env.local app",
+    "dockerbuild:prod": "docker build -t app:production -t app:latest --target app-production .",
+    "dockerbuild": "docker build -t app:development -t app:latest --target development .",
     "typecheck": "tsc",
     "typegen": "wrangler types",
     "preview": "pnpm run build && pnpm run start",

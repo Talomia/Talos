@@ -44,7 +44,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
       // Step 3: Download file
       showProgress('Downloading file', 75);
 
-      downloadJsonFile(settingsData, 'bolt-settings.json');
+      downloadJsonFile(settingsData, 'app-settings.json');
 
       // Step 4: Complete
       showProgress('Completing export', 100);
@@ -125,7 +125,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
         // Step 4: Download file
         showProgress('Downloading file', 80);
 
-        downloadJsonFile(filteredSettings, `bolt-settings-${categoryIds.join('-')}.json`);
+        downloadJsonFile(filteredSettings, `app-settings-${categoryIds.join('-')}.json`);
 
         // Step 5: Complete
         showProgress('Completing export', 100);
@@ -220,7 +220,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
       // Step 3: Download file
       showProgress('Downloading file', 75);
 
-      downloadJsonFile(exportData, 'bolt-chats.json');
+      downloadJsonFile(exportData, 'app-chats.json');
 
       // Step 4: Complete
       showProgress('Completing export', 100);
@@ -315,7 +315,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
         // Step 3: Download file
         showProgress('Downloading file', 75);
 
-        downloadJsonFile(exportData, 'bolt-selected-chats.json');
+        downloadJsonFile(exportData, 'app-selected-chats.json');
 
         // Step 4: Complete
         showProgress('Completing export', 100);
@@ -381,7 +381,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
       // Step 3: Download file
       showProgress('Downloading file', 75);
 
-      downloadJsonFile(apiKeys, 'bolt-api-keys.json');
+      downloadJsonFile(apiKeys, 'app-api-keys.json');
 
       // Step 4: Complete
       showProgress('Completing export', 100);

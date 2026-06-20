@@ -8,6 +8,7 @@ import { WORK_DIR } from '~/utils/constants';
 import { computeFileModifications } from '~/utils/diff';
 import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
+import { STORAGE_KEYS } from '~/lib/app-config';
 import {
   addLockedFile,
   removeLockedFile,
@@ -17,7 +18,6 @@ import {
   getLockedFilesForChat,
   getLockedFoldersForChat,
   isPathInLockedFolder,
-  migrateLegacyLocks,
   clearCache,
 } from '~/lib/persistence/lockedFiles';
 import { getCurrentChatId } from '~/utils/fileLocks';
@@ -79,7 +79,7 @@ export class FilesStore {
     // Load deleted paths from localStorage if available
     try {
       if (typeof localStorage !== 'undefined') {
-        const deletedPathsJson = localStorage.getItem('bolt-deleted-paths');
+        const deletedPathsJson = localStorage.getItem(STORAGE_KEYS.deletedPaths);
 
         if (deletedPathsJson) {
           const deletedPaths = JSON.parse(deletedPathsJson);
@@ -132,9 +132,6 @@ export class FilesStore {
     try {
       const currentChatId = chatId || getCurrentChatId();
       const startTime = performance.now();
-
-      // Migrate any legacy locks to the current chat
-      migrateLegacyLocks(currentChatId);
 
       // Get all locked items for this chat (uses optimized cache)
       const lockedItems = getLockedItemsForChat(currentChatId);
@@ -608,9 +605,6 @@ export class FilesStore {
     // Get the current chat ID
     const currentChatId = getCurrentChatId();
 
-    // Migrate any legacy locks to the current chat
-    migrateLegacyLocks(currentChatId);
-
     // Load locked files immediately for the current chat
     this.#loadLockedFiles(currentChatId);
 
@@ -924,7 +918,7 @@ export class FilesStore {
   #persistDeletedPaths() {
     try {
       if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('bolt-deleted-paths', JSON.stringify([...this.#deletedPaths]));
+        localStorage.setItem(STORAGE_KEYS.deletedPaths, JSON.stringify([...this.#deletedPaths]));
       }
     } catch (error) {
       logger.error('Failed to persist deleted paths to localStorage', error);

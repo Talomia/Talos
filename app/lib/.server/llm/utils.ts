@@ -3,6 +3,7 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODEL_REGEX, PROVIDER_REGEX } from '~/
 import { IGNORE_PATTERNS, type FileMap } from './constants';
 import ignore from 'ignore';
 import type { ContextAnnotation } from '~/types/context';
+import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 
 export function extractPropertiesFromMessage(message: Omit<Message, 'id'>): {
   model: string;
@@ -44,9 +45,9 @@ export function extractPropertiesFromMessage(message: Omit<Message, 'id'>): {
   return { model, provider, content: cleanedContent };
 }
 
-export function simplifyRecurrsiveActions(input: string): string {
-  // Using regex to match recurrsiveAction tags that have type="file"
-  const regex = /(<recurrsiveAction[^>]*type="file"[^>]*>)([\s\S]*?)(<\/recurrsiveAction>)/g;
+export function simplifyActions(input: string): string {
+  // Using regex to match action tags that have type="file" (both new and legacy)
+  const regex = new RegExp(`((?:${ACTION_TAG_OPEN})[^>]*type="file"[^>]*>)([\\s\\S]*?)((?:${ACTION_TAG_CLOSE}))`, 'g');
 
   // Replace each matching occurrence
   return input.replace(regex, (_0, openingTag, _2, closingTag) => {
@@ -82,10 +83,10 @@ export function createFilesContext(files: FileMap, useRelativePath?: boolean) {
         filePath = path.replace('/home/project/', '');
       }
 
-      return `<recurrsiveAction type="file" filePath="${filePath}">${codeWithLinesNumbers}</recurrsiveAction>`;
+      return `${ACTION_TAG_OPEN} type="file" filePath="${filePath}">${codeWithLinesNumbers}${ACTION_TAG_CLOSE}`;
     });
 
-  return `<recurrsiveArtifact id="code-content" title="Code Content" >\n${fileContexts.join('\n')}\n</recurrsiveArtifact>`;
+  return `${ARTIFACT_TAG_OPEN} id="code-content" title="Code Content" >\n${fileContexts.join('\n')}\n${ARTIFACT_TAG_CLOSE}`;
 }
 
 export function extractCurrentContext(messages: Message[]) {

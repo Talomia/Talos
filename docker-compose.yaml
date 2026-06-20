@@ -1,11 +1,11 @@
 services:
   app-prod:
-    image: recurrsive:production
+    image: app:production
     restart: unless-stopped
     build:
       context: .
       dockerfile: Dockerfile
-      target: recurrsive-production
+      target: app-production
     ports:
       - '5173:5173'
     env_file: 
@@ -37,7 +37,7 @@ services:
       - production
 
   app-dev:
-    image: recurrsive:development
+    image: app:development
     restart: unless-stopped
     build:
       context: .
@@ -82,7 +82,7 @@ services:
     profiles: ['development', 'default']
 
   app-prebuild:
-    image: ghcr.io/h-khalid-h/recurrsive:latest
+    image: ghcr.io/h-khalid-h/app:latest
     ports:
       - '5173:5173'
     environment:

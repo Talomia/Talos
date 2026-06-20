@@ -43,7 +43,7 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
-        'User-Agent': 'recurrsive',
+        'User-Agent': 'app',
       },
     });
 
@@ -75,7 +75,7 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
-        'User-Agent': 'recurrsive',
+        'User-Agent': 'app',
       },
     });
 

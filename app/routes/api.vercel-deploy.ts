@@ -292,7 +292,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
 
     // If no projectId provided, create a new project
     if (!targetProjectId) {
-      const projectName = `bolt-diy-${chatId}-${Date.now()}`;
+      const projectName = `app-${chatId}-${Date.now()}`;
       const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
         method: 'POST',
         headers: {
@@ -339,7 +339,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
         };
       } else {
         // If project doesn't exist, create a new one
-        const projectName = `bolt-diy-${chatId}-${Date.now()}`;
+        const projectName = `app-${chatId}-${Date.now()}`;
         const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
           method: 'POST',
           headers: {

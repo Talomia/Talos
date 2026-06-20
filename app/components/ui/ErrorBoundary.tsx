@@ -62,8 +62,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="w-16 h-16 mb-4 text-red-400">
             <div className="i-ph:warning-circle text-5xl" />
           </div>
-          <h3 className="text-lg font-semibold text-bolt-elements-textPrimary mb-2">Something went wrong</h3>
-          <p className="text-sm text-bolt-elements-textSecondary mb-6 max-w-md">
+          <h3 className="text-lg font-semibold text-ui-textPrimary mb-2">Something went wrong</h3>
+          <p className="text-sm text-ui-textSecondary mb-6 max-w-md">
             An unexpected error occurred in {panelName}. You can try again or refresh the page.
           </p>
           <div className="flex gap-3">
@@ -82,8 +82,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onClick={() => window.location.reload()}
               className={classNames(
                 'px-4 py-2 rounded-lg text-sm font-medium',
-                'bg-bolt-elements-background-depth-2 text-bolt-elements-textSecondary',
-                'hover:bg-bolt-elements-background-depth-3',
+                'bg-ui-background-depth-2 text-ui-textSecondary',
+                'hover:bg-ui-background-depth-3',
                 'transition-colors duration-200',
               )}
             >

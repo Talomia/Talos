@@ -108,7 +108,7 @@ export const DiffView = memo(({ fileHistory, setFileHistory }: DiffViewProps) =>
 
   if (!selectedFile || !currentDocument) {
     return (
-      <div className="flex w-full h-full justify-center items-center bg-bolt-elements-background-depth-1 text-bolt-elements-textPrimary">
+      <div className="flex w-full h-full justify-center items-center bg-ui-background-depth-1 text-ui-textPrimary">
         Select a file to view differences
       </div>
     );
@@ -138,7 +138,7 @@ export const DiffView = memo(({ fileHistory, setFileHistory }: DiffViewProps) =>
   } catch (error) {
     logger.error('DiffView render error:', error);
     return (
-      <div className="flex w-full h-full justify-center items-center bg-bolt-elements-background-depth-1 text-red-400">
+      <div className="flex w-full h-full justify-center items-center bg-ui-background-depth-1 text-red-400">
         <div className="text-center">
           <div className="i-ph:warning-circle text-4xl mb-2" />
           <p>Failed to render diff view</p>

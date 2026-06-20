@@ -1,12 +1,13 @@
 import { atom } from 'nanostores';
 import { logStore } from './logs';
 import { createScopedLogger } from '~/utils/logger';
+import { STORAGE_KEYS } from '~/lib/app-config';
 
 const logger = createScopedLogger('ThemeStore');
 
 export type Theme = 'dark' | 'light';
 
-export const kTheme = 'bolt_theme';
+export const kTheme = STORAGE_KEYS.theme;
 
 export function themeIsDark() {
   return themeStore.get() === 'dark';
@@ -42,12 +43,12 @@ export function toggleTheme() {
 
   // Update user profile if it exists
   try {
-    const userProfile = localStorage.getItem('bolt_user_profile');
+    const userProfile = localStorage.getItem(STORAGE_KEYS.userProfile);
 
     if (userProfile) {
       const profile = JSON.parse(userProfile);
       profile.theme = newTheme;
-      localStorage.setItem('bolt_user_profile', JSON.stringify(profile));
+      localStorage.setItem(STORAGE_KEYS.userProfile, JSON.stringify(profile));
     }
   } catch (error) {
     logger.error('Error updating user profile theme:', error);

@@ -91,17 +91,17 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
           exit={{ opacity: 0, scale: 0.95 }}
           className={classNames(
             'relative w-full max-w-md mx-4 rounded-xl shadow-2xl',
-            'bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor',
+            'bg-ui-background-depth-1 border border-ui-borderColor',
             'p-6',
           )}
         >
           {/* Header */}
           <div className="text-center mb-6">
-            <h2 className="text-xl font-bold text-bolt-elements-textPrimary">
+            <h2 className="text-xl font-bold text-ui-textPrimary">
               {mode === 'login' ? 'Welcome back' : 'Create account'}
             </h2>
-            <p className="text-sm text-bolt-elements-textSecondary mt-1">
-              {mode === 'login' ? 'Sign in to your Recurrsive account' : 'Start building with Recurrsive'}
+            <p className="text-sm text-ui-textSecondary mt-1">
+              {mode === 'login' ? 'Sign in to your account' : 'Start building'}
             </p>
           </div>
 
@@ -111,9 +111,9 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
               onClick={() => handleOAuth('github')}
               className={classNames(
                 'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
-                'border border-bolt-elements-borderColor',
-                'text-bolt-elements-textPrimary text-sm font-medium',
-                'hover:bg-bolt-elements-background-depth-2 transition-colors',
+                'border border-ui-borderColor',
+                'text-ui-textPrimary text-sm font-medium',
+                'hover:bg-ui-background-depth-2 transition-colors',
               )}
             >
               <div className="i-ph:github-logo w-5 h-5" />
@@ -123,9 +123,9 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
               onClick={() => handleOAuth('google')}
               className={classNames(
                 'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
-                'border border-bolt-elements-borderColor',
-                'text-bolt-elements-textPrimary text-sm font-medium',
-                'hover:bg-bolt-elements-background-depth-2 transition-colors',
+                'border border-ui-borderColor',
+                'text-ui-textPrimary text-sm font-medium',
+                'hover:bg-ui-background-depth-2 transition-colors',
               )}
             >
               <div className="i-ph:google-logo w-5 h-5" />
@@ -135,9 +135,9 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-bolt-elements-borderColor" />
-            <span className="text-xs text-bolt-elements-textTertiary">or</span>
-            <div className="flex-1 h-px bg-bolt-elements-borderColor" />
+            <div className="flex-1 h-px bg-ui-borderColor" />
+            <span className="text-xs text-ui-textTertiary">or</span>
+            <div className="flex-1 h-px bg-ui-borderColor" />
           </div>
 
           {/* Email/Password Form */}
@@ -150,10 +150,10 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
               required
               className={classNames(
                 'w-full px-3 py-2.5 rounded-lg text-sm',
-                'bg-bolt-elements-prompt-background',
-                'border border-bolt-elements-borderColor',
-                'text-bolt-elements-textPrimary',
-                'placeholder-bolt-elements-textTertiary',
+                'bg-ui-prompt-background',
+                'border border-ui-borderColor',
+                'text-ui-textPrimary',
+                'placeholder-ui-textTertiary',
                 'focus:outline-none focus:ring-2 focus:ring-accent-500/50',
               )}
             />
@@ -166,10 +166,10 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
               minLength={6}
               className={classNames(
                 'w-full px-3 py-2.5 rounded-lg text-sm',
-                'bg-bolt-elements-prompt-background',
-                'border border-bolt-elements-borderColor',
-                'text-bolt-elements-textPrimary',
-                'placeholder-bolt-elements-textTertiary',
+                'bg-ui-prompt-background',
+                'border border-ui-borderColor',
+                'text-ui-textPrimary',
+                'placeholder-ui-textTertiary',
                 'focus:outline-none focus:ring-2 focus:ring-accent-500/50',
               )}
             />
@@ -183,10 +183,10 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
                 minLength={6}
                 className={classNames(
                   'w-full px-3 py-2.5 rounded-lg text-sm',
-                  'bg-bolt-elements-prompt-background',
-                  'border border-bolt-elements-borderColor',
-                  'text-bolt-elements-textPrimary',
-                  'placeholder-bolt-elements-textTertiary',
+                  'bg-ui-prompt-background',
+                  'border border-ui-borderColor',
+                  'text-ui-textPrimary',
+                  'placeholder-ui-textTertiary',
                   'focus:outline-none focus:ring-2 focus:ring-accent-500/50',
                 )}
               />
@@ -214,7 +214,7 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
 
           {/* Toggle mode */}
           <div className="text-center mt-4">
-            <span className="text-sm text-bolt-elements-textSecondary">
+            <span className="text-sm text-ui-textSecondary">
               {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
               <button
                 onClick={() => {
@@ -249,7 +249,7 @@ export function AuthButton() {
       <div className="relative">
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-bolt-elements-background-depth-2 transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-ui-background-depth-2 transition-colors"
         >
           {user.avatarUrl ? (
             <img src={user.avatarUrl} alt={user.name || 'User'} className="w-7 h-7 rounded-full" />
@@ -263,17 +263,17 @@ export function AuthButton() {
         {showDropdown && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setShowDropdown(false)} />
-            <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-lg shadow-xl border border-bolt-elements-borderColor bg-bolt-elements-background-depth-1 py-1">
-              <div className="px-3 py-2 border-b border-bolt-elements-borderColor">
-                <p className="text-sm font-medium text-bolt-elements-textPrimary truncate">{user.name || 'User'}</p>
-                <p className="text-xs text-bolt-elements-textTertiary truncate">{user.email}</p>
+            <div className="absolute right-0 top-full mt-1 z-50 w-48 rounded-lg shadow-xl border border-ui-borderColor bg-ui-background-depth-1 py-1">
+              <div className="px-3 py-2 border-b border-ui-borderColor">
+                <p className="text-sm font-medium text-ui-textPrimary truncate">{user.name || 'User'}</p>
+                <p className="text-xs text-ui-textTertiary truncate">{user.email}</p>
               </div>
               <button
                 onClick={async () => {
                   await signOut();
                   setShowDropdown(false);
                 }}
-                className="w-full text-left px-3 py-2 text-sm text-bolt-elements-textSecondary hover:bg-bolt-elements-background-depth-2 flex items-center gap-2"
+                className="w-full text-left px-3 py-2 text-sm text-ui-textSecondary hover:bg-ui-background-depth-2 flex items-center gap-2"
               >
                 <div className="i-ph:sign-out w-4 h-4" />
                 Sign out

@@ -4,6 +4,7 @@ import type { PluggableList, Plugin } from 'unified';
 import rehypeSanitize, { defaultSchema, type Options as RehypeSanitizeOptions } from 'rehype-sanitize';
 import { SKIP, visit } from 'unist-util-visit';
 import type { UnistNode, UnistParent } from 'node_modules/unist-util-visit/lib';
+import { CSS_CLASS_ARTIFACT, CSS_CLASS_THOUGHT, CSS_CLASS_QUICK_ACTION } from '~/lib/app-config';
 
 export const allowedHTMLElements = [
   'a',
@@ -65,7 +66,7 @@ function remarkThinkRawContent() {
     visit(tree, (node: any) => {
       if (node.type === 'html' && node.value && node.value.startsWith('<think>')) {
         const cleanedContent = node.value.slice(7);
-        node.value = `<div class="__recurrsiveThought__">${cleanedContent}`;
+        node.value = `<div class="${CSS_CLASS_THOUGHT}">${cleanedContent}`;
 
         return;
       }
@@ -86,25 +87,11 @@ const rehypeSanitizeOptions: RehypeSanitizeOptions = {
     div: [
       ...(defaultSchema.attributes?.div ?? []),
       'data*',
-      [
-        'className',
-        '__recurrsiveArtifact__',
-        '__recurrsiveThought__',
-        '__recurrsiveQuickAction',
-        '__recurrsiveSelectedElement__',
-      ],
+      ['className', CSS_CLASS_ARTIFACT, CSS_CLASS_THOUGHT, CSS_CLASS_QUICK_ACTION, '__selectedElement__'],
 
-      // ['className', '__recurrsiveThought__']
+      // ['className', '__thought__']
     ],
-    button: [
-      ...(defaultSchema.attributes?.button ?? []),
-      'data*',
-      'type',
-      'disabled',
-      'name',
-      'value',
-      ['className', '__recurrsiveArtifact__', '__recurrsiveThought__', '__recurrsiveQuickAction'],
-    ],
+    button: [...(defaultSchema.attributes?.button ?? []), 'data*', 'type', 'disabled', 'name', 'value'],
   },
   strip: [],
 };

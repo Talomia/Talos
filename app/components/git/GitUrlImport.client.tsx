@@ -10,7 +10,8 @@ import { BaseChat } from '~/components/chat/BaseChat';
 import { Chat } from '~/components/chat/Chat.client';
 import { useGit } from '~/lib/hooks/useGit';
 import { useChatHistory } from '~/lib/persistence';
-import { createCommandsMessage, detectProjectCommands, escapeRecurrsiveTags } from '~/utils/projectCommands';
+import { createCommandsMessage, detectProjectCommands, escapeXmlTags } from '~/utils/projectCommands';
+import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 import { LoadingOverlay } from '~/components/ui/LoadingOverlay';
 import { toast } from 'react-toastify';
 
@@ -79,16 +80,16 @@ export function GitUrlImport() {
           const filesMessage: Message = {
             role: 'assistant',
             content: `Cloning the repo ${repoUrl} into ${workdir}
-<recurrsiveArtifact id="imported-files" title="Git Cloned Files"  type="bundled">
+${ARTIFACT_TAG_OPEN} id="imported-files" title="Git Cloned Files"  type="bundled">
 ${fileContents
   .map(
     (file) =>
-      `<recurrsiveAction type="file" filePath="${file.path}">
-${escapeRecurrsiveTags(file.content)}
-</recurrsiveAction>`,
+      `${ACTION_TAG_OPEN} type="file" filePath="${file.path}">
+${escapeXmlTags(file.content)}
+${ACTION_TAG_CLOSE}`,
   )
   .join('\n')}
-</recurrsiveArtifact>`,
+${ARTIFACT_TAG_CLOSE}`,
             id: generateId(),
             createdAt: new Date(),
           };

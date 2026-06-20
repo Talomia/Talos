@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { openDatabase } from '~/lib/persistence/db';
 
-// Create a custom hook to connect to the boltHistory database
-export function useBoltHistoryDB() {
+// Create a custom hook to connect to the history database
+export function useHistoryDB() {
   const [db, setDb] = useState<IDBDatabase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

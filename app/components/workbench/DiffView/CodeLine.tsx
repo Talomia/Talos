@@ -60,7 +60,7 @@ export const CodeLine = memo(
       <div className="flex group min-w-fit">
         <div className={lineNumberStyles}>{lineNumber + 1}</div>
         <div className={`${lineContentStyles} ${bgColor}`}>
-          <span className="mr-2 text-bolt-elements-textTertiary">
+          <span className="mr-2 text-ui-textTertiary">
             {type === 'added' && <span className="text-green-700 dark:text-green-500">+</span>}
             {type === 'removed' && <span className="text-red-700 dark:text-red-500">-</span>}
             {type === 'unchanged' && ' '}

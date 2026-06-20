@@ -65,16 +65,13 @@ export function VercelHealthOverview({ stats }: VercelHealthOverviewProps) {
 
   return (
     <div className="mb-6">
-      <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Project Health Overview</h4>
+      <h4 className="text-sm font-medium text-ui-textPrimary mb-2">Project Health Overview</h4>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {healthMetrics.map((metric, index) => (
-          <div
-            key={index}
-            className={`flex flex-col p-3 rounded-lg border border-bolt-elements-borderColor ${metric.bgColor}`}
-          >
+          <div key={index} className={`flex flex-col p-3 rounded-lg border border-ui-borderColor ${metric.bgColor}`}>
             <div className="flex items-center gap-2 mb-1">
               <div className={`${metric.icon} w-4 h-4 ${metric.color}`} />
-              <span className="text-xs text-bolt-elements-textSecondary">{metric.label}</span>
+              <span className="text-xs text-ui-textSecondary">{metric.label}</span>
             </div>
             <span className={`text-lg font-medium ${metric.textColor}`}>{metric.value}</span>
           </div>

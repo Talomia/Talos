@@ -29,26 +29,23 @@ describe('StreamingMessageParser', () => {
       ['Foo bar <', 'Foo bar '],
       ['Foo bar <p', 'Foo bar <p'],
       [['Foo bar <', 's', 'p', 'an>some text</span>'], 'Foo bar <span>some text</span>'],
-    ])('should correctly parse chunks and strip out bolt artifacts (%#)', (input, expected) => {
+    ])('should correctly parse chunks and strip out artifacts (%#)', (input, expected) => {
       runTest(input, expected);
     });
   });
 
   describe('invalid or incomplete artifacts', () => {
     it.each<[string | string[], ExpectedResult | string]>([
-      ['Foo bar <r', 'Foo bar '],
+      ['Foo bar <r', 'Foo bar <r'],
       ['Foo bar <ra', 'Foo bar <ra'],
-      ['Foo bar <rec', 'Foo bar '],
-      ['Foo bar <recu', 'Foo bar '],
-      ['Foo bar <recua', 'Foo bar <recua'],
-      ['Foo bar <recurr', 'Foo bar '],
-      ['Foo bar <recurrsiveArtifacs></recurrsiveArtifact>', 'Foo bar <recurrsiveArtifacs></recurrsiveArtifact>'],
-      ['Before <oltArtfiact>foo</recurrsiveArtifact> After', 'Before <oltArtfiact>foo</recurrsiveArtifact> After'],
-      [
-        'Before <recurrsiveArtifactt>foo</recurrsiveArtifact> After',
-        'Before <recurrsiveArtifactt>foo</recurrsiveArtifact> After',
-      ],
-    ])('should correctly parse chunks and strip out recurrsive artifacts (%#)', (input, expected) => {
+      ['Foo bar <art', 'Foo bar '],
+      ['Foo bar <arti', 'Foo bar '],
+      ['Foo bar <artia', 'Foo bar <artia'],
+      ['Foo bar <artif', 'Foo bar '],
+      ['Foo bar <artifacs></artifact>', 'Foo bar <artifacs></artifact>'],
+      ['Before <oltArtfiact>foo</artifact> After', 'Before <oltArtfiact>foo</artifact> After'],
+      ['Before <artifactt>foo</artifact> After', 'Before <artifactt>foo</artifact> After'],
+    ])('should correctly parse chunks and strip out artifacts (%#)', (input, expected) => {
       runTest(input, expected);
     });
   });
@@ -56,7 +53,7 @@ describe('StreamingMessageParser', () => {
   describe('valid artifacts without actions', () => {
     it.each<[string | string[], ExpectedResult | string]>([
       [
-        'Some text before <recurrsiveArtifact title="Some title" id="artifact_1">foo bar</recurrsiveArtifact> Some more text',
+        'Some text before <artifact title="Some title" id="artifact_1">foo bar</artifact> Some more text',
         {
           output: 'Some text before  Some more text',
           callbacks: { onArtifactOpen: 1, onArtifactClose: 1, onActionOpen: 0, onActionClose: 0 },
@@ -64,9 +61,9 @@ describe('StreamingMessageParser', () => {
       ],
       [
         [
-          'Some text before <recurrsiveArti',
+          'Some text before <arti',
           'fact',
-          ' title="Some title" id="artifact_1" type="bundled" >foo</recurrsiveArtifact> Some more text',
+          ' title="Some title" id="artifact_1" type="bundled" >foo</artifact> Some more text',
         ],
         {
           output: 'Some text before  Some more text',
@@ -75,12 +72,12 @@ describe('StreamingMessageParser', () => {
       ],
       [
         [
-          'Some text before <recurrsiveArti',
+          'Some text before <arti',
           'fac',
           't title="Some title" id="artifact_1"',
           ' ',
           '>',
-          'foo</recurrsiveArtifact> Some more text',
+          'foo</artifact> Some more text',
         ],
         {
           output: 'Some text before  Some more text',
@@ -89,11 +86,11 @@ describe('StreamingMessageParser', () => {
       ],
       [
         [
-          'Some text before <recurrsiveArti',
+          'Some text before <arti',
           'fact',
           ' title="Some title" id="artifact_1"',
           ' >fo',
-          'o</recurrsiveArtifact> Some more text',
+          'o</artifact> Some more text',
         ],
         {
           output: 'Some text before  Some more text',
@@ -102,13 +99,13 @@ describe('StreamingMessageParser', () => {
       ],
       [
         [
-          'Some text before <recurrsiveArti',
+          'Some text before <arti',
           'fact tit',
           'le="Some ',
           'title" id="artifact_1">fo',
           'o',
           '<',
-          '/recurrsiveArtifact> Some more text',
+          '/artifact> Some more text',
         ],
         {
           output: 'Some text before  Some more text',
@@ -116,26 +113,20 @@ describe('StreamingMessageParser', () => {
         },
       ],
       [
-        [
-          'Some text before <recurrsiveArti',
-          'fact title="Some title" id="artif',
-          'act_1">fo',
-          'o<',
-          '/recurrsiveArtifact> Some more text',
-        ],
+        ['Some text before <arti', 'fact title="Some title" id="artif', 'act_1">fo', 'o<', '/artifact> Some more text'],
         {
           output: 'Some text before  Some more text',
           callbacks: { onArtifactOpen: 1, onArtifactClose: 1, onActionOpen: 0, onActionClose: 0 },
         },
       ],
       [
-        'Before <recurrsiveArtifact title="Some title" id="artifact_1">foo</recurrsiveArtifact> After',
+        'Before <artifact title="Some title" id="artifact_1">foo</artifact> After',
         {
           output: 'Before  After',
           callbacks: { onArtifactOpen: 1, onArtifactClose: 1, onActionOpen: 0, onActionClose: 0 },
         },
       ],
-    ])('should correctly parse chunks and strip out recurrsive artifacts (%#)', (input, expected) => {
+    ])('should correctly parse chunks and strip out artifacts (%#)', (input, expected) => {
       runTest(input, expected);
     });
   });
@@ -143,20 +134,20 @@ describe('StreamingMessageParser', () => {
   describe('valid artifacts with actions', () => {
     it.each<[string | string[], ExpectedResult | string]>([
       [
-        'Before <recurrsiveArtifact title="Some title" id="artifact_1"><recurrsiveAction type="shell">npm install</recurrsiveAction></recurrsiveArtifact> After',
+        'Before <artifact title="Some title" id="artifact_1"><action type="shell">npm install</action></artifact> After',
         {
           output: 'Before  After',
           callbacks: { onArtifactOpen: 1, onArtifactClose: 1, onActionOpen: 1, onActionClose: 1 },
         },
       ],
       [
-        'Before <recurrsiveArtifact title="Some title" id="artifact_1"><recurrsiveAction type="shell">npm install</recurrsiveAction><recurrsiveAction type="file" filePath="index.js">some content</recurrsiveAction></recurrsiveArtifact> After',
+        'Before <artifact title="Some title" id="artifact_1"><action type="shell">npm install</action><action type="file" filePath="index.js">some content</action></artifact> After',
         {
           output: 'Before  After',
           callbacks: { onArtifactOpen: 1, onArtifactClose: 1, onActionOpen: 2, onActionClose: 2 },
         },
       ],
-    ])('should correctly parse chunks and strip out recurrsive artifacts (%#)', (input, expected) => {
+    ])('should correctly parse chunks and strip out artifacts (%#)', (input, expected) => {
       runTest(input, expected);
     });
   });

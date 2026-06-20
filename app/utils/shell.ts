@@ -94,7 +94,7 @@ export async function newShellProcess(webcontainer: WebContainer, terminal: ITer
 
 export type ExecutionResult = { output: string; exitCode: number } | undefined;
 
-export class RecurrsiveShell {
+export class AppShell {
   #initialized: (() => void) | undefined;
   #readyPromise: Promise<void>;
   #webcontainer: WebContainer | undefined;
@@ -121,7 +121,7 @@ export class RecurrsiveShell {
     this.#terminal = terminal;
 
     // Use all three streams from tee: one for terminal, one for command execution, one for Expo URL detection
-    const { process, commandStream, expoUrlStream } = await this.newRecurrsiveShellProcess(webcontainer, terminal);
+    const { process, commandStream, expoUrlStream } = await this.newAppShellProcess(webcontainer, terminal);
     this.#process = process;
     this.#outputStream = commandStream.getReader();
 
@@ -132,7 +132,7 @@ export class RecurrsiveShell {
     this.#initialized?.();
   }
 
-  async newRecurrsiveShellProcess(webcontainer: WebContainer, terminal: ITerminal) {
+  async newAppShellProcess(webcontainer: WebContainer, terminal: ITerminal) {
     const args: string[] = [];
     const process = await webcontainer.spawn('/bin/jsh', ['--osc', ...args], {
       terminal: {
@@ -382,6 +382,6 @@ export function cleanTerminalOutput(input: string): string {
     .replace(/\u0000/g, ''); // Remove null characters
 }
 
-export function newRecurrsiveShellProcess() {
-  return new RecurrsiveShell();
+export function newAppShellProcess() {
+  return new AppShell();
 }

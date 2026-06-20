@@ -54,7 +54,7 @@ export function DialogShell({
             className={`w-[90vw] ${width} ${maxHeight ? 'max-h-[85vh] overflow-y-auto' : ''}`}
           >
             <Dialog.Content
-              className="bg-white dark:bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark shadow-xl"
+              className="bg-white dark:bg-ui-background-depth-1 rounded-lg border border-ui-borderColor dark:border-ui-borderColor-dark shadow-xl"
               aria-describedby={ariaDescribedBy}
             >
               <Dialog.Title className="sr-only">{title}</Dialog.Title>
@@ -81,7 +81,7 @@ export function DialogCloseButton({ onClick, absolute = false }: CloseButtonProp
     <Dialog.Close asChild>
       <button
         onClick={onClick}
-        className={`${absolute ? 'absolute right-0 top-0 ' : ''}p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-bolt-elements-textTertiary hover:text-bolt-elements-textPrimary dark:text-bolt-elements-textTertiary-dark dark:hover:text-bolt-elements-textPrimary-dark hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-3 focus:outline-none focus:ring-2 focus:ring-bolt-elements-borderColor dark:focus:ring-bolt-elements-borderColor-dark`}
+        className={`${absolute ? 'absolute right-0 top-0 ' : ''}p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-ui-textTertiary hover:text-ui-textPrimary dark:text-ui-textTertiary-dark dark:hover:text-ui-textPrimary-dark hover:bg-ui-background-depth-2 dark:hover:bg-ui-background-depth-3 focus:outline-none focus:ring-2 focus:ring-ui-borderColor dark:focus:ring-ui-borderColor-dark`}
       >
         <span className="i-ph:x block w-5 h-5" aria-hidden="true" />
         <span className="sr-only">Close dialog</span>
@@ -130,12 +130,12 @@ export function DeploymentSuccessDialog({
               <div className="i-ph:check-circle w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
+              <h3 className="text-lg font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark">
                 Successfully pushed to {provider.name}
               </h3>
               <p
                 id="success-dialog-description"
-                className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark"
+                className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark"
               >
                 Your code is now available on {provider.name}
               </p>
@@ -145,13 +145,13 @@ export function DeploymentSuccessDialog({
         </div>
 
         {/* Repository URL */}
-        <div className="bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg p-4 text-left border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-          <p className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark mb-2 flex items-center gap-2">
+        <div className="bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg p-4 text-left border border-ui-borderColor dark:border-ui-borderColor-dark">
+          <p className="text-sm font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark mb-2 flex items-center gap-2">
             <span className={`${provider.logoIcon} w-4 h-4 text-${provider.brandColor}-500`} />
             Repository URL
           </p>
           <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-4 px-3 py-2 rounded border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark font-mono">
+            <code className="flex-1 text-sm bg-ui-background-depth-1 dark:bg-ui-background-depth-4 px-3 py-2 rounded border border-ui-borderColor dark:border-ui-borderColor-dark text-ui-textPrimary dark:text-ui-textPrimary-dark font-mono">
               {repoUrl}
             </code>
             <motion.button
@@ -159,7 +159,7 @@ export function DeploymentSuccessDialog({
                 navigator.clipboard.writeText(repoUrl);
                 toast.success('URL copied to clipboard');
               }}
-              className="p-2 text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:text-bolt-elements-textSecondary-dark dark:hover:text-bolt-elements-textPrimary-dark bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-4 rounded-lg border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
+              className="p-2 text-ui-textSecondary hover:text-ui-textPrimary dark:text-ui-textSecondary-dark dark:hover:text-ui-textPrimary-dark bg-ui-background-depth-1 dark:bg-ui-background-depth-4 rounded-lg border border-ui-borderColor dark:border-ui-borderColor-dark"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -169,8 +169,8 @@ export function DeploymentSuccessDialog({
         </div>
 
         {/* Pushed Files */}
-        <div className="bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 rounded-lg p-4 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark">
-          <p className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark mb-2 flex items-center gap-2">
+        <div className="bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg p-4 border border-ui-borderColor dark:border-ui-borderColor-dark">
+          <p className="text-sm font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark mb-2 flex items-center gap-2">
             <span className={`i-ph:files w-4 h-4 text-${provider.brandColor}-500`} />
             Pushed Files ({pushedFiles.length})
           </p>
@@ -178,16 +178,16 @@ export function DeploymentSuccessDialog({
             {pushedFiles.slice(0, 100).map((file) => (
               <div
                 key={file.path}
-                className="flex items-center justify-between py-1.5 text-sm text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark border-b border-bolt-elements-borderColor/30 dark:border-bolt-elements-borderColor-dark/30 last:border-0"
+                className="flex items-center justify-between py-1.5 text-sm text-ui-textPrimary dark:text-ui-textPrimary-dark border-b border-ui-borderColor/30 dark:border-ui-borderColor-dark/30 last:border-0"
               >
                 <span className="font-mono truncate flex-1 text-xs">{file.path}</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-bolt-elements-background-depth-3 dark:bg-bolt-elements-background-depth-4 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark ml-2">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-ui-background-depth-3 dark:bg-ui-background-depth-4 text-ui-textSecondary dark:text-ui-textSecondary-dark ml-2">
                   {formatSize(file.size)}
                 </span>
               </div>
             ))}
             {pushedFiles.length > 100 && (
-              <div className="py-2 text-center text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark">
+              <div className="py-2 text-center text-xs text-ui-textSecondary dark:text-ui-textSecondary-dark">
                 +{pushedFiles.length - 100} more files
               </div>
             )}
@@ -212,7 +212,7 @@ export function DeploymentSuccessDialog({
               navigator.clipboard.writeText(repoUrl);
               toast.success('URL copied to clipboard');
             }}
-            className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 text-sm inline-flex items-center gap-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
+            className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary dark:text-ui-textSecondary-dark hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 text-sm inline-flex items-center gap-2 border border-ui-borderColor dark:border-ui-borderColor-dark"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -221,7 +221,7 @@ export function DeploymentSuccessDialog({
           </motion.button>
           <motion.button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 text-sm border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
+            className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary dark:text-ui-textSecondary-dark hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 text-sm border border-ui-borderColor dark:border-ui-borderColor-dark"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
@@ -274,22 +274,22 @@ export function ConnectionRequiredDialog({
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.1 }}
-            className={`mx-auto w-16 h-16 rounded-xl bg-bolt-elements-background-depth-3 flex items-center justify-center text-${provider.brandColor}-500`}
+            className={`mx-auto w-16 h-16 rounded-xl bg-ui-background-depth-3 flex items-center justify-center text-${provider.brandColor}-500`}
           >
             <div className={`${provider.logoIcon} w-8 h-8`} />
           </motion.div>
-          <h3 className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
+          <h3 className="text-lg font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark">
             {provider.name} Connection Required
           </h3>
           <p
             id="connection-required-description"
-            className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark max-w-md mx-auto"
+            className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark max-w-md mx-auto"
           >
             To deploy your code to {provider.name}, you need to connect your {provider.name} account first.
           </p>
           <div className="pt-2 flex justify-center gap-3">
             <motion.button
-              className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark text-sm hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
+              className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary dark:text-ui-textSecondary-dark text-sm hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 border border-ui-borderColor dark:border-ui-borderColor-dark"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={onClose}

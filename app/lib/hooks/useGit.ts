@@ -68,7 +68,7 @@ export function useGit() {
       const headers: {
         [x: string]: string;
       } = {
-        'User-Agent': 'recurrsive',
+        'User-Agent': 'app',
       };
 
       const auth = lookupSavedPassword(url);

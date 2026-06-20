@@ -60,9 +60,7 @@ export function DataActionCard({
           >
             <div className={classNames(icon, 'w-5 h-5')} />
           </motion.div>
-          <CardTitle className="text-lg group-hover:text-bolt-elements-item-contentAccent transition-colors">
-            {title}
-          </CardTitle>
+          <CardTitle className="text-lg group-hover:text-ui-item-contentAccent transition-colors">{title}</CardTitle>
         </div>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
@@ -74,7 +72,7 @@ export function DataActionCard({
             variant="outline"
             size="sm"
             className={classNames(
-              'hover:text-bolt-elements-item-contentAccent hover:border-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-item-backgroundAccent transition-colors w-full justify-center',
+              'hover:text-ui-item-contentAccent hover:border-ui-item-backgroundAccent hover:bg-ui-item-backgroundAccent transition-colors w-full justify-center',
               disabled ? 'cursor-not-allowed' : '',
             )}
           >

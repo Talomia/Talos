@@ -11,16 +11,16 @@ function PerformanceCard() {
             <div className="i-ph:activity w-5 h-5 text-purple-500" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Performance Optimization</h3>
-            <p className="text-sm text-bolt-elements-textSecondary">Tips to improve local AI performance</p>
+            <h3 className="text-lg font-semibold text-ui-textPrimary">Performance Optimization</h3>
+            <p className="text-sm text-ui-textSecondary">Tips to improve local AI performance</p>
           </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-3">
-            <h4 className="font-medium text-bolt-elements-textPrimary">Hardware Optimizations</h4>
-            <ul className="text-sm text-bolt-elements-textSecondary space-y-2">
+            <h4 className="font-medium text-ui-textPrimary">Hardware Optimizations</h4>
+            <ul className="text-sm text-ui-textSecondary space-y-2">
               <li className="flex items-start gap-2">
                 <div className="i-ph:check-circle w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
                 <span>Use NVIDIA GPU with CUDA for 5-10x speedup</span>
@@ -40,8 +40,8 @@ function PerformanceCard() {
             </ul>
           </div>
           <div className="space-y-3">
-            <h4 className="font-medium text-bolt-elements-textPrimary">Software Optimizations</h4>
-            <ul className="text-sm text-bolt-elements-textSecondary space-y-2">
+            <h4 className="font-medium text-ui-textPrimary">Software Optimizations</h4>
+            <ul className="text-sm text-ui-textSecondary space-y-2">
               <li className="flex items-start gap-2">
                 <div className="i-ph:check-circle w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                 <span>Use smaller models for faster responses</span>

@@ -9,6 +9,7 @@ import type { Message } from 'ai';
 import styles from './Markdown.module.scss';
 import ThoughtBox from './ThoughtBox';
 import type { ProviderInfo } from '~/types/model';
+import { CSS_CLASS_ARTIFACT, CSS_CLASS_THOUGHT, CSS_CLASS_QUICK_ACTION } from '~/lib/app-config';
 
 const logger = createScopedLogger('MarkdownComponent');
 
@@ -32,7 +33,7 @@ export const Markdown = memo(
         div: ({ className, children, node, ...props }) => {
           const dataProps = node?.properties as Record<string, unknown>;
 
-          if (className?.includes('__recurrsiveArtifact__')) {
+          if (className?.includes(CSS_CLASS_ARTIFACT)) {
             const messageId = node?.properties.dataMessageId as string;
             const artifactId = node?.properties.dataArtifactId as string;
 
@@ -47,7 +48,7 @@ export const Markdown = memo(
             return <Artifact messageId={messageId} artifactId={artifactId} />;
           }
 
-          if (className?.includes('__recurrsiveSelectedElement__')) {
+          if (className?.includes('__selectedElement__')) {
             const messageId = node?.properties.dataMessageId as string;
             const elementDataAttr = node?.properties.dataElement as string;
 
@@ -67,27 +68,27 @@ export const Markdown = memo(
             }
 
             return (
-              <div className="bg-bolt-elements-background-depth-3 border border-bolt-elements-borderColor rounded-lg p-3 my-2">
+              <div className="bg-ui-background-depth-3 border border-ui-borderColor rounded-lg p-3 my-2">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xs font-mono bg-bolt-elements-background-depth-2 px-2 py-1 rounded text-bolt-elements-textTer">
+                  <span className="text-xs font-mono bg-ui-background-depth-2 px-2 py-1 rounded text-ui-textTer">
                     {elementData?.tagName}
                   </span>
                   {elementData?.className && (
-                    <span className="text-xs text-bolt-elements-textSecondary">.{elementData.className}</span>
+                    <span className="text-xs text-ui-textSecondary">.{elementData.className}</span>
                   )}
                 </div>
-                <code className="block text-sm !text-bolt-elements-textSecondary !bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor p-2 rounded">
+                <code className="block text-sm !text-ui-textSecondary !bg-ui-background-depth-2 border border-ui-borderColor p-2 rounded">
                   {elementData?.displayText}
                 </code>
               </div>
             );
           }
 
-          if (className?.includes('__recurrsiveThought__')) {
+          if (className?.includes(CSS_CLASS_THOUGHT)) {
             return <ThoughtBox title="Thought process">{children}</ThoughtBox>;
           }
 
-          if (className?.includes('__recurrsiveQuickAction__') || dataProps?.dataRecurrsiveQuickAction) {
+          if (className?.includes(CSS_CLASS_QUICK_ACTION) || dataProps?.dataQuickAction) {
             return <div className="flex items-center gap-2 flex-wrap mt-3.5">{children}</div>;
           }
 
@@ -119,10 +120,7 @@ export const Markdown = memo(
         button: ({ node, children, ...props }) => {
           const dataProps = node?.properties as Record<string, unknown>;
 
-          if (
-            dataProps?.class?.toString().includes('__recurrsiveQuickAction__') ||
-            dataProps?.dataRecurrsiveQuickAction === 'true'
-          ) {
+          if (dataProps?.class?.toString().includes(CSS_CLASS_QUICK_ACTION) || dataProps?.dataQuickAction === 'true') {
             const type = dataProps['data-type'] || dataProps.dataType;
             const message = dataProps['data-message'] || dataProps.dataMessage;
             const path = dataProps['data-path'] || dataProps.dataPath;
@@ -140,7 +138,7 @@ export const Markdown = memo(
 
             return (
               <button
-                className="rounded-md justify-center px-3 py-1.5 text-xs bg-bolt-elements-item-backgroundAccent text-bolt-elements-item-contentAccent opacity-90 hover:opacity-100 flex items-center gap-2 cursor-pointer"
+                className="rounded-md justify-center px-3 py-1.5 text-xs bg-ui-item-backgroundAccent text-ui-item-contentAccent opacity-90 hover:opacity-100 flex items-center gap-2 cursor-pointer"
                 data-type={type}
                 data-message={message}
                 data-path={path}
@@ -215,23 +213,23 @@ export const Markdown = memo(
  *
  * @example
  * // Removes code fences around artifact
- * const input = "```xml\n<div class='__recurrsiveArtifact__'></div>\n```";
+ * const input = "```xml\n<div class='__codeArtifact__'></div>\n```";
  * stripCodeFenceFromArtifact(input);
- * // Returns: "\n<div class='__recurrsiveArtifact__'></div>\n"
+ * // Returns: "\n<div class='__codeArtifact__'></div>\n"
  *
  * @remarks
- * - Only removes code fences that directly wrap an artifact (marked with __recurrsiveArtifact__ class)
+ * - Only removes code fences that directly wrap an artifact (marked with __codeArtifact__ class)
  * - Handles code fences with optional language specifications (e.g. ```xml, ```typescript)
  * - Preserves original content if no artifact is found
  * - Safely handles edge cases like empty input or artifacts at start/end of content
  */
 export const stripCodeFenceFromArtifact = (content: string) => {
-  if (!content || !content.includes('__recurrsiveArtifact__')) {
+  if (!content || !content.includes(CSS_CLASS_ARTIFACT)) {
     return content;
   }
 
   const lines = content.split('\n');
-  const artifactLineIndex = lines.findIndex((line) => line.includes('__recurrsiveArtifact__'));
+  const artifactLineIndex = lines.findIndex((line) => line.includes(CSS_CLASS_ARTIFACT));
 
   // Return original content if artifact line not found
   if (artifactLineIndex === -1) {

@@ -44,7 +44,7 @@ export function SupabaseProjectList({
 
   if (fetchingStats) {
     return (
-      <div className="flex items-center gap-2 text-sm text-bolt-elements-textSecondary">
+      <div className="flex items-center gap-2 text-sm text-ui-textSecondary">
         <div className="i-ph:spinner-gap w-4 h-4 animate-spin" />
         Fetching Supabase projects...
       </div>
@@ -54,16 +54,14 @@ export function SupabaseProjectList({
   return (
     <Collapsible open={isProjectsExpanded} onOpenChange={setIsProjectsExpanded}>
       <CollapsibleTrigger asChild>
-        <div className="flex items-center justify-between p-4 rounded-lg bg-bolt-elements-background dark:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive/70 dark:hover:border-bolt-elements-borderColorActive/70 transition-all duration-200 cursor-pointer">
+        <div className="flex items-center justify-between p-4 rounded-lg bg-ui-background dark:bg-ui-background-depth-2 border border-ui-borderColor dark:border-ui-borderColor hover:border-ui-borderColorActive/70 dark:hover:border-ui-borderColorActive/70 transition-all duration-200 cursor-pointer">
           <div className="flex items-center gap-2">
-            <div className="i-ph:database w-4 h-4 text-bolt-elements-item-contentAccent" />
-            <span className="text-sm font-medium text-bolt-elements-textPrimary">
-              Your Projects ({stats?.totalProjects || 0})
-            </span>
+            <div className="i-ph:database w-4 h-4 text-ui-item-contentAccent" />
+            <span className="text-sm font-medium text-ui-textPrimary">Your Projects ({stats?.totalProjects || 0})</span>
           </div>
           <div
             className={classNames(
-              'i-ph:caret-down w-4 h-4 transform transition-transform duration-200 text-bolt-elements-textSecondary',
+              'i-ph:caret-down w-4 h-4 transform transition-transform duration-200 text-ui-textSecondary',
               isProjectsExpanded ? 'rotate-180' : '',
             )}
           />
@@ -73,30 +71,30 @@ export function SupabaseProjectList({
         <div className="space-y-4 mt-4">
           {/* Supabase Overview Dashboard */}
           {stats?.projects?.length ? (
-            <div className="mb-6 p-4 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
-              <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-3">Supabase Overview</h4>
+            <div className="mb-6 p-4 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
+              <h4 className="text-sm font-medium text-ui-textPrimary mb-3">Supabase Overview</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-bolt-elements-textPrimary">{stats.totalProjects}</div>
-                  <div className="text-xs text-bolt-elements-textSecondary">Total Projects</div>
+                  <div className="text-2xl font-bold text-ui-textPrimary">{stats.totalProjects}</div>
+                  <div className="text-xs text-ui-textSecondary">Total Projects</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-bolt-elements-textPrimary">
+                  <div className="text-2xl font-bold text-ui-textPrimary">
                     {stats.projects.filter((p: SupabaseProject) => p.status === 'ACTIVE_HEALTHY').length}
                   </div>
-                  <div className="text-xs text-bolt-elements-textSecondary">Active Projects</div>
+                  <div className="text-xs text-ui-textSecondary">Active Projects</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-bolt-elements-textPrimary">
+                  <div className="text-2xl font-bold text-ui-textPrimary">
                     {new Set(stats.projects.map((p: SupabaseProject) => p.region)).size}
                   </div>
-                  <div className="text-xs text-bolt-elements-textSecondary">Regions Used</div>
+                  <div className="text-xs text-ui-textSecondary">Regions Used</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-bolt-elements-textPrimary">
+                  <div className="text-2xl font-bold text-ui-textPrimary">
                     {stats.projects.filter((p: SupabaseProject) => p.status !== 'ACTIVE_HEALTHY').length}
                   </div>
-                  <div className="text-xs text-bolt-elements-textSecondary">Inactive Projects</div>
+                  <div className="text-xs text-ui-textSecondary">Inactive Projects</div>
                 </div>
               </div>
             </div>
@@ -108,20 +106,20 @@ export function SupabaseProjectList({
                 <div
                   key={project.id}
                   className={classNames(
-                    'p-4 rounded-lg border transition-colors bg-bolt-elements-background-depth-1 cursor-pointer',
+                    'p-4 rounded-lg border transition-colors bg-ui-background-depth-1 cursor-pointer',
                     selectedProjectId === project.id
-                      ? 'border-bolt-elements-item-contentAccent bg-bolt-elements-item-backgroundActive/10'
-                      : 'border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive/70',
+                      ? 'border-ui-item-contentAccent bg-ui-item-backgroundActive/10'
+                      : 'border-ui-borderColor hover:border-ui-borderColorActive/70',
                   )}
                   onClick={() => onProjectSelect(project.id)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h5 className="text-sm font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-                        <div className="i-ph:database w-4 h-4 text-bolt-elements-borderColorActive" />
+                      <h5 className="text-sm font-medium text-ui-textPrimary flex items-center gap-2">
+                        <div className="i-ph:database w-4 h-4 text-ui-borderColorActive" />
                         {project.name}
                       </h5>
-                      <div className="flex items-center gap-2 mt-2 text-xs text-bolt-elements-textSecondary">
+                      <div className="flex items-center gap-2 mt-2 text-xs text-ui-textSecondary">
                         <span className="flex items-center gap-1">
                           <div className="i-ph:globe w-3 h-3" />
                           {project.region}
@@ -161,39 +159,39 @@ export function SupabaseProjectList({
                       </div>
 
                       {/* Project Details Grid */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-bolt-elements-borderColor">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-ui-borderColor">
                         <div className="text-center">
-                          <div className="text-sm font-semibold text-bolt-elements-textPrimary">
+                          <div className="text-sm font-semibold text-ui-textPrimary">
                             {project.stats?.database?.tables ?? '--'}
                           </div>
-                          <div className="text-xs text-bolt-elements-textSecondary flex items-center justify-center gap-1">
+                          <div className="text-xs text-ui-textSecondary flex items-center justify-center gap-1">
                             <div className="i-ph:table w-3 h-3" />
                             Tables
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-semibold text-bolt-elements-textPrimary">
+                          <div className="text-sm font-semibold text-ui-textPrimary">
                             {project.stats?.storage?.buckets ?? '--'}
                           </div>
-                          <div className="text-xs text-bolt-elements-textSecondary flex items-center justify-center gap-1">
+                          <div className="text-xs text-ui-textSecondary flex items-center justify-center gap-1">
                             <div className="i-ph:folder w-3 h-3" />
                             Buckets
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-semibold text-bolt-elements-textPrimary">
+                          <div className="text-sm font-semibold text-ui-textPrimary">
                             {project.stats?.functions?.deployed ?? '--'}
                           </div>
-                          <div className="text-xs text-bolt-elements-textSecondary flex items-center justify-center gap-1">
+                          <div className="text-xs text-ui-textSecondary flex items-center justify-center gap-1">
                             <div className="i-ph:code w-3 h-3" />
                             Functions
                           </div>
                         </div>
                         <div className="text-center">
-                          <div className="text-sm font-semibold text-bolt-elements-textPrimary">
+                          <div className="text-sm font-semibold text-ui-textPrimary">
                             {project.stats?.database?.size_mb ? `${project.stats.database.size_mb} MB` : '--'}
                           </div>
-                          <div className="text-xs text-bolt-elements-textSecondary flex items-center justify-center gap-1">
+                          <div className="text-xs text-ui-textSecondary flex items-center justify-center gap-1">
                             <div className="i-ph:database w-3 h-3" />
                             DB Size
                           </div>
@@ -203,7 +201,7 @@ export function SupabaseProjectList({
                   </div>
 
                   {selectedProjectId === project.id && (
-                    <div className="space-y-4 mt-4 pt-4 border-t border-bolt-elements-borderColor">
+                    <div className="space-y-4 mt-4 pt-4 border-t border-ui-borderColor">
                       <div className="flex flex-wrap items-center gap-1">
                         {projectActions.map((action) => (
                           <Button
@@ -215,7 +213,7 @@ export function SupabaseProjectList({
                               handleProjectAction(project.id, action);
                             }}
                             disabled={isProjectActionLoading || (action.name === 'Get API Keys' && fetchingApiKeys)}
-                            className="flex items-center gap-1 text-xs px-2 py-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                            className="flex items-center gap-1 text-xs px-2 py-1 text-ui-textPrimary dark:text-ui-textPrimary"
                           >
                             <div className={`${action.icon} w-2.5 h-2.5`} />
                             {action.name === 'Get API Keys' && fetchingApiKeys ? 'Fetching...' : action.name}
@@ -225,12 +223,12 @@ export function SupabaseProjectList({
 
                       {/* Project Details */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg space-y-2">
-                          <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-                            <div className="i-ph:database w-4 h-4 text-bolt-elements-item-contentAccent" />
+                        <div className="bg-ui-background-depth-2 p-3 rounded-lg space-y-2">
+                          <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2">
+                            <div className="i-ph:database w-4 h-4 text-ui-item-contentAccent" />
                             Database Schema
                           </h6>
-                          <div className="space-y-1 text-xs text-bolt-elements-textSecondary">
+                          <div className="space-y-1 text-xs text-ui-textSecondary">
                             <div className="flex justify-between">
                               <span>Tables:</span>
                               <span>{project.stats?.database?.tables ?? '--'}</span>
@@ -252,12 +250,12 @@ export function SupabaseProjectList({
                           </div>
                         </div>
 
-                        <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg space-y-2">
-                          <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-                            <div className="i-ph:folder w-4 h-4 text-bolt-elements-item-contentAccent" />
+                        <div className="bg-ui-background-depth-2 p-3 rounded-lg space-y-2">
+                          <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2">
+                            <div className="i-ph:folder w-4 h-4 text-ui-item-contentAccent" />
                             Storage
                           </h6>
-                          <div className="space-y-1 text-xs text-bolt-elements-textSecondary">
+                          <div className="space-y-1 text-xs text-ui-textSecondary">
                             <div className="flex justify-between">
                               <span>Buckets:</span>
                               <span>{project.stats?.storage?.buckets ?? '--'}</span>
@@ -285,20 +283,20 @@ export function SupabaseProjectList({
                       </div>
 
                       {credentials && (
-                        <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg space-y-2">
-                          <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2">
-                            <div className="i-ph:key w-4 h-4 text-bolt-elements-item-contentAccent" />
+                        <div className="bg-ui-background-depth-2 p-3 rounded-lg space-y-2">
+                          <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2">
+                            <div className="i-ph:key w-4 h-4 text-ui-item-contentAccent" />
                             Project Credentials
                           </h6>
                           <div className="space-y-2">
                             <div>
-                              <label className="text-xs text-bolt-elements-textSecondary">Supabase URL:</label>
+                              <label className="text-xs text-ui-textSecondary">Supabase URL:</label>
                               <div className="flex items-center gap-2 mt-1">
                                 <input
                                   type="text"
                                   value={credentials.supabaseUrl || ''}
                                   readOnly
-                                  className="flex-1 px-2 py-1 text-xs bg-bolt-elements-background border border-bolt-elements-borderColor rounded"
+                                  className="flex-1 px-2 py-1 text-xs bg-ui-background border border-ui-borderColor rounded"
                                 />
                                 <Button
                                   size="icon"
@@ -318,13 +316,13 @@ export function SupabaseProjectList({
                               </div>
                             </div>
                             <div>
-                              <label className="text-xs text-bolt-elements-textSecondary">Anon Key:</label>
+                              <label className="text-xs text-ui-textSecondary">Anon Key:</label>
                               <div className="flex items-center gap-2 mt-1">
                                 <input
                                   type="password"
                                   value={credentials.anonKey || ''}
                                   readOnly
-                                  className="flex-1 px-2 py-1 text-xs bg-bolt-elements-background border border-bolt-elements-borderColor rounded"
+                                  className="flex-1 px-2 py-1 text-xs bg-ui-background border border-ui-borderColor rounded"
                                 />
                                 <Button
                                   size="icon"
@@ -352,7 +350,7 @@ export function SupabaseProjectList({
               ))}
             </div>
           ) : (
-            <div className="text-sm text-bolt-elements-textSecondary flex items-center gap-2 p-4">
+            <div className="text-sm text-ui-textSecondary flex items-center gap-2 p-4">
               <div className="i-ph:info w-4 h-4" />
               No projects found in your Supabase account
             </div>

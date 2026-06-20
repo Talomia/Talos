@@ -5,7 +5,7 @@ import { getAllChats } from '~/lib/persistence/db';
 import { DataVisualization } from '~/components/@settings/tabs/data/DataVisualization';
 import { DataActionCard } from '~/components/@settings/tabs/data/DataActionCard';
 import { DataTabDialogs } from '~/components/@settings/tabs/data/DataTabDialogs';
-import { useBoltHistoryDB } from '~/components/@settings/tabs/data/useBoltHistoryDB';
+import { useHistoryDB } from '~/components/@settings/tabs/data/useHistoryDB';
 import { createChatItem, SETTINGS_CATEGORIES } from '~/components/@settings/tabs/data/dataTabTypes';
 import type { ExtendedChat, ChatItem } from '~/components/@settings/tabs/data/dataTabTypes';
 import { toast } from 'react-toastify';
@@ -14,8 +14,8 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('DataTab');
 
 export function DataTab() {
-  // Use our custom hook for the boltHistory database
-  const { db, isLoading: dbLoading } = useBoltHistoryDB();
+  // Use our custom hook for the history database
+  const { db, isLoading: dbLoading } = useHistoryDB();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const apiKeyFileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
@@ -29,7 +29,7 @@ export function DataTab() {
   const [availableChats, setAvailableChats] = useState<ExtendedChat[]>([]);
   const [chatItems, setChatItems] = useState<ChatItem[]>([]);
 
-  // Data operations hook with boltHistory database
+  // Data operations hook with history database
   const {
     isExporting,
     isImporting,
@@ -46,7 +46,7 @@ export function DataTab() {
     handleDownloadTemplate,
     handleImportAPIKeys,
   } = useDataOperations({
-    customDb: db || undefined, // Pass the boltHistory database, converting null to undefined
+    customDb: db || undefined, // Pass the history database, converting null to undefined
     onReloadSettings: () => window.location.reload(),
     onReloadChats: () => {
       // Reload chats after reset
@@ -70,7 +70,7 @@ export function DataTab() {
   // Load available chats
   useEffect(() => {
     if (db) {
-      logger.debug('Loading chats from boltHistory database', {
+      logger.debug('Loading chats from history database', {
         name: db.name,
         version: db.version,
         objectStoreNames: Array.from(db.objectStoreNames),
@@ -201,7 +201,7 @@ export function DataTab() {
 
       {/* Chats Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">Chats</h2>
+        <h2 className="text-xl font-semibold mb-4 text-ui-textPrimary">Chats</h2>
         {dbLoading ? (
           <div className="flex items-center justify-center p-4">
             <div className="i-ph-spinner-gap-bold animate-spin w-6 h-6 mr-2" />
@@ -256,7 +256,7 @@ export function DataTab() {
 
       {/* Settings Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">Settings</h2>
+        <h2 className="text-xl font-semibold mb-4 text-ui-textPrimary">Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <DataActionCard
             icon="i-ph-download-duotone"
@@ -301,7 +301,7 @@ export function DataTab() {
 
       {/* API Keys Section */}
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">API Keys</h2>
+        <h2 className="text-xl font-semibold mb-4 text-ui-textPrimary">API Keys</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <DataActionCard
             icon="i-ph-file-text-duotone"
@@ -326,7 +326,7 @@ export function DataTab() {
 
       {/* Data Visualization */}
       <div>
-        <h2 className="text-xl font-semibold mb-4 text-bolt-elements-textPrimary">Data Usage</h2>
+        <h2 className="text-xl font-semibold mb-4 text-ui-textPrimary">Data Usage</h2>
         <Card>
           <CardContent className="p-5">
             <DataVisualization chats={availableChats} />

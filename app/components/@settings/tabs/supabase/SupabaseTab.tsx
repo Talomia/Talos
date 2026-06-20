@@ -192,7 +192,7 @@ export default function SupabaseTab() {
 
       {/* Main Connection Component */}
       <motion.div
-        className="bg-bolt-elements-background dark:bg-bolt-elements-background border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor rounded-lg"
+        className="bg-ui-background dark:bg-ui-background border border-ui-borderColor dark:border-ui-borderColor rounded-lg"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -200,11 +200,11 @@ export default function SupabaseTab() {
         <div className="p-6 space-y-6">
           {!connection.user ? (
             <div className="space-y-4">
-              <div className="text-xs text-bolt-elements-textSecondary bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 p-3 rounded-lg mb-4">
+              <div className="text-xs text-ui-textSecondary bg-ui-background-depth-1 dark:bg-ui-background-depth-1 p-3 rounded-lg mb-4">
                 <p className="flex items-center gap-1 mb-1">
-                  <span className="i-ph:lightbulb w-3.5 h-3.5 text-bolt-elements-icon-success dark:text-bolt-elements-icon-success" />
+                  <span className="i-ph:lightbulb w-3.5 h-3.5 text-ui-icon-success dark:text-ui-icon-success" />
                   <span className="font-medium">Tip:</span> You can also set the{' '}
-                  <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 rounded">
+                  <code className="px-1 py-0.5 bg-ui-background-depth-2 dark:bg-ui-background-depth-2 rounded">
                     VITE_SUPABASE_ACCESS_TOKEN
                   </code>{' '}
                   environment variable to connect automatically.
@@ -212,7 +212,7 @@ export default function SupabaseTab() {
               </div>
 
               <div>
-                <label className="block text-sm text-bolt-elements-textSecondary mb-2">Access Token</label>
+                <label className="block text-sm text-ui-textSecondary mb-2">Access Token</label>
                 <input
                   type="password"
                   value={tokenInput}
@@ -223,17 +223,17 @@ export default function SupabaseTab() {
                     'w-full px-3 py-2 rounded-lg text-sm',
                     'bg-[#F8F8F8] dark:bg-[#1A1A1A]',
                     'border border-[#E5E5E5] dark:border-[#333333]',
-                    'text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary',
-                    'focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive',
+                    'text-ui-textPrimary placeholder-ui-textTertiary',
+                    'focus:outline-none focus:ring-1 focus:ring-ui-borderColorActive',
                     'disabled:opacity-50',
                   )}
                 />
-                <div className="mt-2 text-sm text-bolt-elements-textSecondary">
+                <div className="mt-2 text-sm text-ui-textSecondary">
                   <a
                     href="https://supabase.com/dashboard/account/tokens"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-bolt-elements-borderColorActive hover:underline inline-flex items-center gap-1"
+                    className="text-ui-borderColorActive hover:underline inline-flex items-center gap-1"
                   >
                     Get your token
                     <div className="i-ph:arrow-square-out w-4 h-4" />
@@ -280,7 +280,7 @@ export default function SupabaseTab() {
                     <div className="i-ph:plug w-4 h-4" />
                     Disconnect
                   </button>
-                  <span className="text-sm text-bolt-elements-textSecondary flex items-center gap-1">
+                  <span className="text-sm text-ui-textSecondary flex items-center gap-1">
                     <div className="i-ph:check-circle w-4 h-4 text-green-500" />
                     Connected to Supabase
                   </span>

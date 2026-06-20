@@ -1,31 +1,24 @@
 import type { WebContainer } from '@webcontainer/api';
 import { path as nodePath } from '~/utils/path';
 import { atom, map, type MapStore } from 'nanostores';
-import type {
-  ActionAlert,
-  RecurrsiveAction,
-  DeployAlert,
-  FileHistory,
-  SupabaseAction,
-  SupabaseAlert,
-} from '~/types/actions';
+import type { ActionAlert, CodeAction, DeployAlert, FileHistory, SupabaseAction, SupabaseAlert } from '~/types/actions';
 import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
 import type { ActionCallbackData } from './message-parser';
-import type { RecurrsiveShell } from '~/utils/shell';
+import type { AppShell } from '~/utils/shell';
 
 const logger = createScopedLogger('ActionRunner');
 
 export type ActionStatus = 'pending' | 'running' | 'complete' | 'aborted' | 'failed';
 
-export type BaseActionState = RecurrsiveAction & {
+export type BaseActionState = CodeAction & {
   status: Exclude<ActionStatus, 'failed'>;
   abort: () => void;
   executed: boolean;
   abortSignal: AbortSignal;
 };
 
-export type FailedActionState = RecurrsiveAction &
+export type FailedActionState = CodeAction &
   Omit<BaseActionState, 'status'> & {
     status: Extract<ActionStatus, 'failed'>;
     error: string;
@@ -73,7 +66,7 @@ class ActionCommandError extends Error {
 export class ActionRunner {
   #webcontainer: Promise<WebContainer>;
   #currentExecutionPromise: Promise<void> = Promise.resolve();
-  #shellTerminal: () => RecurrsiveShell;
+  #shellTerminal: () => AppShell;
   runnerId = atom<string>(`${Date.now()}`);
   actions: ActionsMap = map({});
   onAlert?: (alert: ActionAlert) => void;
@@ -83,7 +76,7 @@ export class ActionRunner {
 
   constructor(
     webcontainerPromise: Promise<WebContainer>,
-    getShellTerminal: () => RecurrsiveShell,
+    getShellTerminal: () => AppShell,
     onAlert?: (alert: ActionAlert) => void,
     onSupabaseAlert?: (alert: SupabaseAlert) => void,
     onDeployAlert?: (alert: DeployAlert) => void,

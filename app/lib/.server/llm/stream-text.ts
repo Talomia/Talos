@@ -10,6 +10,7 @@ import { createScopedLogger } from '~/utils/logger';
 import { createFilesContext, extractPropertiesFromMessage } from './utils';
 import { discussPrompt } from '~/lib/common/prompts/discuss-prompt';
 import type { DesignScheme } from '~/types/design-scheme';
+import { CSS_CLASS_THOUGHT, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
 
 export type Messages = Message[];
 
@@ -44,10 +45,13 @@ function getCompletionTokenLimit(modelDetails: any): number {
 }
 
 function sanitizeText(text: string): string {
-  let sanitized = text.replace(/<div class=\\"__recurrsiveThought__\\">.*?<\/div>/s, '');
+  let sanitized = text.replace(new RegExp(`<div class=\\"(?:${CSS_CLASS_THOUGHT})\\">.*?<\\/div>`, 's'), '');
   sanitized = sanitized.replace(/<think>.*?<\/think>/s, '');
   sanitized = sanitized.replace(
-    /<recurrsiveAction type="file" filePath="package-lock\.json">[\s\S]*?<\/recurrsiveAction>/g,
+    new RegExp(
+      `(?:${ACTION_TAG_OPEN}) type="file" filePath="package-lock\\.json">[\\s\\S]*?(?:${ACTION_TAG_CLOSE})`,
+      'g',
+    ),
     '',
   );
 

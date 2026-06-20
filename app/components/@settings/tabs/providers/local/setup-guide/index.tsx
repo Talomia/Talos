@@ -17,16 +17,14 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           variant="ghost"
           size="sm"
           onClick={onBack}
-          className="bg-transparent hover:bg-transparent text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-all duration-200 p-2"
+          className="bg-transparent hover:bg-transparent text-ui-textSecondary hover:text-ui-textPrimary transition-all duration-200 p-2"
           aria-label="Back to Dashboard"
         >
           <div className="i-ph:arrow-left w-4 h-4" />
         </Button>
         <div>
-          <h2 className="text-xl font-semibold text-bolt-elements-textPrimary">Local Provider Setup Guide</h2>
-          <p className="text-sm text-bolt-elements-textSecondary">
-            Complete setup instructions for running AI models locally
-          </p>
+          <h2 className="text-xl font-semibold text-ui-textPrimary">Local Provider Setup Guide</h2>
+          <p className="text-sm text-ui-textSecondary">Complete setup instructions for running AI models locally</p>
         </div>
       </div>
 

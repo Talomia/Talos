@@ -1,5 +1,5 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from '@remix-run/cloudflare';
-import { readVault, writeVault, clearLegacyCookie } from '~/lib/.server/api-key-vault';
+import { readVault, writeVault } from '~/lib/.server/api-key-vault';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.keys');
@@ -60,7 +60,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         { success: true, provider: body.provider },
         {
           headers: {
-            'Set-Cookie': [setCookie, clearLegacyCookie()].join(', '),
+            'Set-Cookie': setCookie,
           },
         },
       );
@@ -90,7 +90,7 @@ export async function action({ request, context }: ActionFunctionArgs) {
         { success: true, provider: body.provider },
         {
           headers: {
-            'Set-Cookie': [setCookie, clearLegacyCookie()].join(', '),
+            'Set-Cookie': setCookie,
           },
         },
       );

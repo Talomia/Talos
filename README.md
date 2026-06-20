@@ -1,8 +1,8 @@
-# Recurrsive
+# App
 
 **Build Recursively. Ship Infinitely.**
 
-Recurrsive is an AI-native platform for generating, iterating, and deploying full-stack web applications using natural language. Describe what you want, and Recurrsive builds it — live, in your browser.
+App is an AI-native platform for generating, iterating, and deploying full-stack web applications using natural language. Describe what you want, and App builds it — live, in your browser.
 
 ## Features
 
@@ -24,8 +24,8 @@ Recurrsive is an AI-native platform for generating, iterating, and deploying ful
 
 ```bash
 # Clone the repository
-git clone https://github.com/h-khalid-h/recurrsive.git
-cd recurrsive
+git clone https://github.com/h-khalid-h/app.git
+cd app
 
 # Install dependencies
 pnpm install

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================
-# Recurrsive — Quick Setup Script
+# App — Quick Setup Script
 # ============================================
 # This script helps you set up the remaining infrastructure:
 # 1. Supabase project + schema migration
@@ -12,7 +12,7 @@ set -e
 
 echo ""
 echo "  ╭─────────────────────────────────────╮"
-echo "  │     🔄 Recurrsive Setup Script      │"
+echo "  │     🔄 App Setup Script      │"
 echo "  │  Build Recursively. Ship Infinitely. │"
 echo "  ╰─────────────────────────────────────╯"
 echo ""
@@ -54,7 +54,7 @@ if [ -z "$SUPABASE_URL" ] && grep -q "^SUPABASE_URL=$" .env.local 2>/dev/null; t
   echo ""
   echo "To set up Supabase:"
   echo "  1. Go to https://supabase.com/dashboard"
-  echo "  2. Create a new project (name: recurrsive)"
+  echo "  2. Create a new project (name: app)"
   echo "  3. Go to Settings → API"
   echo "  4. Copy the Project URL and anon/public key"
   echo "  5. Run the schema migration:"

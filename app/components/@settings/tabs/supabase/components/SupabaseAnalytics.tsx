@@ -9,11 +9,11 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
     <>
       {/* Advanced Analytics */}
       <div className="mb-6 space-y-4">
-        <h4 className="text-sm font-medium text-bolt-elements-textPrimary">Performance Analytics</h4>
+        <h4 className="text-sm font-medium text-ui-textPrimary">Performance Analytics</h4>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor">
-            <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2 mb-2">
-              <div className="i-ph:chart-line w-4 h-4 text-bolt-elements-item-contentAccent" />
+          <div className="bg-ui-background-depth-2 p-3 rounded-lg border border-ui-borderColor">
+            <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2 mb-2">
+              <div className="i-ph:chart-line w-4 h-4 text-ui-item-contentAccent" />
               Database Health
             </h6>
             <div className="space-y-1">
@@ -36,16 +36,16 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
                 ];
               })().map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs">
-                  <span className="text-bolt-elements-textSecondary">{item.label}:</span>
-                  <span className="text-bolt-elements-textPrimary font-medium">{item.value}</span>
+                  <span className="text-ui-textSecondary">{item.label}:</span>
+                  <span className="text-ui-textPrimary font-medium">{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor">
-            <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2 mb-2">
-              <div className="i-ph:shield-check w-4 h-4 text-bolt-elements-item-contentAccent" />
+          <div className="bg-ui-background-depth-2 p-3 rounded-lg border border-ui-borderColor">
+            <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2 mb-2">
+              <div className="i-ph:shield-check w-4 h-4 text-ui-item-contentAccent" />
               Auth & Security
             </h6>
             <div className="space-y-1">
@@ -65,16 +65,16 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
                 ];
               })().map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs">
-                  <span className="text-bolt-elements-textSecondary">{item.label}:</span>
-                  <span className="text-bolt-elements-textPrimary font-medium">{item.value}</span>
+                  <span className="text-ui-textSecondary">{item.label}:</span>
+                  <span className="text-ui-textPrimary font-medium">{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="bg-bolt-elements-background-depth-2 p-3 rounded-lg border border-bolt-elements-borderColor">
-            <h6 className="text-xs font-medium text-bolt-elements-textPrimary flex items-center gap-2 mb-2">
-              <div className="i-ph:globe w-4 h-4 text-bolt-elements-item-contentAccent" />
+          <div className="bg-ui-background-depth-2 p-3 rounded-lg border border-ui-borderColor">
+            <h6 className="text-xs font-medium text-ui-textPrimary flex items-center gap-2 mb-2">
+              <div className="i-ph:globe w-4 h-4 text-ui-item-contentAccent" />
               Regional Distribution
             </h6>
             <div className="space-y-1">
@@ -94,8 +94,8 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
                   .map(([region, count]) => ({ label: region.toUpperCase(), value: count }));
               })().map((item, idx) => (
                 <div key={idx} className="flex justify-between text-xs">
-                  <span className="text-bolt-elements-textSecondary">{item.label}:</span>
-                  <span className="text-bolt-elements-textPrimary font-medium">{item.value}</span>
+                  <span className="text-ui-textSecondary">{item.label}:</span>
+                  <span className="text-ui-textPrimary font-medium">{item.value}</span>
                 </div>
               ))}
             </div>
@@ -105,7 +105,7 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
 
       {/* Resource Utilization */}
       <div className="mb-6">
-        <h4 className="text-sm font-medium text-bolt-elements-textPrimary mb-2">Resource Overview</h4>
+        <h4 className="text-sm font-medium text-ui-textPrimary mb-2">Resource Overview</h4>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {(() => {
             const totalDatabase = stats?.projects?.reduce((sum, p) => sum + (p.stats?.database?.size_mb || 0), 0) || 0;
@@ -158,13 +158,10 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
               },
             ];
           })().map((metric, index) => (
-            <div
-              key={index}
-              className={`flex flex-col p-3 rounded-lg border border-bolt-elements-borderColor ${metric.bgColor}`}
-            >
+            <div key={index} className={`flex flex-col p-3 rounded-lg border border-ui-borderColor ${metric.bgColor}`}>
               <div className="flex items-center gap-2 mb-1">
                 <div className={`${metric.icon} w-4 h-4 ${metric.color}`} />
-                <span className="text-xs text-bolt-elements-textSecondary">{metric.label}</span>
+                <span className="text-xs text-ui-textSecondary">{metric.label}</span>
               </div>
               <span className={`text-lg font-medium ${metric.textColor}`}>{metric.value}</span>
             </div>
@@ -174,12 +171,12 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
 
       {/* Usage Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-3 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
+        <div className="p-3 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
           <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:database w-4 h-4 text-bolt-elements-item-contentAccent" />
-            <span className="text-xs font-medium text-bolt-elements-textPrimary">Database</span>
+            <div className="i-ph:database w-4 h-4 text-ui-item-contentAccent" />
+            <span className="text-xs font-medium text-ui-textPrimary">Database</span>
           </div>
-          <div className="text-sm text-bolt-elements-textSecondary">
+          <div className="text-sm text-ui-textSecondary">
             <div>Tables: {stats?.projects?.reduce((sum, p) => sum + (p.stats?.database?.tables || 0), 0) || '--'}</div>
             <div>
               Size:{' '}
@@ -190,12 +187,12 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
             </div>
           </div>
         </div>
-        <div className="p-3 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
+        <div className="p-3 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
           <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:folder w-4 h-4 text-bolt-elements-item-contentAccent" />
-            <span className="text-xs font-medium text-bolt-elements-textPrimary">Storage</span>
+            <div className="i-ph:folder w-4 h-4 text-ui-item-contentAccent" />
+            <span className="text-xs font-medium text-ui-textPrimary">Storage</span>
           </div>
-          <div className="text-sm text-bolt-elements-textSecondary">
+          <div className="text-sm text-ui-textSecondary">
             <div>Buckets: {stats?.projects?.reduce((sum, p) => sum + (p.stats?.storage?.buckets || 0), 0) || '--'}</div>
             <div>
               Used:{' '}
@@ -206,12 +203,12 @@ export function SupabaseAnalytics({ stats }: SupabaseAnalyticsProps) {
             </div>
           </div>
         </div>
-        <div className="p-3 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
+        <div className="p-3 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
           <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:code w-4 h-4 text-bolt-elements-item-contentAccent" />
-            <span className="text-xs font-medium text-bolt-elements-textPrimary">Functions</span>
+            <div className="i-ph:code w-4 h-4 text-ui-item-contentAccent" />
+            <span className="text-xs font-medium text-ui-textPrimary">Functions</span>
           </div>
-          <div className="text-sm text-bolt-elements-textSecondary">
+          <div className="text-sm text-ui-textSecondary">
             <div>
               Deployed: {stats?.projects?.reduce((sum, p) => sum + (p.stats?.functions?.deployed || 0), 0) || '--'}
             </div>

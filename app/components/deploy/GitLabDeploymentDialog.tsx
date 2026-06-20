@@ -245,7 +245,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       ) : null}
 
       <div
-        className="avatar-fallback w-10 h-10 rounded-full bg-bolt-elements-background-depth-4 flex items-center justify-center text-bolt-elements-textSecondary font-semibold text-sm"
+        className="avatar-fallback w-10 h-10 rounded-full bg-ui-background-depth-4 flex items-center justify-center text-ui-textSecondary font-semibold text-sm"
         style={{
           display:
             dialog.user!.avatar_url && dialog.user!.avatar_url !== 'null' && dialog.user!.avatar_url !== ''

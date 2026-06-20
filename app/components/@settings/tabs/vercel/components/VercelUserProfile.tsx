@@ -10,18 +10,18 @@ export function VercelUserProfile({ user, stats }: VercelUserProfileProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4 p-4 bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 rounded-lg">
+      <div className="flex items-center gap-4 p-4 bg-ui-background-depth-1 dark:bg-ui-background-depth-1 rounded-lg">
         <img
           src={`https://vercel.com/api/www/avatar?u=${user?.username}`}
           referrerPolicy="no-referrer"
           crossOrigin="anonymous"
           alt="User Avatar"
-          className="w-12 h-12 rounded-full border-2 border-bolt-elements-borderColorActive"
+          className="w-12 h-12 rounded-full border-2 border-ui-borderColorActive"
         />
         <div className="flex-1">
-          <h4 className="text-sm font-medium text-bolt-elements-textPrimary">{user?.username || 'Vercel User'}</h4>
-          <p className="text-sm text-bolt-elements-textSecondary">{user?.email || 'No email available'}</p>
-          <div className="flex items-center gap-4 mt-2 text-xs text-bolt-elements-textSecondary">
+          <h4 className="text-sm font-medium text-ui-textPrimary">{user?.username || 'Vercel User'}</h4>
+          <p className="text-sm text-ui-textSecondary">{user?.email || 'No email available'}</p>
+          <div className="flex items-center gap-4 mt-2 text-xs text-ui-textSecondary">
             <span className="flex items-center gap-1">
               <div className="i-ph:buildings w-3 h-3" />
               {stats?.totalProjects || 0} Projects
@@ -41,33 +41,33 @@ export function VercelUserProfile({ user, stats }: VercelUserProfileProps) {
 
       {/* Usage Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="p-3 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
+        <div className="p-3 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
           <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:buildings w-4 h-4 text-bolt-elements-item-contentAccent" />
-            <span className="text-xs font-medium text-bolt-elements-textPrimary">Projects</span>
+            <div className="i-ph:buildings w-4 h-4 text-ui-item-contentAccent" />
+            <span className="text-xs font-medium text-ui-textPrimary">Projects</span>
           </div>
-          <div className="text-sm text-bolt-elements-textSecondary">
+          <div className="text-sm text-ui-textSecondary">
             <div>Active: {activeProjects}</div>
             <div>Total: {stats?.totalProjects || 0}</div>
           </div>
         </div>
-        <div className="p-3 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
+        <div className="p-3 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
           <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:globe w-4 h-4 text-bolt-elements-item-contentAccent" />
-            <span className="text-xs font-medium text-bolt-elements-textPrimary">Domains</span>
+            <div className="i-ph:globe w-4 h-4 text-ui-item-contentAccent" />
+            <span className="text-xs font-medium text-ui-textPrimary">Domains</span>
           </div>
-          <div className="text-sm text-bolt-elements-textSecondary">
+          <div className="text-sm text-ui-textSecondary">
             {/* Domain usage would be fetched from API */}
             <div>Custom: --</div>
             <div>Vercel: --</div>
           </div>
         </div>
-        <div className="p-3 bg-bolt-elements-background-depth-1 rounded-lg border border-bolt-elements-borderColor">
+        <div className="p-3 bg-ui-background-depth-1 rounded-lg border border-ui-borderColor">
           <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:activity w-4 h-4 text-bolt-elements-item-contentAccent" />
-            <span className="text-xs font-medium text-bolt-elements-textPrimary">Usage</span>
+            <div className="i-ph:activity w-4 h-4 text-ui-item-contentAccent" />
+            <span className="text-xs font-medium text-ui-textPrimary">Usage</span>
           </div>
-          <div className="text-sm text-bolt-elements-textSecondary">
+          <div className="text-sm text-ui-textSecondary">
             {/* Usage metrics would be fetched from API */}
             <div>Bandwidth: --</div>
             <div>Requests: --</div>

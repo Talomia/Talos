@@ -1,5 +1,6 @@
 import { atom } from 'nanostores';
 import { createScopedLogger } from '~/utils/logger';
+import { STORAGE_KEYS } from '~/lib/app-config';
 
 const logger = createScopedLogger('profile-store');
 
@@ -10,7 +11,7 @@ interface Profile {
 }
 
 // Initialize with stored profile or defaults
-const storedProfile = typeof window !== 'undefined' ? localStorage.getItem('bolt_profile') : null;
+const storedProfile = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.profile) : null;
 const initialProfile: Profile = storedProfile
   ? JSON.parse(storedProfile)
   : {
@@ -46,7 +47,7 @@ export async function initProfile(): Promise<void> {
 
       // Update localStorage cache
       if (typeof window !== 'undefined') {
-        localStorage.setItem('bolt_profile', JSON.stringify(serverProfile));
+        localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(serverProfile));
       }
 
       logger.info('Profile loaded from server');
@@ -67,7 +68,7 @@ export const updateProfile = (updates: Partial<Profile>) => {
 
   // Persist to localStorage (immediate, always works)
   if (typeof window !== 'undefined') {
-    localStorage.setItem('bolt_profile', JSON.stringify(current));
+    localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(current));
   }
 
   // Sync to server in background (non-blocking)

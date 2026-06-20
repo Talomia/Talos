@@ -76,12 +76,7 @@ export function StatusIndicator({ status, size = 'md', pulse = false, label, cla
 
       {/* Optional label */}
       {label && (
-        <span
-          className={classNames(
-            'text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark',
-            textSizeClass,
-          )}
-        >
+        <span className={classNames('text-ui-textSecondary dark:text-ui-textSecondary-dark', textSizeClass)}>
           {label}
         </span>
       )}

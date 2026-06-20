@@ -176,7 +176,7 @@ export default function NetlifyConnection() {
   };
 
   return (
-    <div className="space-y-6 bg-bolt-elements-background dark:bg-bolt-elements-background border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor rounded-lg">
+    <div className="space-y-6 bg-ui-background dark:bg-ui-background border border-ui-borderColor dark:border-ui-borderColor rounded-lg">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -184,15 +184,13 @@ export default function NetlifyConnection() {
             <div className="text-[#00AD9F]">
               <NetlifyLogo />
             </div>
-            <h2 className="text-lg font-medium text-bolt-elements-textPrimary">Netlify Connection</h2>
+            <h2 className="text-lg font-medium text-ui-textPrimary">Netlify Connection</h2>
           </div>
         </div>
 
         {!connection.user ? (
           <div className="mt-4">
-            <label className="block text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary mb-2">
-              API Token
-            </label>
+            <label className="block text-sm text-ui-textSecondary dark:text-ui-textSecondary mb-2">API Token</label>
             <input
               type="password"
               value={tokenInput}
@@ -202,17 +200,17 @@ export default function NetlifyConnection() {
                 'w-full px-3 py-2 rounded-lg text-sm',
                 'bg-[#F8F8F8] dark:bg-[#1A1A1A]',
                 'border border-[#E5E5E5] dark:border-[#333333]',
-                'text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary',
-                'focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive',
+                'text-ui-textPrimary placeholder-ui-textTertiary',
+                'focus:outline-none focus:ring-1 focus:ring-ui-borderColorActive',
                 'disabled:opacity-50',
               )}
             />
-            <div className="mt-2 text-sm text-bolt-elements-textSecondary">
+            <div className="mt-2 text-sm text-ui-textSecondary">
               <a
                 href="https://app.netlify.com/user/applications#personal-access-tokens"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-bolt-elements-borderColorActive hover:underline inline-flex items-center gap-1"
+                className="text-ui-borderColorActive hover:underline inline-flex items-center gap-1"
               >
                 Get your token
                 <div className="i-ph:arrow-square-out w-4 h-4" />
@@ -258,7 +256,7 @@ export default function NetlifyConnection() {
                 <div className="i-ph:plug w-4 h-4" />
                 Disconnect
               </button>
-              <span className="text-sm text-bolt-elements-textSecondary flex items-center gap-1">
+              <span className="text-sm text-ui-textSecondary flex items-center gap-1">
                 <div className="i-ph:check-circle w-4 h-4 text-green-500" />
                 Connected to Netlify
               </span>
@@ -269,16 +267,16 @@ export default function NetlifyConnection() {
               <div className="mt-6">
                 <Collapsible open={isStatsOpen} onOpenChange={setIsStatsOpen}>
                   <CollapsibleTrigger asChild>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-bolt-elements-background dark:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive/70 dark:hover:border-bolt-elements-borderColorActive/70 transition-all duration-200">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-ui-background dark:bg-ui-background-depth-2 border border-ui-borderColor dark:border-ui-borderColor hover:border-ui-borderColorActive/70 dark:hover:border-ui-borderColorActive/70 transition-all duration-200">
                       <div className="flex items-center gap-2">
-                        <div className="i-ph:chart-bar w-4 h-4 text-bolt-elements-item-contentAccent dark:text-bolt-elements-item-contentAccent" />
-                        <span className="text-sm font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                        <div className="i-ph:chart-bar w-4 h-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
+                        <span className="text-sm font-medium text-ui-textPrimary dark:text-ui-textPrimary">
                           Netlify Stats
                         </span>
                       </div>
                       <div
                         className={classNames(
-                          'i-ph:caret-down w-4 h-4 transform transition-transform duration-200 text-bolt-elements-textSecondary',
+                          'i-ph:caret-down w-4 h-4 transform transition-transform duration-200 text-ui-textSecondary',
                           isStatsOpen ? 'rotate-180' : '',
                         )}
                       />
@@ -289,24 +287,24 @@ export default function NetlifyConnection() {
                       <div className="flex flex-wrap items-center gap-4">
                         <Badge
                           variant="outline"
-                          className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                          className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
                         >
-                          <div className="i-ph:buildings h-4 w-4 text-bolt-elements-item-contentAccent" />
+                          <div className="i-ph:buildings h-4 w-4 text-ui-item-contentAccent" />
                           <span>{connection.stats.totalSites} Sites</span>
                         </Badge>
                         <Badge
                           variant="outline"
-                          className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                          className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
                         >
-                          <div className="i-ph:rocket h-4 w-4 text-bolt-elements-item-contentAccent" />
+                          <div className="i-ph:rocket h-4 w-4 text-ui-item-contentAccent" />
                           <span>{deploymentCount} Deployments</span>
                         </Badge>
                         {lastUpdated && (
                           <Badge
                             variant="outline"
-                            className="flex items-center gap-1 text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary"
+                            className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
                           >
-                            <div className="i-ph:clock h-4 w-4 text-bolt-elements-item-contentAccent" />
+                            <div className="i-ph:clock h-4 w-4 text-ui-item-contentAccent" />
                             <span>Updated {formatDistanceToNow(new Date(lastUpdated))} ago</span>
                           </Badge>
                         )}

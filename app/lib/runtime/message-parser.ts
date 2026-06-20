@@ -1,25 +1,22 @@
-import type {
-  ActionType,
-  RecurrsiveAction,
-  RecurrsiveActionData,
-  FileAction,
-  ShellAction,
-  SupabaseAction,
-} from '~/types/actions';
-import type { RecurrsiveArtifactData } from '~/types/artifact';
+import type { ActionType, CodeAction, CodeActionData, FileAction, ShellAction, SupabaseAction } from '~/types/actions';
+import type { ArtifactData } from '~/types/artifact';
 import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
-
-const ARTIFACT_TAG_OPEN = '<recurrsiveArtifact';
-const ARTIFACT_TAG_CLOSE = '</recurrsiveArtifact>';
-const ARTIFACT_ACTION_TAG_OPEN = '<recurrsiveAction';
-const ARTIFACT_ACTION_TAG_CLOSE = '</recurrsiveAction>';
-const BOLT_QUICK_ACTIONS_OPEN = '<recurrsive-quick-actions>';
-const BOLT_QUICK_ACTIONS_CLOSE = '</recurrsive-quick-actions>';
+import {
+  ARTIFACT_TAG_OPEN,
+  ARTIFACT_TAG_CLOSE,
+  ACTION_TAG_OPEN,
+  ACTION_TAG_CLOSE,
+  QUICK_ACTIONS_TAG_OPEN,
+  QUICK_ACTIONS_TAG_CLOSE,
+  CSS_CLASS_ARTIFACT,
+  CSS_CLASS_QUICK_ACTION,
+  QUICK_ACTION_ELEMENT,
+} from '~/lib/app-config';
 
 const logger = createScopedLogger('MessageParser');
 
-export interface ArtifactCallbackData extends RecurrsiveArtifactData {
+export interface ArtifactCallbackData extends ArtifactData {
   messageId: string;
   artifactId?: string;
 }
@@ -28,7 +25,7 @@ export interface ActionCallbackData {
   artifactId: string;
   messageId: string;
   actionId: string;
-  action: RecurrsiveAction;
+  action: CodeAction;
 }
 
 export type ArtifactCallback = (data: ArtifactCallbackData) => void;
@@ -59,8 +56,8 @@ interface MessageState {
   insideArtifact: boolean;
   insideAction: boolean;
   artifactCounter: number;
-  currentArtifact?: RecurrsiveArtifactData;
-  currentAction: RecurrsiveActionData;
+  currentArtifact?: ArtifactData;
+  currentAction: CodeActionData;
   actionId: number;
 }
 
@@ -107,14 +104,20 @@ export class StreamingMessageParser {
     let earlyBreak = false;
 
     while (i < input.length) {
-      if (input.startsWith(BOLT_QUICK_ACTIONS_OPEN, i)) {
-        const actionsBlockEnd = input.indexOf(BOLT_QUICK_ACTIONS_CLOSE, i);
+      // Check for quick-actions open tag
+      const quickActionsOpenLen = input.startsWith(QUICK_ACTIONS_TAG_OPEN, i) ? QUICK_ACTIONS_TAG_OPEN.length : 0;
+
+      if (quickActionsOpenLen > 0) {
+        const actionsBlockEnd = input.indexOf(QUICK_ACTIONS_TAG_CLOSE, i);
 
         if (actionsBlockEnd !== -1) {
-          const actionsBlockContent = input.slice(i + BOLT_QUICK_ACTIONS_OPEN.length, actionsBlockEnd);
+          const actionsBlockContent = input.slice(i + quickActionsOpenLen, actionsBlockEnd);
 
-          // Find all <recurrsive-quick-action ...>label</recurrsive-quick-action> inside
-          const quickActionRegex = /<recurrsive-quick-action([^>]*)>([\s\S]*?)<\/recurrsive-quick-action>/g;
+          // Find all <quick-action ...>label</quick-action> inside
+          const quickActionRegex = new RegExp(
+            `<${QUICK_ACTION_ELEMENT}([^>]*)>([\\s\\S]*?)<\\/${QUICK_ACTION_ELEMENT}>`,
+            'g',
+          );
           let match;
           const buttons = [];
 
@@ -133,7 +136,9 @@ export class StreamingMessageParser {
             );
           }
           output += createQuickActionGroup(buttons);
-          i = actionsBlockEnd + BOLT_QUICK_ACTIONS_CLOSE.length;
+
+          const closeLen = QUICK_ACTIONS_TAG_CLOSE.length;
+          i = actionsBlockEnd + closeLen;
           continue;
         }
       }
@@ -146,8 +151,7 @@ export class StreamingMessageParser {
         }
 
         if (state.insideAction) {
-          const closeIndex = input.indexOf(ARTIFACT_ACTION_TAG_CLOSE, i);
-
+          const closeIndex = input.indexOf(ACTION_TAG_CLOSE, i);
           const currentAction = state.currentAction;
 
           if (closeIndex !== -1) {
@@ -178,13 +182,14 @@ export class StreamingMessageParser {
                */
               actionId: String(state.actionId - 1),
 
-              action: currentAction as RecurrsiveAction,
+              action: currentAction as CodeAction,
             });
 
             state.insideAction = false;
             state.currentAction = { content: '' };
 
-            i = closeIndex + ARTIFACT_ACTION_TAG_CLOSE.length;
+            const actionCloseLen = ACTION_TAG_CLOSE.length;
+            i = closeIndex + actionCloseLen;
           } else {
             if ('type' in currentAction && currentAction.type === 'file') {
               let content = input.slice(i);
@@ -209,7 +214,7 @@ export class StreamingMessageParser {
             break;
           }
         } else {
-          const actionOpenIndex = input.indexOf(ARTIFACT_ACTION_TAG_OPEN, i);
+          const actionOpenIndex = input.indexOf(ACTION_TAG_OPEN, i);
           const artifactCloseIndex = input.indexOf(ARTIFACT_TAG_CLOSE, i);
 
           if (actionOpenIndex !== -1 && (artifactCloseIndex === -1 || actionOpenIndex < artifactCloseIndex)) {
@@ -224,7 +229,7 @@ export class StreamingMessageParser {
                 artifactId: currentArtifact.id,
                 messageId,
                 actionId: String(state.actionId++),
-                action: state.currentAction as RecurrsiveAction,
+                action: state.currentAction as CodeAction,
               });
 
               i = actionEndIndex + 1;
@@ -241,7 +246,8 @@ export class StreamingMessageParser {
             state.insideArtifact = false;
             state.currentArtifact = undefined;
 
-            i = artifactCloseIndex + ARTIFACT_TAG_CLOSE.length;
+            const artifactCloseLen = ARTIFACT_TAG_CLOSE.length;
+            i = artifactCloseIndex + artifactCloseLen;
           } else {
             break;
           }
@@ -250,7 +256,9 @@ export class StreamingMessageParser {
         let j = i;
         let potentialTag = '';
 
-        while (j < input.length && potentialTag.length < ARTIFACT_TAG_OPEN.length) {
+        const maxTagLen = ARTIFACT_TAG_OPEN.length;
+
+        while (j < input.length && potentialTag.length < maxTagLen) {
           potentialTag += input[j];
 
           if (potentialTag === ARTIFACT_TAG_OPEN) {
@@ -287,7 +295,7 @@ export class StreamingMessageParser {
                 id: artifactId,
                 title: artifactTitle,
                 type,
-              } satisfies RecurrsiveArtifactData;
+              } satisfies ArtifactData;
 
               state.currentArtifact = currentArtifact;
 
@@ -395,7 +403,7 @@ export class StreamingMessageParser {
 
 const createArtifactElement: ElementFactory = (props) => {
   const elementProps = [
-    'class="__recurrsiveArtifact__"',
+    `class="${CSS_CLASS_ARTIFACT}"`,
     ...Object.entries(props).map(([key, value]) => {
       return `data-${camelToDashCase(key)}=${JSON.stringify(value)}`;
     }),
@@ -410,8 +418,8 @@ function camelToDashCase(input: string) {
 
 function createQuickActionElement(props: Record<string, string>, label: string) {
   const elementProps = [
-    'class="__recurrsiveQuickAction__"',
-    'data-recurrsive-quick-action="true"',
+    `class="${CSS_CLASS_QUICK_ACTION}"`,
+    'data-quick-action="true"',
     ...Object.entries(props).map(([key, value]) => `data-${camelToDashCase(key)}=${JSON.stringify(value)}`),
   ];
 
@@ -419,5 +427,5 @@ function createQuickActionElement(props: Record<string, string>, label: string) 
 }
 
 function createQuickActionGroup(buttons: string[]) {
-  return `<div class=\"__recurrsiveQuickAction__\" data-recurrsive-quick-action=\"true\">${buttons.join('')}</div>`;
+  return `<div class="${CSS_CLASS_QUICK_ACTION}" data-quick-action="true">${buttons.join('')}</div>`;
 }

@@ -137,7 +137,7 @@ export function useSendMessage(deps: UseSendMessageDeps) {
     if (selectedElement) {
       logger.debug('Selected Element:', selectedElement);
 
-      const elementInfo = `<div class=\"__recurrsiveSelectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
+      const elementInfo = `<div class=\"__selectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
       finalMessageContent = messageContent + elementInfo;
     }
 
