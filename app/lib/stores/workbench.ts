@@ -466,7 +466,19 @@ export class WorkbenchStore {
   }
 
   abortAllActions() {
-    // TODO: what do we wanna do and how do we wanna recover from this?
+    const artifacts = this.artifacts.get();
+
+    for (const [, artifact] of Object.entries(artifacts)) {
+      const actions = artifact.runner.actions.get();
+
+      for (const [, action] of Object.entries(actions)) {
+        if (action.status === 'running' || action.status === 'pending') {
+          action.abort();
+        }
+      }
+    }
+
+    logger.info('All actions aborted');
   }
 
   setReloadedMessages(messages: string[]) {

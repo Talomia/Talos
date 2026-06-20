@@ -1,5 +1,4 @@
 import { atom, map } from 'nanostores';
-import { setSecureCookie, getCookie } from '~/lib/api/secureCookies';
 import { createScopedLogger } from '~/utils/logger';
 import { STORAGE_KEYS } from '~/lib/app-config';
 
@@ -68,14 +67,18 @@ class LogStore {
   }
 
   private _loadLogs() {
-    const savedLogs = getCookie('eventLogs');
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const savedLogs = localStorage.getItem('eventLogs');
 
     if (savedLogs) {
       try {
         const parsedLogs = JSON.parse(savedLogs);
         this._logs.set(parsedLogs);
       } catch (error) {
-        logger.error('Failed to parse logs from cookies:', error);
+        logger.error('Failed to parse logs from localStorage:', error);
       }
     }
   }
@@ -98,8 +101,16 @@ class LogStore {
   }
 
   private _saveLogs() {
-    const currentLogs = this._logs.get();
-    setSecureCookie('eventLogs', JSON.stringify(currentLogs));
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const currentLogs = this._logs.get();
+      localStorage.setItem('eventLogs', JSON.stringify(currentLogs));
+    } catch (error) {
+      logger.error('Failed to save logs to localStorage:', error);
+    }
   }
 
   private _saveReadLogs() {

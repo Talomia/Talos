@@ -21,6 +21,7 @@ export class PreviewsStore {
   #watchedFiles = new Set<string>();
   #refreshTimeouts = new Map<string, NodeJS.Timeout>();
   #REFRESH_DELAY = 300;
+  #storageListener?: (event: StorageEvent) => void;
 
   previews = atom<PreviewInfo[]>([]);
 
@@ -51,7 +52,7 @@ export class PreviewsStore {
      * localStorage changes — no monkey-patching needed.
      */
     if (typeof window !== 'undefined') {
-      window.addEventListener('storage', (event: StorageEvent) => {
+      this.#storageListener = (event: StorageEvent) => {
         if (event.key && event.newValue !== null) {
           /*
            * A localStorage key was updated in another tab — refresh previews
@@ -59,10 +60,38 @@ export class PreviewsStore {
            */
           this._refreshAllPreviews();
         }
-      });
+      };
+      window.addEventListener('storage', this.#storageListener);
     }
 
     this.#init();
+  }
+
+  /**
+   * Clean up all event listeners, channels, and timers.
+   * Call this during HMR teardown or component unmount.
+   */
+  destroy() {
+    // Clear all pending refresh timeouts
+    for (const timeout of this.#refreshTimeouts.values()) {
+      clearTimeout(timeout);
+    }
+
+    this.#refreshTimeouts.clear();
+
+    // Close broadcast channel
+    this.#broadcastChannel?.close();
+    this.#broadcastChannel = undefined;
+
+    // Remove storage event listener
+    if (typeof window !== 'undefined' && this.#storageListener) {
+      window.removeEventListener('storage', this.#storageListener);
+      this.#storageListener = undefined;
+    }
+
+    this.#availablePreviews.clear();
+    this.#lastUpdate.clear();
+    this.#watchedFiles.clear();
   }
 
   #maybeCreateChannel(name: string): BroadcastChannel | undefined {

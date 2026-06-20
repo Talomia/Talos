@@ -45,12 +45,13 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
 
     const user = (await userResponse.json()) as GitHubUserResponse;
 
-    // Fetch repositories with pagination
+    // Fetch repositories with pagination (capped at 500 repos to prevent unbounded requests)
+    const MAX_REPOS = 500;
     let allRepos: any[] = [];
     let page = 1;
     let hasMore = true;
 
-    while (hasMore) {
+    while (hasMore && allRepos.length < MAX_REPOS) {
       const repoResponse = await fetch(
         `https://api.github.com/user/repos?sort=updated&per_page=100&page=${page}&affiliation=owner,organization_member`,
         {
@@ -75,6 +76,9 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
         page += 1;
       }
     }
+
+    // Trim to cap in case last batch pushed over
+    allRepos = allRepos.slice(0, MAX_REPOS);
 
     // Fetch branch counts for repositories (limit to first 50 repos to avoid rate limits)
     const reposWithBranches = await Promise.allSettled(

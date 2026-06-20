@@ -95,9 +95,15 @@ export const loader: LoaderFunction = async ({ context }) => {
       });
     }
 
-    return json<ConfiguredProvidersResponse>({
-      providers: configuredProviders,
-    });
+    return json<ConfiguredProvidersResponse>(
+      { providers: configuredProviders },
+      {
+        headers: {
+          // Provider configuration rarely changes — cache for 60 seconds
+          'Cache-Control': 'private, max-age=60',
+        },
+      },
+    );
   } catch (error) {
     logger.error('Error detecting configured providers:', error);
 
