@@ -1,5 +1,5 @@
-appId: com.app.ide
-productName: App
+appId: com.talomia.talos
+productName: Talos
 directories:
   buildResources: build
   output: dist
@@ -55,8 +55,8 @@ npmRebuild: false
 
 publish:
   provider: github
-  owner: h-khalid-h
-  repo: app
+  owner: Talomia
+  repo: Talos
   private: true
   releaseType: release
 
