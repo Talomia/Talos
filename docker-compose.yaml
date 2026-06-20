@@ -98,3 +98,60 @@ services:
     command: pnpm run dockerstart
     profiles:
       - prebuilt
+
+  # ─── Docker Runtime Engine ───────────────────────────────────────────────────
+  # Server-side code execution via Docker containers.
+  # Replaces WebContainer for self-hosted/air-gapped deployments.
+  # Usage: docker compose --profile docker-engine up
+  runtime-ws:
+    image: talos:runtime-server
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime-server
+    ports:
+      - '3001:3001'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - runtime-workspaces:/tmp/talos-workspaces
+    environment:
+      - DOCKER_SOCKET=/var/run/docker.sock
+      - SANDBOX_IMAGE=${SANDBOX_IMAGE:-node:22-slim}
+      - RUNTIME_WS_PORT=3001
+      - RUNTIME_WS_HOST=0.0.0.0
+      - LOG_LEVEL=${LOG_LEVEL:-debug}
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    profiles:
+      - docker-engine
+
+  # Full Docker engine stack: app + runtime server
+  app-docker:
+    image: talos:production
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app-production
+    ports:
+      - '5173:5173'
+    env_file:
+      - '.env'
+      - '.env.local'
+    environment:
+      - NODE_ENV=production
+      - VITE_RUNTIME_ENGINE=docker
+      - VITE_RUNTIME_WS_URL=ws://runtime-ws:3001
+      - PORT=5173
+      - RUNNING_IN_DOCKER=true
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    depends_on:
+      - runtime-ws
+    command: pnpm run dockerstart
+    profiles:
+      - docker-engine
+
+volumes:
+  runtime-workspaces:

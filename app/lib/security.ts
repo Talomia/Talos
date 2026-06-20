@@ -133,17 +133,13 @@ export function createSecurityHeaders() {
 
     /*
      * Content Security Policy
-     * NOTE: unsafe-eval is required by WebContainers (StackBlitz runtime).
-     * NOTE: unsafe-inline is required by React's runtime and inline styles.
-     * TODO: Replace unsafe-inline with nonce-based CSP when Remix supports it.
+     * Engine-aware: WebContainer mode requires stackblitz.io/webcontainer.io domains
+     * and unsafe-eval. Docker mode needs neither — only the WS server URL.
      */
-    'Content-Security-Policy': [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: https: blob:",
-      "font-src 'self' data: https://fonts.gstatic.com",
-      [
+    'Content-Security-Policy': (() => {
+      const isDockerEngine = typeof process !== 'undefined' ? process.env?.VITE_RUNTIME_ENGINE === 'docker' : false;
+
+      const connectSrc = [
         "connect-src 'self'",
         'https://api.github.com',
         'https://api.netlify.com',
@@ -155,16 +151,39 @@ export function createSecurityHeaders() {
         'https://api.anthropic.com',
         'https://api.groq.com',
         'https://openrouter.ai',
-        'https://*.stackblitz.io',
-        'wss://*.stackblitz.io',
         'https://registry.npmjs.org',
-      ].join(' '),
-      "frame-src 'self' https://*.stackblitz.io https://*.webcontainer.io",
-      "worker-src 'self' blob:",
-      "object-src 'none'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; '),
+      ];
+
+      if (isDockerEngine) {
+        // Docker engine: connect to the WebSocket server instead of StackBlitz
+        connectSrc.push('ws://localhost:3001', 'wss://localhost:3001');
+      } else {
+        // WebContainer engine: requires StackBlitz runtime domains
+        connectSrc.push('https://*.stackblitz.io', 'wss://*.stackblitz.io');
+      }
+
+      const frameSrc = isDockerEngine
+        ? "frame-src 'self' http://localhost:*"
+        : "frame-src 'self' https://*.stackblitz.io https://*.webcontainer.io";
+
+      const scriptSrc = isDockerEngine
+        ? "script-src 'self' 'unsafe-inline'"
+        : "script-src 'self' 'unsafe-inline' 'unsafe-eval'";
+
+      return [
+        "default-src 'self'",
+        scriptSrc,
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "img-src 'self' data: https: blob:",
+        "font-src 'self' data: https://fonts.gstatic.com",
+        connectSrc.join(' '),
+        frameSrc,
+        "worker-src 'self' blob:",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+      ].join('; ');
+    })(),
 
     // Referrer Policy
     'Referrer-Policy': 'strict-origin-when-cross-origin',

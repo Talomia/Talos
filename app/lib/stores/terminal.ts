@@ -1,4 +1,4 @@
-import type { WebContainer, WebContainerProcess } from '@webcontainer/api';
+import type { RuntimeEngine, RuntimeProcess } from '~/lib/runtime/runtime-engine';
 import { atom, type WritableAtom } from 'nanostores';
 import type { ITerminal } from '~/types/terminal';
 import { newAppShellProcess, newShellProcess } from '~/utils/shell';
@@ -8,14 +8,14 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('TerminalStore');
 
 export class TerminalStore {
-  #webcontainer: Promise<WebContainer>;
-  #terminals: Array<{ terminal: ITerminal; process: WebContainerProcess }> = [];
+  #engine: Promise<RuntimeEngine>;
+  #terminals: Array<{ terminal: ITerminal; process: RuntimeProcess }> = [];
   #appTerminal = newAppShellProcess();
 
   showTerminal: WritableAtom<boolean> = import.meta.hot?.data.showTerminal ?? atom(true);
 
-  constructor(webcontainerPromise: Promise<WebContainer>) {
-    this.#webcontainer = webcontainerPromise;
+  constructor(enginePromise: Promise<RuntimeEngine>) {
+    this.#engine = enginePromise;
 
     if (import.meta.hot) {
       import.meta.hot.data.showTerminal = this.showTerminal;
@@ -30,7 +30,7 @@ export class TerminalStore {
   }
   async attachAppTerminal(terminal: ITerminal) {
     try {
-      const wc = await this.#webcontainer;
+      const wc = await this.#engine;
       await this.#appTerminal.init(wc, terminal);
     } catch (error: any) {
       terminal.write(coloredText.red('Failed to spawn shell\n\n') + error.message);
@@ -40,7 +40,7 @@ export class TerminalStore {
 
   async attachTerminal(terminal: ITerminal) {
     try {
-      const shellProcess = await newShellProcess(await this.#webcontainer, terminal);
+      const shellProcess = await newShellProcess(await this.#engine, terminal);
       this.#terminals.push({ terminal, process: shellProcess });
     } catch (error: any) {
       terminal.write(coloredText.red('Failed to spawn shell\n\n') + error.message);

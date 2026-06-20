@@ -1,6 +1,6 @@
-import type { WebContainer } from '@webcontainer/api';
+import type { RuntimeEngine } from '~/lib/runtime/runtime-engine';
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react';
-import { webcontainer as webcontainerPromise } from '~/lib/webcontainer';
+import { runtime as runtimePromise } from '~/lib/webcontainer';
 import git, { type GitAuth, type PromiseFsClient } from 'isomorphic-git';
 import http from 'isomorphic-git/http/web';
 import { setSecureCookie, getCookie } from '~/lib/api/secureCookies';
@@ -33,13 +33,13 @@ const saveGitAuth = (url: string, auth: GitAuth) => {
 
 export function useGit() {
   const [ready, setReady] = useState(false);
-  const [webcontainer, setWebcontainer] = useState<WebContainer>();
+  const [engine, setEngine] = useState<RuntimeEngine>();
   const [fs, setFs] = useState<PromiseFsClient>();
   const fileData = useRef<Record<string, { data: any; encoding?: string }>>({});
   useEffect(() => {
-    webcontainerPromise.then((container) => {
+    runtimePromise.then((container) => {
       fileData.current = {};
-      setWebcontainer(container);
+      setEngine(container);
       setFs(getFs(container, fileData));
       setReady(true);
     });
@@ -47,8 +47,8 @@ export function useGit() {
 
   const gitClone = useCallback(
     async (url: string, retryCount = 0) => {
-      if (!webcontainer || !fs || !ready) {
-        throw new Error('Webcontainer not initialized. Please try again later.');
+      if (!engine || !fs || !ready) {
+        throw new Error('Runtime engine not initialized. Please try again later.');
       }
 
       fileData.current = {};
@@ -87,7 +87,7 @@ export function useGit() {
         await git.clone({
           fs,
           http,
-          dir: webcontainer.workdir,
+          dir: engine.workdir,
           url: baseUrl,
           depth: 1,
           singleBranch: true,
@@ -138,7 +138,7 @@ export function useGit() {
           data[key] = value;
         }
 
-        return { workdir: webcontainer.workdir, data };
+        return { workdir: engine.workdir, data };
       } catch (error) {
         logger.error('Git clone error:', error);
 
@@ -178,23 +178,20 @@ export function useGit() {
         }
       }
     },
-    [webcontainer, fs, ready],
+    [engine, fs, ready],
   );
 
   return { ready, gitClone };
 }
 
-const getFs = (
-  webcontainer: WebContainer,
-  record: MutableRefObject<Record<string, { data: any; encoding?: string }>>,
-) => ({
+const getFs = (engine: RuntimeEngine, record: MutableRefObject<Record<string, { data: any; encoding?: string }>>) => ({
   promises: {
     readFile: async (path: string, options: any) => {
       const encoding = options?.encoding;
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(engine.workdir, path);
 
       try {
-        const result = await webcontainer.fs.readFile(relativePath, encoding);
+        const result = await engine.fs.readFile(relativePath, encoding);
 
         return result;
       } catch (error) {
@@ -202,7 +199,7 @@ const getFs = (
       }
     },
     writeFile: async (path: string, data: any, options: any = {}) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(engine.workdir, path);
 
       if (record.current) {
         record.current[relativePath] = { data, encoding: options?.encoding };
@@ -212,12 +209,12 @@ const getFs = (
         // Handle encoding properly based on data type
         if (data instanceof Uint8Array) {
           // For binary data, don't pass encoding
-          const result = await webcontainer.fs.writeFile(relativePath, data);
+          const result = await engine.fs.writeFile(relativePath, data);
           return result;
         } else {
           // For text data, use the encoding if provided
           const encoding = options?.encoding || 'utf8';
-          const result = await webcontainer.fs.writeFile(relativePath, data, encoding);
+          const result = await engine.fs.writeFile(relativePath, data, encoding);
 
           return result;
         }
@@ -226,10 +223,10 @@ const getFs = (
       }
     },
     mkdir: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(engine.workdir, path);
 
       try {
-        const result = await webcontainer.fs.mkdir(relativePath, { ...options, recursive: true });
+        const result = await engine.fs.mkdir(relativePath, { ...options, recursive: true });
 
         return result;
       } catch (error) {
@@ -237,10 +234,10 @@ const getFs = (
       }
     },
     readdir: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(engine.workdir, path);
 
       try {
-        const result = await webcontainer.fs.readdir(relativePath, options);
+        const result = await engine.fs.readdir(relativePath, options);
 
         return result;
       } catch (error) {
@@ -248,10 +245,10 @@ const getFs = (
       }
     },
     rm: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(engine.workdir, path);
 
       try {
-        const result = await webcontainer.fs.rm(relativePath, { ...(options || {}) });
+        const result = await engine.fs.rm(relativePath, { ...(options || {}) });
 
         return result;
       } catch (error) {
@@ -259,10 +256,10 @@ const getFs = (
       }
     },
     rmdir: async (path: string, options: any) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(engine.workdir, path);
 
       try {
-        const result = await webcontainer.fs.rm(relativePath, { recursive: true, ...options });
+        const result = await engine.fs.rm(relativePath, { recursive: true, ...options });
 
         return result;
       } catch (error) {
@@ -270,17 +267,17 @@ const getFs = (
       }
     },
     unlink: async (path: string) => {
-      const relativePath = pathUtils.relative(webcontainer.workdir, path);
+      const relativePath = pathUtils.relative(engine.workdir, path);
 
       try {
-        return await webcontainer.fs.rm(relativePath, { recursive: false });
+        return await engine.fs.rm(relativePath, { recursive: false });
       } catch (error) {
         throw error;
       }
     },
     stat: async (path: string) => {
       try {
-        const relativePath = pathUtils.relative(webcontainer.workdir, path);
+        const relativePath = pathUtils.relative(engine.workdir, path);
         const dirPath = pathUtils.dirname(relativePath);
         const fileName = pathUtils.basename(relativePath);
 
@@ -311,7 +308,7 @@ const getFs = (
           };
         }
 
-        const resp = await webcontainer.fs.readdir(dirPath, { withFileTypes: true });
+        const resp = await engine.fs.readdir(dirPath, { withFileTypes: true });
         const fileInfo = resp.find((x) => x.name === fileName);
 
         if (!fileInfo) {
@@ -358,7 +355,7 @@ const getFs = (
       }
     },
     lstat: async (path: string) => {
-      return await getFs(webcontainer, record).promises.stat(path);
+      return await getFs(engine, record).promises.stat(path);
     },
     readlink: async (path: string) => {
       throw new Error(`EINVAL: invalid argument, readlink '${path}'`);

@@ -1,68 +1,97 @@
-import { WebContainer } from '@webcontainer/api';
-import { WORK_DIR_NAME } from '~/utils/constants';
+/**
+ * Runtime Engine Bootstrap
+ *
+ * This module is the single entry point for the execution runtime. It creates and
+ * exports a `RuntimeEngine` promise that all stores, runners, and components consume.
+ *
+ * The engine type is selected via the `VITE_RUNTIME_ENGINE` env variable:
+ *   - 'webcontainer' (default) — in-browser Node.js via StackBlitz WebContainer
+ *   - 'docker' — server-side Docker containers via WebSocket
+ */
+import type { RuntimeEngine } from '~/lib/runtime/runtime-engine';
+import { createEngine } from '~/lib/runtime/engine-factory';
 import { cleanStackTrace } from '~/utils/stacktrace';
 import { createScopedLogger } from '~/utils/logger';
 
-const logger = createScopedLogger('WebContainer');
+const logger = createScopedLogger('Runtime');
 
-interface WebContainerContext {
+// ─── HMR Context ──────────────────────────────────────────────────────────────
+
+interface RuntimeContext {
   loaded: boolean;
 }
 
-export const webcontainerContext: WebContainerContext = import.meta.hot?.data.webcontainerContext ?? {
+export const runtimeContext: RuntimeContext = import.meta.hot?.data.runtimeContext ?? {
   loaded: false,
 };
 
 if (import.meta.hot) {
-  import.meta.hot.data.webcontainerContext = webcontainerContext;
+  import.meta.hot.data.runtimeContext = runtimeContext;
 }
 
-export let webcontainer: Promise<WebContainer> = new Promise(() => {
-  // noop for ssr
+// ─── Engine Singleton ─────────────────────────────────────────────────────────
+
+/**
+ * The global runtime engine promise.
+ *
+ * On SSR this is a never-resolving promise (noop).
+ * On the client it boots the configured engine and wires up error handling.
+ */
+export let runtime: Promise<RuntimeEngine> = new Promise(() => {
+  // noop for SSR — runtime only exists on the client
 });
 
+/**
+ * @deprecated Use `runtime` instead. This alias exists only for migration convenience
+ * and will be removed once all consumers are migrated.
+ */
+export { runtime as webcontainer };
+
 if (!import.meta.env.SSR) {
-  webcontainer =
-    import.meta.hot?.data.webcontainer ??
+  runtime =
+    import.meta.hot?.data.runtime ??
     Promise.resolve()
-      .then(() => {
-        return WebContainer.boot({
-          coep: 'credentialless',
-          workdirName: WORK_DIR_NAME,
-          forwardPreviewErrors: true, // Enable error forwarding from iframes
-        });
-      })
-      .then(async (webcontainer) => {
-        webcontainerContext.loaded = true;
+      .then(() => createEngine())
+      .then(async (engine) => {
+        runtimeContext.loaded = true;
+        logger.info('Runtime engine booted');
 
-        const { workbenchStore } = await import('~/lib/stores/workbench');
-
+        // Load and inject the inspector script into previews
         const response = await fetch('/inspector-script.js');
         const inspectorScript = await response.text();
-        await webcontainer.setPreviewScript(inspectorScript);
+        await engine.setPreviewScript(inspectorScript);
 
-        // Listen for preview errors
-        webcontainer.on('preview-message', (message) => {
+        // Listen for preview errors and surface them in the workbench
+        engine.on('preview-message', (message) => {
           logger.trace('Preview message:', message);
 
-          // Handle both uncaught exceptions and unhandled promise rejections
           if (message.type === 'PREVIEW_UNCAUGHT_EXCEPTION' || message.type === 'PREVIEW_UNHANDLED_REJECTION') {
             const isPromise = message.type === 'PREVIEW_UNHANDLED_REJECTION';
             const title = isPromise ? 'Unhandled Promise Rejection' : 'Uncaught Exception';
-            workbenchStore.actionAlert.set({
-              type: 'preview',
-              title,
-              description: 'message' in message ? message.message : 'Unknown error',
-              content: `Error occurred at ${message.pathname}${message.search}${message.hash}\nPort: ${message.port}\n\nStack trace:\n${cleanStackTrace(message.stack || '')}`,
-              source: 'preview',
+
+            /*
+             * Lazy-import workbenchStore to avoid circular dependency.
+             * This import is cached after first call.
+             */
+            import('~/lib/stores/workbench').then(({ workbenchStore }) => {
+              workbenchStore.actionAlert.set({
+                type: 'preview',
+                title,
+                description: 'message' in message ? message.message : 'Unknown error',
+                content: `Error occurred at ${message.pathname}${message.search}${message.hash}\nPort: ${message.port}\n\nStack trace:\n${cleanStackTrace(message.stack || '')}`,
+                source: 'preview',
+              });
             });
           }
         });
 
-        return webcontainer;
+        return engine;
       });
 
   if (import.meta.hot) {
-    import.meta.hot.data.webcontainer = webcontainer;
+    import.meta.hot.data.runtime = runtime;
   }
 }
+
+// Re-export context under the old name for backward compat during migration
+export { runtimeContext as webcontainerContext };

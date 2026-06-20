@@ -1,4 +1,4 @@
-import type { WebContainer } from '@webcontainer/api';
+import type { RuntimeEngine } from '~/lib/runtime/runtime-engine';
 import { atom } from 'nanostores';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -15,7 +15,7 @@ const PREVIEW_CHANNEL = 'preview-updates';
 
 export class PreviewsStore {
   #availablePreviews = new Map<number, PreviewInfo>();
-  #webcontainer: Promise<WebContainer>;
+  #engine: Promise<RuntimeEngine>;
   #broadcastChannel?: BroadcastChannel;
   #lastUpdate = new Map<string, number>();
   #watchedFiles = new Set<string>();
@@ -24,8 +24,8 @@ export class PreviewsStore {
 
   previews = atom<PreviewInfo[]>([]);
 
-  constructor(webcontainerPromise: Promise<WebContainer>) {
-    this.#webcontainer = webcontainerPromise;
+  constructor(enginePromise: Promise<RuntimeEngine>) {
+    this.#engine = enginePromise;
     this.#broadcastChannel = this.#maybeCreateChannel(PREVIEW_CHANNEL);
 
     if (this.#broadcastChannel) {
@@ -102,10 +102,10 @@ export class PreviewsStore {
   }
 
   async #init() {
-    const webcontainer = await this.#webcontainer;
+    const engine = await this.#engine;
 
     // Listen for server ready events
-    webcontainer.on('server-ready', (port, url) => {
+    engine.on('server-ready', (port, url) => {
       logger.trace('Server ready on port:', port, url);
       this.broadcastUpdate(url);
 
@@ -114,7 +114,7 @@ export class PreviewsStore {
     });
 
     // Listen for port events
-    webcontainer.on('port', (port, type, url) => {
+    engine.on('port', (port, type, url) => {
       let previewInfo = this.#availablePreviews.get(port);
 
       if (type === 'close' && previewInfo) {
@@ -238,10 +238,10 @@ let previewsStore: PreviewsStore | null = null;
 export function usePreviewStore() {
   if (!previewsStore) {
     /*
-     * Initialize with a Promise that resolves to WebContainer
-     * This should match how you're initializing WebContainer elsewhere
+     * Initialize with a Promise that resolves to the runtime engine
+     * This should match how you're initializing the runtime engine elsewhere
      */
-    previewsStore = new PreviewsStore(Promise.resolve({} as WebContainer));
+    previewsStore = new PreviewsStore(Promise.resolve({} as RuntimeEngine));
   }
 
   return previewsStore;

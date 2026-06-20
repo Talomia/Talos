@@ -1,4 +1,4 @@
-import type { WebContainer, WebContainerProcess } from '@webcontainer/api';
+import type { RuntimeEngine, RuntimeProcess } from '~/lib/runtime/runtime-engine';
 import type { ITerminal } from '~/types/terminal';
 import { withResolvers } from './promises';
 import { atom } from 'nanostores';
@@ -7,11 +7,11 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Shell');
 
-export async function newShellProcess(webcontainer: WebContainer, terminal: ITerminal) {
+export async function newShellProcess(engine: RuntimeEngine, terminal: ITerminal) {
   const args: string[] = [];
 
   // we spawn a JSH process with a fallback cols and rows in case the process is not attached yet to a visible terminal
-  const process = await webcontainer.spawn('/bin/jsh', ['--osc', ...args], {
+  const process = await engine.spawn('/bin/jsh', ['--osc', ...args], {
     terminal: {
       cols: terminal.cols ?? 80,
       rows: terminal.rows ?? 15,
@@ -97,9 +97,9 @@ export type ExecutionResult = { output: string; exitCode: number } | undefined;
 export class AppShell {
   #initialized: (() => void) | undefined;
   #readyPromise: Promise<void>;
-  #webcontainer: WebContainer | undefined;
+  #engine: RuntimeEngine | undefined;
   #terminal: ITerminal | undefined;
-  #process: WebContainerProcess | undefined;
+  #process: RuntimeProcess | undefined;
   executionState = atom<
     { sessionId: string; active: boolean; executionPrms?: Promise<any>; abort?: () => void } | undefined
   >();
@@ -116,12 +116,12 @@ export class AppShell {
     return this.#readyPromise;
   }
 
-  async init(webcontainer: WebContainer, terminal: ITerminal) {
-    this.#webcontainer = webcontainer;
+  async init(engine: RuntimeEngine, terminal: ITerminal) {
+    this.#engine = engine;
     this.#terminal = terminal;
 
     // Use all three streams from tee: one for terminal, one for command execution, one for Expo URL detection
-    const { process, commandStream, expoUrlStream } = await this.newAppShellProcess(webcontainer, terminal);
+    const { process, commandStream, expoUrlStream } = await this.newAppShellProcess(engine, terminal);
     this.#process = process;
     this.#outputStream = commandStream.getReader();
 
@@ -132,9 +132,9 @@ export class AppShell {
     this.#initialized?.();
   }
 
-  async newAppShellProcess(webcontainer: WebContainer, terminal: ITerminal) {
+  async newAppShellProcess(engine: RuntimeEngine, terminal: ITerminal) {
     const args: string[] = [];
-    const process = await webcontainer.spawn('/bin/jsh', ['--osc', ...args], {
+    const process = await engine.spawn('/bin/jsh', ['--osc', ...args], {
       terminal: {
         cols: terminal.cols ?? 80,
         rows: terminal.rows ?? 15,
