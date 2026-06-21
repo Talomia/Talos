@@ -175,12 +175,13 @@ export const ChatImpl = memo(
       setData,
     });
 
+    const hasAutoSentPrompt = useRef(false);
+
     useEffect(() => {
       const prompt = searchParams.get('prompt');
 
-
-
-      if (prompt) {
+      if (prompt && !hasAutoSentPrompt.current) {
+        hasAutoSentPrompt.current = true;
         setSearchParams({});
         runAnimation();
         append({

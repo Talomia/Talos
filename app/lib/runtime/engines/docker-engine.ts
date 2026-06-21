@@ -351,16 +351,24 @@ export class DockerEngine implements RuntimeEngine {
       throw new Error('DockerEngine not booted');
     }
 
-    const result = (await this.#rpc('spawn', { command, args, options })) as { processId: string };
-
-    return new DockerProcess(
-      result.processId,
+    // Pre-create the process adapter so output controller is registered
+    // BEFORE the spawn RPC, preventing early-message loss.
+    const process = new DockerProcess(
+      null, // processId assigned after RPC
       this.#rpc.bind(this),
       this.#sendBinary.bind(this),
       (pid, controller) => this.#outputControllers.set(pid, controller),
       (pid) => this.#outputControllers.delete(pid),
       (pid, resolve) => this.#exitResolvers.set(pid, resolve),
     );
+
+    const result = (await this.#rpc('spawn', { command, args, options })) as { processId: string };
+
+    // Now bind the real processId — this moves the controller registration
+    // from the temporary id to the real one.
+    process._assignProcessId(result.processId);
+
+    return process;
   }
 
   // ─── Events ───────────────────────────────────────────────────────────────
@@ -564,6 +572,12 @@ export class DockerEngine implements RuntimeEngine {
       try {
         await this.#connect();
         logger.info('Reconnected successfully');
+
+        // Clear stale state from previous connection before re-booting
+        this.#outputControllers.clear();
+        this.#exitResolvers.clear();
+        this.#watchCallbacks.clear();
+        this.#searchProgressCallbacks.clear();
 
         // Re-boot if we were previously booted
         if (this.#booted) {

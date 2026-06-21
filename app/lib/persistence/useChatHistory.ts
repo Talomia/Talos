@@ -1,5 +1,5 @@
 import { useLoaderData, useNavigate, useSearchParams } from '@remix-run/react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { atom } from 'nanostores';
 import { generateId, type JSONValue, type Message } from 'ai';
 import { toast } from 'react-toastify';
@@ -40,37 +40,43 @@ const persistenceEnabled = !import.meta.env.VITE_DISABLE_PERSISTENCE;
 
 /*
  * Lazy-initialized database singleton.
- * Avoids top-level await that can block module loading and cause startup race conditions.
+ * Uses a promise-based lock to prevent race conditions when multiple
+ * callers invoke getDb() before the first openDatabase() resolves.
  */
 let _db: IDBDatabase | undefined;
-let _dbInitialized = false;
+let _dbInitPromise: Promise<IDBDatabase | undefined> | null = null;
 
-async function initDb(): Promise<IDBDatabase | undefined> {
-  if (_dbInitialized) {
+/**
+ * Get the database instance. Returns undefined if persistence is disabled.
+ * Lazily initializes the database on first call and caches the result.
+ * Concurrent callers share the same in-flight promise.
+ */
+export async function getDb(): Promise<IDBDatabase | undefined> {
+  if (_db) {
     return _db;
   }
 
-  _dbInitialized = true;
+  if (_dbInitPromise) {
+    return _dbInitPromise;
+  }
 
   if (!persistenceEnabled) {
     return undefined;
   }
 
-  try {
-    _db = await openDatabase();
-  } catch (error) {
-    logger.error('Failed to open database:', error);
-  }
+  _dbInitPromise = (async () => {
+    try {
+      _db = await openDatabase();
+      return _db;
+    } catch (error) {
+      logger.error('Failed to open database:', error);
+      return undefined;
+    } finally {
+      _dbInitPromise = null;
+    }
+  })();
 
-  return _db;
-}
-
-/**
- * Get the database instance. Returns undefined if persistence is disabled.
- * Lazily initializes the database on first call and caches the result.
- */
-export async function getDb(): Promise<IDBDatabase | undefined> {
-  return initDb();
+  return _dbInitPromise;
 }
 
 // For backward compatibility: synchronous getter (returns undefined until initialized)
@@ -91,6 +97,18 @@ export function useChatHistory() {
   const [ready, setReady] = useState<boolean>(false);
   const [urlId, setUrlId] = useState<string | undefined>();
   const [db, setDb] = useState<IDBDatabase | undefined>(undefined);
+
+  // Refs to avoid stale closures in storeMessageHistory
+  const initialMessagesRef = useRef<Message[]>(initialMessages);
+  const archivedMessagesRef = useRef<Message[]>(archivedMessages);
+
+  useEffect(() => {
+    initialMessagesRef.current = initialMessages;
+  }, [initialMessages]);
+
+  useEffect(() => {
+    archivedMessagesRef.current = archivedMessages;
+  }, [archivedMessages]);
 
   // Initialize database on mount
   useEffect(() => {
@@ -388,7 +406,7 @@ ${value.content}
       }
 
       // Ensure chatId.get() is used here as well
-      if (initialMessages.length === 0 && !chatId.get()) {
+      if (initialMessagesRef.current.length === 0 && !chatId.get()) {
         const nextId = await getNextId(db);
 
         chatId.set(nextId);
@@ -411,7 +429,7 @@ ${value.content}
       await setMessages(
         db,
         finalChatId, // Use the potentially updated chatId
-        [...archivedMessages, ...messages],
+        [...archivedMessagesRef.current, ...messages],
         urlId,
         description.get(),
         undefined,

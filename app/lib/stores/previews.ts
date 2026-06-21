@@ -297,12 +297,18 @@ export class PreviewsStore {
 // Create a singleton instance
 let previewsStore: PreviewsStore | null = null;
 
+/**
+ * TODO: This function initializes PreviewsStore with a dummy `{} as RuntimeEngine`.
+ * Any PreviewsStore method that delegates to the engine (e.g. getPreviewUrl) will
+ * fail silently or throw at runtime. It currently only works for operations that
+ * don't touch the engine (e.g. refreshAllPreviews via BroadcastChannel).
+ *
+ * To fix properly, the real RuntimeEngine promise should be injected here — for
+ * example by accepting it as a parameter, or by importing the same engine promise
+ * used elsewhere in the app.
+ */
 export function usePreviewStore() {
   if (!previewsStore) {
-    /*
-     * Initialize with a Promise that resolves to the runtime engine
-     * This should match how you're initializing the runtime engine elsewhere
-     */
     previewsStore = new PreviewsStore(Promise.resolve({} as RuntimeEngine));
   }
 

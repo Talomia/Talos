@@ -96,8 +96,10 @@ export async function setMessages(
       metadata,
     });
 
-    request.onsuccess = () => {
-      // Background sync to cloud (non-blocking)
+    request.onerror = () => reject(request.error);
+
+    transaction.oncomplete = () => {
+      // Background sync to cloud (non-blocking) — only after transaction commits
       syncChatToCloud({
         id,
         urlId: urlId || id,
@@ -107,7 +109,7 @@ export async function setMessages(
       });
       resolve();
     };
-    request.onerror = () => reject(request.error);
+    transaction.onerror = () => reject(transaction.error);
   });
 }
 
@@ -144,61 +146,22 @@ export async function deleteById(db: IDBDatabase, id: string): Promise<void> {
     const chatStore = transaction.objectStore('chats');
     const snapshotStore = transaction.objectStore('snapshots');
 
-    const deleteChatRequest = chatStore.delete(id);
-    const deleteSnapshotRequest = snapshotStore.delete(id); // Also delete snapshot
-
-    let chatDeleted = false;
-    let snapshotDeleted = false;
-
-    const checkCompletion = () => {
-      if (chatDeleted && snapshotDeleted) {
-        resolve(undefined);
-      }
-    };
-
-    deleteChatRequest.onsuccess = () => {
-      chatDeleted = true;
-
-      // Background sync deletion to cloud
-      syncDeleteToCloud(id);
-      checkCompletion();
-    };
-    deleteChatRequest.onerror = () => reject(deleteChatRequest.error);
-
-    deleteSnapshotRequest.onsuccess = () => {
-      snapshotDeleted = true;
-      checkCompletion();
-    };
-
-    deleteSnapshotRequest.onerror = (event) => {
-      if ((event.target as IDBRequest).error?.name === 'NotFoundError') {
-        snapshotDeleted = true;
-        checkCompletion();
-      } else {
-        reject(deleteSnapshotRequest.error);
-      }
-    };
+    chatStore.delete(id);
+    snapshotStore.delete(id); // Also delete snapshot
 
     transaction.oncomplete = () => {
-      // This might resolve before checkCompletion if one operation finishes much faster
+      // Background sync deletion to cloud — only after transaction commits
+      syncDeleteToCloud(id);
+      resolve();
     };
     transaction.onerror = () => reject(transaction.error);
   });
 }
 
-export async function getNextId(db: IDBDatabase): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction('chats', 'readonly');
-    const store = transaction.objectStore('chats');
-    const request = store.getAllKeys();
-
-    request.onsuccess = () => {
-      const highestId = request.result.reduce((cur, acc) => Math.max(+cur, +acc), 0);
-      resolve(String(+highestId + 1));
-    };
-
-    request.onerror = () => reject(request.error);
-  });
+export async function getNextId(_db: IDBDatabase): Promise<string> {
+  // Use a timestamp + random suffix to generate unique IDs without reading the store.
+  // This avoids a race condition where concurrent calls could produce duplicate IDs.
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
 export async function getUrlId(db: IDBDatabase, id: string): Promise<string> {
@@ -305,11 +268,8 @@ export async function updateChatDescription(db: IDBDatabase, id: string, descrip
     throw new Error('Description cannot be empty');
   }
 
-  // Update locally
+  // Update locally — setMessages already triggers cloud sync via transaction.oncomplete
   await setMessages(db, id, chat.messages, chat.urlId, description, chat.timestamp, chat.metadata);
-
-  // Sync only the description change (lightweight) instead of re-uploading all messages
-  syncDescriptionToCloud(id, description);
 }
 
 export async function updateChatMetadata(

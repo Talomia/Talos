@@ -282,8 +282,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
 
         reader.onload = (e) => {
           const base64Image = e.target?.result as string;
-          setUploadedFiles?.([...uploadedFiles, file]);
-          setImageDataList?.([...imageDataList, base64Image]);
+          setUploadedFiles?.((prev: File[]) => [...prev, file]);
+          setImageDataList?.((prev: string[]) => [...prev, base64Image]);
         };
         reader.readAsDataURL(file);
       }
@@ -333,8 +333,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
 
           reader.onload = (e) => {
             const base64Image = e.target?.result as string;
-            setUploadedFiles?.([...uploadedFiles, file]);
-            setImageDataList?.([...imageDataList, base64Image]);
+            setUploadedFiles?.((prev: File[]) => [...prev, file]);
+            setImageDataList?.((prev: string[]) => [...prev, base64Image]);
           };
           reader.readAsDataURL(file);
         }

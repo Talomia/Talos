@@ -22,6 +22,8 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('WebContainerEngine');
 
+type AnyFunction = (...args: any[]) => any;
+
 // ─── Filesystem Adapter ───────────────────────────────────────────────────────
 
 class WebContainerFileSystem implements RuntimeFileSystem {
@@ -165,19 +167,48 @@ export class WebContainerEngine implements RuntimeEngine {
     return new WebContainerProcessAdapter(process);
   }
 
+  // Track listeners so off() can effectively disable them
+  // (WebContainer API has no native off())
+  #eventListeners = new Map<string, Set<AnyFunction>>();
+
   on<K extends keyof RuntimeEventMap>(event: K, callback: RuntimeEventMap[K]): void {
     if (!this.#instance) {
       throw new Error('WebContainerEngine not booted');
     }
 
-    this.#instance.on(event as any, callback as any);
+    let listeners = this.#eventListeners.get(event);
+
+    if (!listeners) {
+      listeners = new Set();
+      this.#eventListeners.set(event, listeners);
+    }
+
+    if (listeners.has(callback as AnyFunction)) {
+      return; // already registered
+    }
+
+    listeners.add(callback as AnyFunction);
+
+    // Wrap the callback so we can gate it via the listener set
+    const wrapped = ((...args: any[]) => {
+      if (this.#eventListeners.get(event)?.has(callback as AnyFunction)) {
+        (callback as AnyFunction)(...args);
+      }
+    }) as any;
+
+    this.#instance.on(event as any, wrapped);
   }
 
   off<K extends keyof RuntimeEventMap>(event: K, callback: RuntimeEventMap[K]): void {
-    // WebContainer API doesn't provide off(), so this is a no-op.
-    // In practice, WebContainer events are cleaned up when the instance is torn down.
-    void event;
-    void callback;
+    const listeners = this.#eventListeners.get(event);
+
+    if (listeners) {
+      listeners.delete(callback as AnyFunction);
+
+      if (listeners.size === 0) {
+        this.#eventListeners.delete(event);
+      }
+    }
   }
 
   async setPreviewScript(script: string): Promise<void> {

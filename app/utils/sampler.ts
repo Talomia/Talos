@@ -1,3 +1,7 @@
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('sampler');
+
 /**
  * Creates a function that samples calls at regular intervals and captures trailing calls.
  * - Drops calls that occur between sampling intervals
@@ -28,7 +32,19 @@ export function createSampler<T extends (...args: any[]) => any>(fn: T, sampleIn
             lastTime = Date.now();
 
             if (lastArgs) {
-              fn.apply(this, lastArgs);
+              try {
+                const result = fn.apply(this, lastArgs);
+
+                // Catch errors from async functions
+                if (result && typeof result.catch === 'function') {
+                  result.catch((err: unknown) => {
+                    logger.error('Sampler trailing call error:', err);
+                  });
+                }
+              } catch (err) {
+                logger.error('Sampler trailing call error:', err);
+              }
+
               lastArgs = null;
             }
           },

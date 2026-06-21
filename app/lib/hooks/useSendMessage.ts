@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { Message } from 'ai';
 import type { ChatRequestOptions, Attachment, TextUIPart, FileUIPart } from '@ai-sdk/ui-utils';
 import Cookies from 'js-cookie';
@@ -120,7 +121,13 @@ export function useSendMessage(deps: UseSendMessageDeps) {
     runAnimation,
   } = deps;
 
+  const sendingRef = useRef(false);
+
   const sendMessage = async (_event: React.UIEvent, messageInput?: string) => {
+    if (sendingRef.current) {
+      return;
+    }
+
     const messageContent = messageInput || input;
 
     if (!messageContent?.trim()) {
@@ -131,6 +138,10 @@ export function useSendMessage(deps: UseSendMessageDeps) {
       abort();
       return;
     }
+
+    sendingRef.current = true;
+
+    try {
 
     let finalMessageContent = messageContent;
 
@@ -317,6 +328,9 @@ export function useSendMessage(deps: UseSendMessageDeps) {
     resetEnhancer();
 
     textareaRef.current?.blur();
+    } finally {
+      sendingRef.current = false;
+    }
   };
 
   return { sendMessage };

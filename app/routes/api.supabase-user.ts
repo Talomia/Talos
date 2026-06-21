@@ -177,8 +177,12 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
         api_key: string;
       }>;
 
+      // Filter out service_role keys — they grant full admin access and
+      // must never be exposed to the client.
+      const safeKeys = apiKeys.filter((key) => !key.name.toLowerCase().includes('service_role'));
+
       return json({
-        apiKeys: apiKeys.map((key) => ({
+        apiKeys: safeKeys.map((key) => ({
           name: key.name,
           api_key: key.api_key,
         })),

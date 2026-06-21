@@ -33,14 +33,14 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
 
   // validate 'model' and 'provider' fields
   if (!model || typeof model !== 'string') {
-    throw new Response('Invalid or missing model', {
+    return new Response('Invalid or missing model', {
       status: 400,
       statusText: 'Bad Request',
     });
   }
 
   if (!providerName || typeof providerName !== 'string') {
-    throw new Response('Invalid or missing provider', {
+    return new Response('Invalid or missing provider', {
       status: 400,
       statusText: 'Bad Request',
     });
@@ -119,13 +119,13 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
     logger.debug(error);
 
     if (error instanceof Error && error.message?.includes('API key')) {
-      throw new Response('Invalid or missing API key', {
+      return new Response('Invalid or missing API key', {
         status: 401,
         statusText: 'Unauthorized',
       });
     }
 
-    throw new Response(null, {
+    return new Response(null, {
       status: 500,
       statusText: 'Internal Server Error',
     });

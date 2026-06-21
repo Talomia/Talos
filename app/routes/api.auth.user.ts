@@ -1,5 +1,6 @@
 import { type LoaderFunctionArgs, json } from '@remix-run/cloudflare';
 import { getAuthenticatedUser } from '~/lib/.server/supabase';
+import { withSecurity } from '~/lib/security';
 
 /**
  * GET /api/auth/user
@@ -7,7 +8,7 @@ import { getAuthenticatedUser } from '~/lib/.server/supabase';
  * Returns the currently authenticated user, or null.
  * Used by the client to check auth state on page load.
  */
-export async function loader({ request, context }: LoaderFunctionArgs) {
+async function authUserLoader({ request, context }: LoaderFunctionArgs) {
   const { user, responseHeaders } = await getAuthenticatedUser(request, context);
 
   if (!user) {
@@ -28,3 +29,5 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     { headers: responseHeaders },
   );
 }
+
+export const loader = withSecurity(authUserLoader, { allowedMethods: ['GET'] });

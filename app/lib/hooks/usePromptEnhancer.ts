@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ProviderInfo } from '~/types/model';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -7,6 +7,15 @@ const logger = createScopedLogger('usePromptEnhancement');
 export function usePromptEnhancer() {
   const [enhancingPrompt, setEnhancingPrompt] = useState(false);
   const [promptEnhanced, setPromptEnhanced] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Abort any in-flight enhancer request on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+    };
+  }, []);
 
   const resetEnhancer = () => {
     setEnhancingPrompt(false);
@@ -28,9 +37,16 @@ export function usePromptEnhancer() {
       provider,
     };
 
+    // Abort any previous in-flight request
+    abortControllerRef.current?.abort();
+
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
     const response = await fetch('/api/enhancer', {
       method: 'POST',
       body: JSON.stringify(requestBody),
+      signal: abortController.signal,
     });
 
     if (!response.ok) {
@@ -53,6 +69,11 @@ export function usePromptEnhancer() {
         setInput('');
 
         while (true) {
+          if (abortController.signal.aborted) {
+            await reader.cancel();
+            break;
+          }
+
           const { value, done } = await reader.read();
 
           if (done) {
@@ -66,9 +87,18 @@ export function usePromptEnhancer() {
           setInput(_input);
         }
       } catch (error) {
+        if ((error as DOMException)?.name === 'AbortError') {
+          await reader.cancel().catch(() => {});
+          return;
+        }
+
         _error = error;
         setInput(originalInput);
       } finally {
+        if (abortControllerRef.current === abortController) {
+          abortControllerRef.current = null;
+        }
+
         if (_error) {
           logger.error(_error);
         }
