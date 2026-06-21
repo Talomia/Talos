@@ -88,8 +88,8 @@ export interface UseSendMessageDeps {
   setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
   setInput: (input: string) => void;
   setFakeLoading: (loading: boolean) => void;
-  setUploadedFiles: (files: File[]) => void;
-  setImageDataList: (dataList: string[]) => void;
+  setUploadedFiles: (files: File[] | ((prev: File[]) => File[])) => void;
+  setImageDataList: (dataList: string[] | ((prev: string[]) => string[])) => void;
   resetEnhancer: () => void;
   abort: () => void;
   runAnimation: () => Promise<void>;

@@ -39,9 +39,9 @@ export interface ChatContextAlerts {
 
 export interface ChatContextFiles {
   uploadedFiles: File[];
-  setUploadedFiles: (files: File[]) => void;
+  setUploadedFiles: (files: File[] | ((prev: File[]) => File[])) => void;
   imageDataList: string[];
-  setImageDataList: (dataList: string[]) => void;
+  setImageDataList: (dataList: string[] | ((prev: string[]) => string[])) => void;
 }
 
 export interface ChatContextActions {

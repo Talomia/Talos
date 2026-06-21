@@ -183,34 +183,47 @@ class DockerProcess implements RuntimeProcess {
   #processId: string;
   #rpc: (method: string, params: Record<string, unknown>) => Promise<unknown>;
   #sendBinary: (frame: ArrayBuffer) => void;
+  #registerOutput: (processId: string, controller: ReadableStreamDefaultController<string>) => void;
+  #unregisterOutput: (processId: string) => void;
+  #registerExit: (processId: string, resolve: (code: number) => void) => void;
+  #outputController: ReadableStreamDefaultController<string> | null = null;
+  #exitResolver: ((code: number) => void) | null = null;
 
   constructor(
-    processId: string,
+    processId: string | null,
     rpc: (method: string, params: Record<string, unknown>) => Promise<unknown>,
     sendBinary: (frame: ArrayBuffer) => void,
     registerOutput: (processId: string, controller: ReadableStreamDefaultController<string>) => void,
     unregisterOutput: (processId: string) => void,
     registerExit: (processId: string, resolve: (code: number) => void) => void,
   ) {
-    this.#processId = processId;
+    // Use a temporary ID if processId is not yet known
+    this.#processId = processId ?? `__pending_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     this.#rpc = rpc;
     this.#sendBinary = sendBinary;
+    this.#registerOutput = registerOutput;
+    this.#unregisterOutput = unregisterOutput;
+    this.#registerExit = registerExit;
 
     // WritableStream that sends binary frames for stdin
+    // Uses this.#processId so it picks up the real ID after _assignProcessId
     this.input = new WritableStream<string>({
       write: (chunk) => {
-        const frame = encodeBinaryFrame(BINARY_OPCODE_STDIN, processId, chunk);
+        const frame = encodeBinaryFrame(BINARY_OPCODE_STDIN, this.#processId, chunk);
         this.#sendBinary(frame);
       },
     });
 
+    const self = this;
+
     // ReadableStream that receives binary frames for stdout
     this.output = new ReadableStream<string>({
       start(controller) {
-        registerOutput(processId, controller);
+        self.#outputController = controller;
+        registerOutput(self.#processId, controller);
       },
       cancel() {
-        unregisterOutput(processId);
+        unregisterOutput(self.#processId);
       },
     });
 
@@ -221,8 +234,34 @@ class DockerProcess implements RuntimeProcess {
 
     // Exit promise
     this.exit = new Promise<number>((resolve) => {
-      registerExit(processId, resolve);
+      self.#exitResolver = resolve;
+      registerExit(self.#processId, resolve);
     });
+  }
+
+  /**
+   * Reassign the real processId after the spawn RPC returns.
+   * Migrates output controller and exit resolver registrations from the
+   * temporary ID to the real one.
+   */
+  _assignProcessId(realId: string): void {
+    const tempId = this.#processId;
+
+    if (tempId === realId) {
+      return;
+    }
+
+    this.#unregisterOutput(tempId);
+
+    if (this.#outputController) {
+      this.#registerOutput(realId, this.#outputController);
+    }
+
+    if (this.#exitResolver) {
+      this.#registerExit(realId, this.#exitResolver);
+    }
+
+    this.#processId = realId;
   }
 
   resize(dimensions: { cols: number; rows: number }): void {
