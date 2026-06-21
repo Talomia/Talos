@@ -1,4 +1,4 @@
-import type { LoaderFunction } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.configured-providers');
@@ -20,7 +20,7 @@ interface ConfiguredProvidersResponse {
  * API endpoint that detects which providers are configured via environment variables
  * This helps auto-enable providers that have been set up by the user
  */
-export const loader: LoaderFunction = async ({ context }) => {
+export const loader = withSecurity(async ({ context }) => {
   try {
     const llmManager = LLMManager.getInstance((context?.cloudflare?.env as Record<string, string>) ?? {});
     const configuredProviders: ConfiguredProvider[] = [];
@@ -116,4 +116,4 @@ export const loader: LoaderFunction = async ({ context }) => {
       })),
     });
   }
-};
+});

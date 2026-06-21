@@ -22,6 +22,13 @@ export function resetAllFileModifications(filesStore: FilesStore) {
 }
 
 /**
+ * Reset modification tracking for a single file in the files store.
+ */
+export function resetFileModificationsForFile(filesStore: FilesStore, filePath: string) {
+  filesStore.resetFileModificationsForFile(filePath);
+}
+
+/**
  * Lock a file to prevent edits
  * @param filesStore The underlying files store
  * @param filePath Path to the file to lock

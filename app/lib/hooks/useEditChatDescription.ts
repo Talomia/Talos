@@ -126,7 +126,7 @@ export function useEditChatDescription({
     }
 
     return true;
-  }, []);
+  }, [initialDescription, toggleEditMode]);
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {
@@ -160,7 +160,7 @@ export function useEditChatDescription({
 
       toggleEditMode();
     },
-    [currentDescription, db, chatId, initialDescription, customChatId],
+    [currentDescription, db, chatId, isValidDescription, toggleEditMode, syncWithGlobalStore],
   );
 
   const handleKeyDown = useCallback(

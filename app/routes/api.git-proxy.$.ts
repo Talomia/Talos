@@ -1,5 +1,6 @@
 import { json } from '@remix-run/cloudflare';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('git-proxy');
@@ -46,13 +47,13 @@ const EXPOSE_HEADERS = [
 ];
 
 // Handle all HTTP methods
-export async function action({ request, params }: ActionFunctionArgs) {
+export const action = withSecurity(async ({ request, params }: ActionFunctionArgs) => {
   return handleProxyRequest(request, params['*']);
-}
+});
 
-export async function loader({ request, params }: LoaderFunctionArgs) {
+export const loader = withSecurity(async ({ request, params }: LoaderFunctionArgs) => {
   return handleProxyRequest(request, params['*']);
-}
+});
 
 async function handleProxyRequest(request: Request, path: string | undefined) {
   try {
@@ -99,13 +100,13 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
       'sourcehut.org',
     ];
 
-    const isDomainAllowed = ALLOWED_DOMAINS.some((allowed) => domain === allowed || domain.endsWith(`.${allowed}`));
+    const isDomainAllowed = ALLOWED_DOMAINS.includes(domain);
 
     if (!isDomainAllowed) {
       logger.warn(`Blocked proxy request to disallowed domain: ${domain}`);
 
       return json(
-        { error: `Domain '${domain}' is not allowed. Only Git hosting providers are permitted.` },
+        { error: 'Domain is not allowed. Only Git hosting providers are permitted.' },
         { status: 403 },
       );
     }

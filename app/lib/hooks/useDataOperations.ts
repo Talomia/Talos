@@ -283,16 +283,14 @@ export function useDataOperations({
         }
 
         case 'import-api-keys': {
-          // Restore previous API keys
+          // Restore previous API keys via encrypted vault
           const previousAPIKeys = lastOperation.data.previous;
-          const newKeys = ImportExportService.importAPIKeys(previousAPIKeys);
-          const apiKeysJson = JSON.stringify(newKeys);
-          document.cookie = `apiKeys=${apiKeysJson}; path=/; max-age=31536000`;
+          await ImportExportService.importAPIKeys(previousAPIKeys);
 
           // Dismiss progress toast before showing success toast
           toast.dismiss('progress-toast');
 
-          toast.success('Operation undone successfully', {
+          toast.success('API keys restored successfully', {
             position: 'bottom-right',
             autoClose: 3000,
           });

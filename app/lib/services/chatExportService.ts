@@ -61,7 +61,9 @@ export async function exportAllChats(
  */
 export async function deleteAllChats(db: IDBDatabase): Promise<void> {
   // Clear chat history from localStorage
-  localStorage.removeItem('app_chat_history');
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('app_chat_history');
+  }
 
   // Clear chats from IndexedDB
   if (!db) {
@@ -71,5 +73,5 @@ export async function deleteAllChats(db: IDBDatabase): Promise<void> {
   // Get all chats and delete them one by one
   const chats = await getAllChats(db);
   const deletePromises = chats.map((chat) => deleteChat(db, chat.id));
-  await Promise.all(deletePromises);
+  await Promise.allSettled(deletePromises);
 }

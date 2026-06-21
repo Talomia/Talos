@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { toast } from 'react-toastify';
 import { Octokit } from '@octokit/rest';
 import { getLocalStorage } from '~/lib/persistence/localStorage';
@@ -17,6 +18,7 @@ import {
 import { useDeploymentDialog } from '~/components/deploy/useDeploymentDialog';
 import { RepoListSection } from '~/components/deploy/RepoListSection';
 import { DeploymentFormShell } from '~/components/deploy/DeploymentFormShell';
+import type { FileContent } from '~/utils/deployUtils';
 
 const GITHUB_PROVIDER: DeploymentProviderConfig = {
   name: 'GitHub',
@@ -30,7 +32,7 @@ interface GitHubDeploymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectName: string;
-  files: Record<string, string>;
+  files: Record<string, FileContent>;
 }
 
 /**
@@ -114,6 +116,25 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     extraFilter: (repo, query) => Boolean(repo.language && repo.language.toLowerCase().includes(query)),
   });
 
+  // React-based overwrite confirmation (replaces window.confirm)
+  const overwriteResolveRef = useRef<((confirmed: boolean) => void) | null>(null);
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+  const [overwriteConfirmMessage, setOverwriteConfirmMessage] = useState('');
+
+  function requestOverwriteConfirmation(message: string): Promise<boolean> {
+    setOverwriteConfirmMessage(message);
+    setShowOverwriteConfirm(true);
+    return new Promise<boolean>((resolve) => {
+      overwriteResolveRef.current = resolve;
+    });
+  }
+
+  function handleOverwriteResponse(confirmed: boolean) {
+    setShowOverwriteConfirm(false);
+    overwriteResolveRef.current?.(confirmed);
+    overwriteResolveRef.current = null;
+  }
+
   // Function to create a new repository or push to an existing one
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,23 +151,23 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       return;
     }
 
-    // Validate repository name
-    const sanitizedName = sanitizeRepoName(dialog.repoName);
+    // Validate and sanitize repository name (single call, reused throughout)
+    const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
 
-    if (!sanitizedName || sanitizedName.length < 1) {
+    if (!sanitizedRepoName || sanitizedRepoName.length < 1) {
       toast.error('Repository name must contain at least one alphanumeric character');
       return;
     }
 
-    if (sanitizedName.length > 100) {
+    if (sanitizedRepoName.length > 100) {
       toast.error('Repository name is too long (maximum 100 characters)');
       return;
     }
 
     // Update the repo name field with the sanitized version if it was changed
-    if (sanitizedName !== dialog.repoName) {
-      dialog.setRepoName(sanitizedName);
-      toast.info(`Repository name sanitized to: ${sanitizedName}`);
+    if (sanitizedRepoName !== dialog.repoName) {
+      dialog.setRepoName(sanitizedRepoName);
+      toast.info(`Repository name sanitized to: ${sanitizedRepoName}`);
     }
 
     dialog.setIsLoading(true);
@@ -157,8 +178,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       let repoExists = false;
 
       try {
-        // Check if the repository already exists - ensure repo name is properly sanitized
-        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
+        // Check if the repository already exists
         const { data: existingRepo } = await octokit.repos.get({
           owner: connection.user.login,
           repo: sanitizedRepoName,
@@ -178,7 +198,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           confirmMessage += `\n\n${visibilityChange}`;
         }
 
-        const confirmOverwrite = window.confirm(confirmMessage);
+        const confirmOverwrite = await requestOverwriteConfirmation(confirmMessage);
 
         if (!confirmOverwrite) {
           dialog.setIsLoading(false);
@@ -207,7 +227,6 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
       // Create repository if it doesn't exist
       if (!repoExists) {
-        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         const { data: newRepo } = await octokit.repos.createForAuthenticatedUser({
           name: sanitizedRepoName,
           private: dialog.isPrivate,
@@ -229,7 +248,6 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         await new Promise((resolve) => setTimeout(resolve, 2000));
       } else {
         // Set URL for existing repo
-        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         dialog.setCreatedRepoUrl(`https://github.com/${connection.user.login}/${sanitizedRepoName}`);
       }
 
@@ -237,11 +255,13 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       const fileEntries = Object.entries(files);
 
       // Filter out files and format them for display
-      const fileList = fileEntries.map(([filePath, content]) => {
+      const fileList = fileEntries.map(([filePath, fileData]) => {
         // The paths are already properly formatted in the GitHubDeploy component
         return {
           path: filePath,
-          size: new TextEncoder().encode(content).length,
+          size: fileData.isBinary
+            ? Math.ceil(fileData.content.length * 3 / 4) // approximate decoded base64 size
+            : new TextEncoder().encode(fileData.content).length,
         };
       });
 
@@ -256,7 +276,6 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
       try {
         // For both new and existing repos, get the repository info
-        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         const { data: repo } = await octokit.repos.get({
           owner: connection.user.login,
           repo: sanitizedRepoName,
@@ -298,18 +317,44 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       try {
         logger.debug('Creating tree for repository');
 
-        // Create a tree with all files
-        const tree = fileEntries.map(([filePath, content]) => ({
-          path: filePath, // We've already formatted the paths correctly
-          mode: '100644' as const, // Regular file
-          type: 'blob' as const,
-          content,
-        }));
+        // Create a tree with all files — binary files need blobs created first
+        const tree: Array<{
+          path: string;
+          mode: '100644';
+          type: 'blob';
+          content?: string;
+          sha?: string;
+        }> = [];
+
+        for (const [filePath, fileData] of fileEntries) {
+          if (fileData.isBinary) {
+            // Binary files: create a blob with base64 encoding, then reference its SHA
+            const { data: blobData } = await octokit.git.createBlob({
+              owner: connection.user.login,
+              repo: sanitizedRepoName,
+              content: fileData.content,
+              encoding: 'base64',
+            });
+            tree.push({
+              path: filePath,
+              mode: '100644' as const,
+              type: 'blob' as const,
+              sha: blobData.sha,
+            });
+          } else {
+            // Text files: inline content
+            tree.push({
+              path: filePath,
+              mode: '100644' as const,
+              type: 'blob' as const,
+              content: fileData.content,
+            });
+          }
+        }
 
         logger.debug(`Creating tree with ${tree.length} files using base: ${baseSha || 'none'}`);
 
         // Create a tree with all the files, using the base tree if available
-        const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
         const { data: treeData } = await octokit.git.createTree({
           owner: connection.user.login,
           repo: sanitizedRepoName,
@@ -392,7 +437,6 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       }
 
       // Save the repository information for this chat
-      const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
       localStorage.setItem(
         `github-repo-${currentChatId}`,
         JSON.stringify({
@@ -497,6 +541,33 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
       {/* GitHub Auth Dialog */}
       <GitHubAuthDialog isOpen={dialog.showAuthDialog} onClose={dialog.handleAuthDialogClose} />
+
+      {/* Overwrite Confirmation Dialog */}
+      {showOverwriteConfirm && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50">
+          <div className="bg-ui-background-depth-2 border border-ui-borderColor rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="i-ph:warning-circle w-5 h-5 text-yellow-500" />
+              <h3 className="text-sm font-semibold text-ui-textPrimary">Confirm Overwrite</h3>
+            </div>
+            <p className="text-sm text-ui-textSecondary whitespace-pre-line mb-5">{overwriteConfirmMessage}</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => handleOverwriteResponse(false)}
+                className="px-4 py-2 text-sm rounded-lg border border-ui-borderColor text-ui-textSecondary hover:bg-ui-item-backgroundActive transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleOverwriteResponse(true)}
+                className="px-4 py-2 text-sm rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
+              >
+                Update Repository
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

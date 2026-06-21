@@ -34,21 +34,21 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   }
 
   parse(messageId: string, input: string): string {
-    // First try the normal parsing
-    let output = super.parse(messageId, input);
-
     // If no artifacts were detected, check for code blocks that should be files
+    let effectiveInput = input;
+
     if (!this._hasDetectedArtifacts(input)) {
       const enhancedInput = this._detectAndWrapCodeBlocks(messageId, input);
 
       if (enhancedInput !== input) {
-        // Reset and reparse with enhanced input
-        this.reset();
-        output = super.parse(messageId, enhancedInput);
+        // Only reset state for THIS message, not all messages
+        this._processedCodeBlocks.delete(messageId);
+        effectiveInput = enhancedInput;
       }
     }
 
-    return output;
+    // Only call super.parse() ONCE to avoid duplicate callbacks
+    return super.parse(messageId, effectiveInput);
   }
 
   private _hasDetectedArtifacts(input: string): boolean {
@@ -259,7 +259,7 @@ ${ARTIFACT_TAG_CLOSE}`;
 
     // Exclude certain patterns that are likely not real files
     const excludePatterns = [
-      /^\/?(tmp|temp|test|example)\//i,
+      /^\/?(tmp|temp|example)\//i,
       /\.(tmp|temp|bak|backup|old|orig)$/i,
       /^\/?(output|result|response)\//i, // Common AI response folders
       /^code_\d+\.(sh|bash|zsh)$/i, // Auto-generated shell files (our target issue)
@@ -317,8 +317,16 @@ ${ARTIFACT_TAG_CLOSE}`;
       return '/App.jsx';
     }
 
-    // Default to a generic name
-    return `/component-${Date.now()}.jsx`;
+    // Default to a deterministic generic name based on content hash
+    let numericHash = 0;
+
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      numericHash = (numericHash << 5) - numericHash + char;
+      numericHash = numericHash & numericHash;
+    }
+
+    return `/component-${Math.abs(numericHash).toString(36)}.jsx`;
   }
 
   private _hashBlock(content: string): string {

@@ -300,17 +300,23 @@ export async function getProfile(supabase: SupabaseClient, userId: string): Prom
 }
 
 /**
- * Updates the user's profile.
+ * Updates the user's profile (creates it if it doesn't exist).
  */
 export async function updateProfile(
   supabase: SupabaseClient,
   userId: string,
   updates: Partial<Pick<ProfileRecord, 'username' | 'bio' | 'avatar_url' | 'settings'>>,
 ): Promise<void> {
-  const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
+  const { error } = await supabase.from('profiles').upsert(
+    {
+      id: userId,
+      ...updates,
+    },
+    { onConflict: 'id' },
+  );
 
   if (error) {
-    logger.error('Failed to update profile:', error);
+    logger.error('Failed to upsert profile:', error);
     throw new Error(`Failed to update profile: ${error.message}`);
   }
 }

@@ -31,8 +31,11 @@ export const authLoading = computed(authStore, (state) => state.isLoading);
 /**
  * Fetches the current auth state from the server.
  * Call this on app initialization.
+ * Returns a cleanup function that clears the session refresh interval.
  */
-export async function initAuth(): Promise<void> {
+export async function initAuth(): Promise<() => void> {
+  let intervalId: ReturnType<typeof setInterval> | null = null;
+
   try {
     authStore.set({ ...authStore.get(), isLoading: true, error: null });
 
@@ -46,11 +49,45 @@ export async function initAuth(): Promise<void> {
       import('~/lib/monitoring').then(({ identifyUser }) =>
         identifyUser({ id: data.user!.id, email: data.user!.email || undefined, name: data.user!.name || undefined }),
       );
+
+      // Set up periodic session refresh every 5 minutes
+      intervalId = setInterval(async () => {
+        try {
+          const refreshResponse = await fetch('/api/auth/user');
+          const refreshData = (await refreshResponse.json()) as { user: AuthUser | null };
+
+          if (!refreshData.user) {
+            authStore.set({ user: null, isLoading: false, error: null });
+
+            // Show a toast notification if available in the browser
+            if (typeof window !== 'undefined') {
+              import('react-toastify').then(({ toast }) => {
+                toast.warning('Your session has expired. Please sign in again.');
+              });
+            }
+
+            // Clear the interval since the user is no longer authenticated
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+          }
+        } catch {
+          logger.warn('Session refresh check failed');
+        }
+      }, 5 * 60 * 1000); // 5 minutes
     }
   } catch (_err) {
     logger.error('Failed to fetch auth state:', _err);
     authStore.set({ user: null, isLoading: false, error: 'Failed to check authentication' });
   }
+
+  return () => {
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+  };
 }
 
 /**

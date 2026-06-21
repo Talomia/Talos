@@ -1,5 +1,6 @@
 import type { Message } from 'ai';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef as useReactRef, useState } from 'react';
+import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
 import { ClientOnly } from 'remix-utils/client-only';
 import { Menu } from '~/components/sidebar/Menu.client';
@@ -86,6 +87,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
     onStreamingChange?.(isStreaming);
   }, [isStreaming, onStreamingChange]);
 
+  // Use a ref to always call the latest handleInputChange from SpeechRecognition
+  const handleInputChangeRef = useReactRef(handleInputChange);
+
+  useEffect(() => {
+    handleInputChangeRef.current = handleInputChange;
+  }, [handleInputChange]);
+
   useEffect(() => {
     if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -101,11 +109,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
 
         setTranscript(transcript);
 
-        if (handleInputChange) {
+        if (handleInputChangeRef.current) {
           const syntheticEvent = {
             target: { value: transcript },
           } as React.ChangeEvent<HTMLTextAreaElement>;
-          handleInputChange(syntheticEvent);
+          handleInputChangeRef.current(syntheticEvent);
         }
       };
 
@@ -115,7 +123,22 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
       };
 
       setRecognition(recognition);
+
+      // Cleanup: stop recognition and release handlers on unmount
+      return () => {
+        try {
+          recognition.abort();
+        } catch {
+          // Ignore errors during abort (e.g., if not started)
+        }
+
+        recognition.onresult = null;
+        recognition.onerror = null;
+        recognition.onend = null;
+      };
     }
+
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -132,7 +155,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
 
       setIsModelLoading('all');
       fetch('/api/models')
-        .then((response) => response.json())
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`Failed to fetch models: ${response.status} ${response.statusText}`);
+          }
+
+          return response.json();
+        })
         .then((data) => {
           const typedData = data as { modelList: ModelInfo[] };
           setModelList(typedData.modelList);
@@ -170,6 +199,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
 
     try {
       const response = await fetch(`/api/models/${encodeURIComponent(providerName)}`);
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch models: ${response.status}`);
+      }
+
       const data = await response.json();
       providerModels = (data as { modelList: ModelInfo[] }).modelList;
     } catch (error) {
@@ -224,10 +258,26 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
     input.type = 'file';
     input.accept = 'image/*';
 
+    const cleanup = () => {
+      if (input.parentNode) {
+        input.parentNode.removeChild(input);
+      }
+    };
+
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
 
       if (file) {
+        // Validate file size (5MB max)
+        const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+        if (file.size > MAX_IMAGE_SIZE) {
+          toast.error(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 5MB.`);
+          cleanup();
+
+          return;
+        }
+
         const reader = new FileReader();
 
         reader.onload = (e) => {
@@ -237,9 +287,24 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
         };
         reader.readAsDataURL(file);
       }
+
+      cleanup();
     };
 
+    document.body.appendChild(input);
     input.click();
+
+    // Clean up if user cancels the file picker (onchange never fires)
+    // When the window regains focus after the picker closes, remove if still present
+    const handleFocus = () => {
+      setTimeout(() => {
+        if (!input.files?.length) {
+          cleanup();
+        }
+      }, 300);
+      window.removeEventListener('focus', handleFocus);
+    };
+    window.addEventListener('focus', handleFocus);
   };
 
   const handlePaste = async (e: React.ClipboardEvent) => {
@@ -256,6 +321,14 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
         const file = item.getAsFile();
 
         if (file) {
+          // Validate file size (5MB max)
+          const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+          if (file.size > MAX_IMAGE_SIZE) {
+            toast.error(`Pasted image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 5MB.`);
+            break;
+          }
+
           const reader = new FileReader();
 
           reader.onload = (e) => {
@@ -277,7 +350,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
       className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')}
       data-chat-visible={showChat}
     >
-      <ClientOnly>{() => <Menu />}</ClientOnly>
+      <ClientOnly>{() => <ErrorBoundary panelName="the sidebar"><Menu /></ErrorBoundary>}</ClientOnly>
       <ScreenshotProvider
         uploadedFiles={uploadedFiles}
         setUploadedFiles={setUploadedFiles}
@@ -408,7 +481,16 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
           </div>
           <ClientOnly>
             {() => (
-              <ErrorBoundary panelName="the workbench">
+              <ErrorBoundary
+                panelName="the workbench"
+                onReset={() => {
+                  import('~/lib/stores/workbench').then(({ workbenchStore }) => {
+                    workbenchStore.clearAlert();
+                    workbenchStore.clearSupabaseAlert();
+                    workbenchStore.clearDeployAlert();
+                  });
+                }}
+              >
                 <Workbench
                   chatStarted={chatStarted}
                   isStreaming={isStreaming}

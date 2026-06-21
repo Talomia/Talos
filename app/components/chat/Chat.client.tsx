@@ -178,7 +178,7 @@ export const ChatImpl = memo(
     useEffect(() => {
       const prompt = searchParams.get('prompt');
 
-      // console.log(prompt, searchParams, model, provider);
+
 
       if (prompt) {
         setSearchParams({});
@@ -294,10 +294,15 @@ export const ChatImpl = memo(
     const { debouncedCachePrompt } = usePromptCache();
 
     useEffect(() => {
-      const storedApiKeys = Cookies.get('apiKeys');
+      try {
+        const storedApiKeys = Cookies.get('apiKeys');
 
-      if (storedApiKeys) {
-        setApiKeys(JSON.parse(storedApiKeys));
+        if (storedApiKeys) {
+          setApiKeys(JSON.parse(storedApiKeys));
+        }
+      } catch (error) {
+        logger.error('Error loading API keys from cookie:', error);
+        Cookies.remove('apiKeys');
       }
     }, []);
 
@@ -335,9 +340,8 @@ export const ChatImpl = memo(
         },
         model,
         provider,
-        apiKeys,
       );
-    }, [input, enhancePrompt, setInput, scrollTextArea, model, provider, apiKeys]);
+    }, [input, enhancePrompt, setInput, scrollTextArea, model, provider]);
 
     const combinedHandleInputChange = useCallback(
       (e: React.ChangeEvent<HTMLTextAreaElement>) => {

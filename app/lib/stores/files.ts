@@ -44,8 +44,22 @@ type Dirent = File | Folder;
 
 export type FileMap = Record<string, Dirent | undefined>;
 
+const MAX_DELETED_PATHS = 500;
+
 export class FilesStore {
   #engine: Promise<RuntimeEngine>;
+
+  /**
+   * Per-file write queue that serializes concurrent writes to the same path.
+   * This prevents race conditions when multiple writes target the same file.
+   */
+  #writeQueue: Map<string, Promise<void>> = new Map();
+
+  /**
+   * Debounce timers for file watcher events, keyed by file path.
+   * Multiple events for the same file within 100ms are coalesced into one store update.
+   */
+  #watchDebounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   /**
    * Tracks the number of files without folders.
@@ -60,7 +74,8 @@ export class FilesStore {
   #modifiedFiles: Map<string, string> = import.meta.hot?.data.modifiedFiles ?? new Map();
 
   /**
-   * Keeps track of deleted files and folders to prevent them from reappearing on reload
+   * Keeps track of deleted files and folders to prevent them from reappearing on reload.
+   * Capped at MAX_DELETED_PATHS to prevent unbounded growth.
    */
   #deletedPaths: Set<string> = import.meta.hot?.data.deletedPaths ?? new Set();
 
@@ -68,6 +83,10 @@ export class FilesStore {
    * Map of files that matches the state of the runtime engine.
    */
   files: MapStore<FileMap> = import.meta.hot?.data.files ?? map({});
+
+  /** Cleanup references to prevent memory leaks on HMR */
+  #chatIdObserver: MutationObserver | null = null;
+  #lockCheckInterval: ReturnType<typeof setInterval> | null = null;
 
   get filesCount() {
     return this.#size;
@@ -97,10 +116,22 @@ export class FilesStore {
     this.#loadLockedFiles();
 
     if (import.meta.hot) {
+      // Clean up previous instance's resources before persisting new state
+      const prevStore = import.meta.hot.data.storeInstance as FilesStore | undefined;
+
+      if (prevStore) {
+        prevStore.#chatIdObserver?.disconnect();
+
+        if (prevStore.#lockCheckInterval) {
+          clearInterval(prevStore.#lockCheckInterval);
+        }
+      }
+
       // Persist our state across hot reloads
       import.meta.hot.data.files = this.files;
       import.meta.hot.data.modifiedFiles = this.#modifiedFiles;
       import.meta.hot.data.deletedPaths = this.#deletedPaths;
+      import.meta.hot.data.storeInstance = this;
     }
 
     // Listen for URL changes to detect chat ID changes
@@ -108,7 +139,7 @@ export class FilesStore {
       let lastChatId = getCurrentChatId();
 
       // Use MutationObserver to detect URL changes (for SPA navigation)
-      const observer = new MutationObserver(() => {
+      this.#chatIdObserver = new MutationObserver(() => {
         const currentChatId = getCurrentChatId();
 
         if (currentChatId !== lastChatId) {
@@ -118,7 +149,7 @@ export class FilesStore {
         }
       });
 
-      observer.observe(document, { subtree: true, childList: true });
+      this.#chatIdObserver.observe(document, { subtree: true, childList: true });
     }
 
     this.#init();
@@ -544,7 +575,26 @@ export class FilesStore {
     this.#modifiedFiles.clear();
   }
 
+  /**
+   * Reset modification tracking for a single file.
+   * Unlike resetFileModifications(), this preserves tracking for all other files.
+   */
+  resetFileModificationsForFile(filePath: string) {
+    this.#modifiedFiles.delete(filePath);
+  }
+
   async saveFile(filePath: string, content: string) {
+    // Chain writes for the same path to serialize concurrent writes
+    const pending = this.#writeQueue.get(filePath) || Promise.resolve();
+    const newWrite = pending.then(() => this.#doSaveFile(filePath, content)).catch((error) => {
+      logger.error(`Queued write failed for ${filePath}:`, error);
+      throw error;
+    });
+    this.#writeQueue.set(filePath, newWrite.catch(() => {})); // Prevent rejection from blocking future writes
+    await newWrite;
+  }
+
+  async #doSaveFile(filePath: string, content: string) {
     const engine = await this.#engine;
 
     try {
@@ -556,8 +606,8 @@ export class FilesStore {
 
       const oldContent = this.getFile(filePath)?.content;
 
-      if (!oldContent && oldContent !== '') {
-        unreachable('Expected content to be defined');
+      if (oldContent === undefined && oldContent !== '') {
+        // New file — no previous content to diff against; just proceed with the save
       }
 
       await engine.fs.writeFile(relativePath, content);
@@ -620,7 +670,7 @@ export class FilesStore {
      * Set up a less frequent periodic check to ensure locks remain applied.
      * This is now less critical since we have the storage event listener.
      */
-    setInterval(() => {
+    this.#lockCheckInterval = setInterval(() => {
       // Clear the cache to force a fresh read from localStorage
       clearCache();
 
@@ -690,9 +740,9 @@ export class FilesStore {
   #processEventBuffer(events: Array<[events: FileChangeEvent[]]>) {
     const watchEvents = events.flat(2);
 
-    for (const { type, path, buffer } of watchEvents) {
+    for (const { type, path: eventPath, buffer } of watchEvents) {
       // remove any trailing slashes
-      const sanitizedPath = path.replace(/\/+$/g, '');
+      const sanitizedPath = eventPath.replace(/\/+$/g, '');
 
       switch (type) {
         case 'add_dir': {
@@ -703,8 +753,12 @@ export class FilesStore {
         case 'remove_dir': {
           this.files.setKey(sanitizedPath, undefined);
 
-          for (const [direntPath] of Object.entries(this.files)) {
+          for (const [direntPath, dirent] of Object.entries(this.files)) {
             if (direntPath.startsWith(sanitizedPath)) {
+              if (dirent?.type === 'file') {
+                this.#size--;
+              }
+
               this.files.setKey(direntPath, undefined);
             }
           }
@@ -715,23 +769,12 @@ export class FilesStore {
         case 'change': {
           if (type === 'add_file') {
             this.#size++;
+            // For new files, apply immediately without debounce
+            this.#applyFileUpdate(sanitizedPath, buffer);
+          } else {
+            // Debounce change events: coalesce multiple events within 100ms
+            this.#debouncedFileUpdate(sanitizedPath, buffer);
           }
-
-          let content = '';
-
-          /**
-           * @note This check is purely for the editor. The way we detect this is not
-           * bullet-proof and it's a best guess so there might be false-positives.
-           * The reason we do this is because we don't want to display binary files
-           * in the editor nor allow to edit them.
-           */
-          const isBinary = isBinaryFile(buffer);
-
-          if (!isBinary) {
-            content = this.#decodeFileContent(buffer);
-          }
-
-          this.files.setKey(sanitizedPath, { type: 'file', content, isBinary });
 
           break;
         }
@@ -746,6 +789,46 @@ export class FilesStore {
         }
       }
     }
+  }
+
+  /**
+   * Debounce file change events: coalesce multiple events for the same path
+   * within 100ms into a single store update.
+   */
+  #debouncedFileUpdate(filePath: string, buffer?: Uint8Array) {
+    const existingTimer = this.#watchDebounceTimers.get(filePath);
+
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+    }
+
+    const timer = setTimeout(() => {
+      this.#watchDebounceTimers.delete(filePath);
+      this.#applyFileUpdate(filePath, buffer);
+    }, 100);
+
+    this.#watchDebounceTimers.set(filePath, timer);
+  }
+
+  /**
+   * Apply a file content update to the store.
+   */
+  #applyFileUpdate(filePath: string, buffer?: Uint8Array) {
+    let content = '';
+
+    /**
+     * @note This check is purely for the editor. The way we detect this is not
+     * bullet-proof and it's a best guess so there might be false-positives.
+     * The reason we do this is because we don't want to display binary files
+     * in the editor nor allow to edit them.
+     */
+    const isBinary = isBinaryFile(buffer);
+
+    if (!isBinary) {
+      content = this.#decodeFileContent(buffer);
+    }
+
+    this.files.setKey(filePath, { type: 'file', content, isBinary });
   }
 
   #decodeFileContent(buffer?: Uint8Array) {
@@ -918,6 +1001,12 @@ export class FilesStore {
   #persistDeletedPaths() {
     try {
       if (typeof localStorage !== 'undefined') {
+        // Cap the set size to prevent unbounded growth
+        if (this.#deletedPaths.size > MAX_DELETED_PATHS) {
+          const entries = [...this.#deletedPaths];
+          this.#deletedPaths = new Set(entries.slice(entries.length - MAX_DELETED_PATHS));
+        }
+
         localStorage.setItem(STORAGE_KEYS.deletedPaths, JSON.stringify([...this.#deletedPaths]));
       }
     } catch (error) {

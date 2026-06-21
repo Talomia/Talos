@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('HeaderActionButtons');
@@ -11,7 +10,7 @@ interface HeaderActionButtonsProps {
 }
 
 export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionButtonsProps) {
-  const [activePreviewIndex] = useState(0);
+  const activePreviewIndex = 0;
   const previews = useStore(workbenchStore.previews);
   const activePreview = previews[activePreviewIndex];
 
@@ -26,7 +25,7 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
       {shouldShowButtons && (
         <div className="flex border border-ui-borderColor rounded-md overflow-hidden text-sm">
           <button
-            onClick={() => window.open('#', '_blank')}
+            onClick={() => window.open('https://github.com/Talomia/Talos/issues/new', '_blank')}
             className="rounded-l-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-ui-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-ui-button-primary-backgroundHover outline-accent-500 flex gap-1.5"
             title="Report Bug"
           >

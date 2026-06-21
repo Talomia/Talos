@@ -12,13 +12,16 @@ interface Profile {
 
 // Initialize with stored profile or defaults
 const storedProfile = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEYS.profile) : null;
-const initialProfile: Profile = storedProfile
-  ? JSON.parse(storedProfile)
-  : {
-      username: '',
-      bio: '',
-      avatar: '',
-    };
+let initialProfile: Profile;
+
+try {
+  initialProfile = storedProfile
+    ? JSON.parse(storedProfile)
+    : { username: '', bio: '', avatar: '' };
+} catch {
+  logger.warn('Failed to parse stored profile, using defaults');
+  initialProfile = { username: '', bio: '', avatar: '' };
+}
 
 export const profileStore = atom<Profile>(initialProfile);
 

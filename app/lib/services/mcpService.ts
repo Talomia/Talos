@@ -375,6 +375,10 @@ export class MCPService {
   }
 
   async processToolInvocations(messages: Message[], dataStream: DataStreamWriter): Promise<Message[]> {
+    if (!messages.length) {
+      return messages;
+    }
+
     const lastMessage = messages[messages.length - 1];
     const parts = lastMessage.parts;
 

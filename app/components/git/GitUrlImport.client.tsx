@@ -40,6 +40,40 @@ const IGNORE_PATTERNS = [
   '**/*lock.yaml',
 ];
 
+/**
+ * Validates a git URL to prevent dangerous protocols and ensure it's a valid remote URL.
+ * Allows: https://, http://, ssh://, git://, and git@host:user/repo shorthand.
+ * Rejects: file://, javascript:, data:, and other potentially dangerous protocols.
+ */
+function isValidGitUrl(url: string): boolean {
+  const trimmed = url.trim();
+
+  // Reject empty strings
+  if (!trimmed) {
+    return false;
+  }
+
+  // Reject dangerous protocols
+  const dangerousProtocols = ['file:', 'javascript:', 'data:', 'vbscript:'];
+
+  if (dangerousProtocols.some((proto) => trimmed.toLowerCase().startsWith(proto))) {
+    return false;
+  }
+
+  // Allow git@host:user/repo.git SSH shorthand
+  if (/^git@[\w.-]+:[\w./-]+$/.test(trimmed)) {
+    return true;
+  }
+
+  // Allow https://, http://, ssh://, git:// URLs
+  try {
+    const parsed = new URL(trimmed);
+    return ['https:', 'http:', 'ssh:', 'git:'].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+}
+
 export function GitUrlImport() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -54,6 +88,15 @@ export function GitUrlImport() {
     }
 
     if (repoUrl) {
+      // Validate the git URL before cloning
+      if (!isValidGitUrl(repoUrl)) {
+        toast.error('Invalid repository URL. Please provide a valid GitHub, GitLab, or Bitbucket URL.');
+        setLoading(false);
+        navigate('/');
+
+        return;
+      }
+
       const ig = ignore().add(IGNORE_PATTERNS);
 
       try {
@@ -109,7 +152,19 @@ ${ARTIFACT_TAG_CLOSE}`,
         }
       } catch (error) {
         logger.error('Error during import:', error);
-        toast.error('Failed to import repository');
+
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+        if (errorMessage.includes('401') || errorMessage.includes('403') || errorMessage.includes('Authentication')) {
+          toast.error('Authentication failed. For private repos, check your access token.');
+        } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+          toast.error('Repository not found. Check the URL and try again.');
+        } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+          toast.error('Network error. Check your connection and try again.');
+        } else {
+          toast.error(`Failed to import repository: ${errorMessage}`);
+        }
+
         setLoading(false);
         navigate('/');
 

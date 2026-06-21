@@ -31,7 +31,11 @@ export const Terminal = memo(
       const resizeObserverRef = useRef<ResizeObserver>();
 
       useEffect(() => {
-        const element = terminalElementRef.current!;
+        if (!terminalElementRef.current) {
+          return;
+        }
+
+        const element = terminalElementRef.current;
 
         const fitAddon = new FitAddon();
         const webLinksAddon = new WebLinksAddon();
@@ -102,7 +106,11 @@ export const Terminal = memo(
       }, []);
 
       useEffect(() => {
-        const terminal = terminalRef.current!;
+        const terminal = terminalRef.current;
+
+        if (!terminal) {
+          return;
+        }
 
         // we render a transparent cursor in case the terminal is readonly
         terminal.options.theme = getTerminalTheme(readonly ? { cursor: '#00000000' } : {});

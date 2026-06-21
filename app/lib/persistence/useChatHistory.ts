@@ -286,7 +286,6 @@ ${value.content}
   );
 
   const restoreSnapshot = useCallback(async (id: string, snapshot?: Snapshot) => {
-    // const snapshotStr = localStorage.getItem(`snapshot:${id}`); // Remove localStorage usage
     const container = await runtime;
 
     const validSnapshot = snapshot || { chatIndex: '', files: {} };
@@ -295,27 +294,41 @@ ${value.content}
       return;
     }
 
-    Object.entries(validSnapshot.files).forEach(async ([key, value]) => {
-      if (key.startsWith(container.workdir)) {
-        key = key.replace(container.workdir, '');
-      }
+    const entries = Object.entries(validSnapshot.files);
 
+    // Create directories first (sequentially to ensure parent dirs exist)
+    for (const [rawKey, value] of entries) {
       if (value?.type === 'folder') {
-        await container.fs.mkdir(key, { recursive: true });
-      }
-    });
-    Object.entries(validSnapshot.files).forEach(async ([key, value]) => {
-      if (value?.type === 'file') {
+        let key = rawKey;
+
         if (key.startsWith(container.workdir)) {
           key = key.replace(container.workdir, '');
         }
 
-        await container.fs.writeFile(key, value.content, value.isBinary ? undefined : 'utf8');
-      } else {
+        try {
+          await container.fs.mkdir(key, { recursive: true });
+        } catch (error) {
+          logger.error(`Failed to create directory ${key}:`, error);
+        }
       }
-    });
+    }
 
-    // workbenchStore.files.setKey(snapshot?.files)
+    // Then write files
+    for (const [rawKey, value] of entries) {
+      if (value?.type === 'file') {
+        let key = rawKey;
+
+        if (key.startsWith(container.workdir)) {
+          key = key.replace(container.workdir, '');
+        }
+
+        try {
+          await container.fs.writeFile(key, value.content, value.isBinary ? undefined : 'utf8');
+        } catch (error) {
+          logger.error(`Failed to write file ${key}:`, error);
+        }
+      }
+    }
   }, []);
 
   return {
@@ -463,9 +476,12 @@ ${value.content}
 
 function navigateChat(nextId: string) {
   /**
-   * FIXME: Using the intended navigate function causes a rerender for <Chat /> that breaks the app.
+   * Design choice: We use `window.history.replaceState` instead of React Router's
+   * `navigate()` because the latter triggers a full rerender of the <Chat />
+   * component tree, which breaks active streaming state. The manual history
+   * manipulation updates the URL without unmounting/remounting components.
    *
-   * `navigate(`/chat/${nextId}`, { replace: true });`
+   * Original intent: `navigate(`/chat/${nextId}`, { replace: true });`
    */
   const url = new URL(window.location.href);
   url.pathname = `/chat/${nextId}`;

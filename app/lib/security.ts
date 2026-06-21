@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
+import { parse as parseCookie } from 'cookie';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Security');
@@ -80,13 +81,26 @@ export function checkRateLimit(request: Request, endpoint: string): { allowed: b
   }
 
   const [, config] = rule;
+  // Clean up expired entries (resetTime is in the past)
   const now = Date.now();
-  const windowStart = now - config.windowMs;
 
-  // Clean up old entries
   for (const [storedKey, data] of rateLimitStore.entries()) {
-    if (data.resetTime < windowStart) {
+    if (data.resetTime < now) {
       rateLimitStore.delete(storedKey);
+    }
+  }
+
+  // Hard cap to prevent memory exhaustion under DDoS
+  if (rateLimitStore.size > 10000) {
+    const entriesToDelete = rateLimitStore.size - 5000;
+    const iterator = rateLimitStore.keys();
+
+    for (let i = 0; i < entriesToDelete; i++) {
+      const key = iterator.next().value;
+
+      if (key !== undefined) {
+        rateLimitStore.delete(key);
+      }
     }
   }
 
@@ -269,6 +283,22 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
         status: 405,
         headers: createSecurityHeaders(),
       });
+    }
+
+    // Enforce authentication if required (checked BEFORE rate limiting)
+    if (options.requireAuth) {
+      const cookieHeader = request.headers.get('Cookie') || '';
+      const cookies = parseCookie(cookieHeader);
+
+      if (!cookies['rc_vault']) {
+        return new Response(JSON.stringify({ error: 'Authentication required' }), {
+          status: 401,
+          headers: {
+            ...createSecurityHeaders(),
+            'Content-Type': 'application/json',
+          },
+        });
+      }
     }
 
     // Apply rate limiting

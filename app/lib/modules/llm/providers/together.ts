@@ -53,7 +53,7 @@ export default class TogetherProvider extends BaseProvider {
       return [];
     }
 
-    // console.log({ baseUrl, apiKey });
+
 
     const response = await fetch(`${baseUrl}/models`, {
       headers: {

@@ -34,6 +34,7 @@ export default defineConfig((config) => {
               if (id.includes('@ai-sdk') || id.includes('openai') || id.includes('anthropic')) {
                 return 'vendor-ai-core';
               }
+              if (id.includes('framer-motion')) return 'vendor-animation';
               return 'vendor-packages';
             }
           },

@@ -29,29 +29,35 @@ export function useSupabaseConnection() {
       // First, try to initialize from server-side token
       try {
         await initializeSupabaseConnection();
-      } catch {}
+      } catch (error) {
+        logger.debug('Server-side Supabase init skipped:', error);
+      }
 
       // Then check localStorage for additional data
-      const savedConnection = localStorage.getItem('supabase_connection');
-      const savedCredentials = localStorage.getItem('supabaseCredentials');
+      try {
+        const savedConnection = localStorage.getItem('supabase_connection');
+        const savedCredentials = localStorage.getItem('supabaseCredentials');
 
-      if (savedConnection) {
-        const parsed = JSON.parse(savedConnection);
+        if (savedConnection) {
+          const parsed = JSON.parse(savedConnection);
 
-        if (savedCredentials && !parsed.credentials) {
-          parsed.credentials = JSON.parse(savedCredentials);
+          if (savedCredentials && !parsed.credentials) {
+            parsed.credentials = JSON.parse(savedCredentials);
+          }
+
+          // Only update if we don't already have a connection from server-side
+          const currentState = supabaseConnection.get();
+
+          if (!currentState.user) {
+            updateSupabaseConnection(parsed);
+          }
+
+          if (parsed.token && parsed.selectedProjectId && !parsed.credentials) {
+            fetchProjectApiKeys(parsed.selectedProjectId, parsed.token).catch((e) => logger.error(e));
+          }
         }
-
-        // Only update if we don't already have a connection from server-side
-        const currentState = supabaseConnection.get();
-
-        if (!currentState.user) {
-          updateSupabaseConnection(parsed);
-        }
-
-        if (parsed.token && parsed.selectedProjectId && !parsed.credentials) {
-          fetchProjectApiKeys(parsed.selectedProjectId, parsed.token).catch((e) => logger.error(e));
-        }
+      } catch (error) {
+        logger.error('Failed to restore Supabase connection from localStorage:', error);
       }
     };
 

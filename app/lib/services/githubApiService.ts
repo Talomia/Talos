@@ -85,8 +85,9 @@ export class GitHubApiServiceClass {
     const allRepos: GitHubRepoInfo[] = [];
     let page = 1;
     let hasMore = true;
+    const maxPages = 100;
 
-    while (hasMore) {
+    while (hasMore && page <= maxPages) {
       const repos = await this._makeRequestInternal<GitHubRepoInfo[]>(
         `/user/repos?per_page=100&page=${page}&sort=updated`,
       );
@@ -104,7 +105,7 @@ export class GitHubApiServiceClass {
    */
   async getDetailedRepositoryInfo(owner: string, repo: string): Promise<DetailedRepoInfo> {
     const [repoInfo, branches] = await Promise.all([
-      this._makeRequestInternal<GitHubRepoInfo>(`/repos/${owner}/${repo}`),
+      this._makeRequestInternal<GitHubRepoInfo>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`),
       this.getRepositoryBranches(owner, repo).catch(() => []),
     ]);
 
@@ -130,14 +131,14 @@ export class GitHubApiServiceClass {
    * Get repository branches
    */
   async getRepositoryBranches(owner: string, repo: string): Promise<GitHubBranch[]> {
-    return this._makeRequestInternal<GitHubBranch[]>(`/repos/${owner}/${repo}/branches`);
+    return this._makeRequestInternal<GitHubBranch[]>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`);
   }
 
   /**
    * Get contributors count using Link header pagination info
    */
   private async _getRepositoryContributorsCount(owner: string, repo: string): Promise<number> {
-    const response = await fetch(`${this._baseURL}/repos/${owner}/${repo}/contributors?per_page=1`, {
+    const response = await fetch(`${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=1`, {
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
@@ -165,7 +166,7 @@ export class GitHubApiServiceClass {
    * Get issues count using Link header pagination info
    */
   private async _getRepositoryIssuesCount(owner: string, repo: string): Promise<number> {
-    const response = await fetch(`${this._baseURL}/repos/${owner}/${repo}/issues?state=all&per_page=1`, {
+    const response = await fetch(`${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=all&per_page=1`, {
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
@@ -193,7 +194,7 @@ export class GitHubApiServiceClass {
    * Get pull requests count using Link header pagination info
    */
   private async _getRepositoryPullRequestsCount(owner: string, repo: string): Promise<number> {
-    const response = await fetch(`${this._baseURL}/repos/${owner}/${repo}/pulls?state=all&per_page=1`, {
+    const response = await fetch(`${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=all&per_page=1`, {
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,

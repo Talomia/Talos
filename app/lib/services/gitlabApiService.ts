@@ -6,6 +6,7 @@ import type {
   GitLabProjectResponse,
   GitLabCommitRequest,
 } from '~/types/GitLab';
+import type { FileContent } from '~/utils/deployUtils';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('GitLabApiService');
@@ -18,10 +19,20 @@ interface CacheEntry<T> {
   expiresAt: number;
 }
 
+const MAX_CACHE_SIZE = 1000;
+
 class GitLabCache {
   private _cache = new Map<string, CacheEntry<any>>();
 
   set<T>(key: string, data: T, duration = CACHE_DURATION): void {
+    if (this._cache.size >= MAX_CACHE_SIZE) {
+      // Evict the oldest entry
+      const firstKey = this._cache.keys().next().value;
+      if (firstKey !== undefined) {
+        this._cache.delete(firstKey);
+      }
+    }
+
     const timestamp = Date.now();
     this._cache.set(key, {
       data,
@@ -109,7 +120,7 @@ export class GitLabApiService {
     // Log token format for debugging
     logger.trace('GitLab API token info:', {
       tokenLength: this._token.length,
-      tokenPrefix: this._token.substring(0, 10) + '...',
+      tokenPrefix: this._token.substring(0, 4) + '...',
       tokenType: this._token.startsWith('glpat-') ? 'personal-access-token' : 'unknown',
     });
 
@@ -185,7 +196,8 @@ export class GitLabApiService {
   }
 
   async getProjects(membership = true, minAccessLevel = 20, perPage = 50): Promise<GitLabProjectInfo[]> {
-    const cacheKey = `projects_${this._token}_${membership}_${minAccessLevel}`;
+    const tokenHash = btoa(this._token).substring(0, 8);
+    const cacheKey = `projects_${tokenHash}_${membership}_${minAccessLevel}`;
     const cached = gitlabCache.get<GitLabProjectInfo[]>(cacheKey);
 
     if (cached) {
@@ -274,6 +286,8 @@ export class GitLabApiService {
       return await response.json();
     }
 
+    logger.warn(`Failed to fetch groups: ${response.status} ${response.statusText}`);
+
     return [];
   }
 
@@ -283,6 +297,8 @@ export class GitLabApiService {
     if (response.ok) {
       return await response.json();
     }
+
+    logger.warn(`Failed to fetch snippets: ${response.status} ${response.statusText}`);
 
     return [];
   }
@@ -432,7 +448,7 @@ export class GitLabApiService {
   async createProjectWithFiles(
     name: string,
     isPrivate: boolean,
-    files: Record<string, string>,
+    files: Record<string, FileContent>,
   ): Promise<GitLabProjectResponse> {
     // Create the project first
     const project = await this.createProject(name, isPrivate);
@@ -442,10 +458,11 @@ export class GitLabApiService {
       // Wait a moment for the project to be fully created
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      const actions = Object.entries(files).map(([filePath, content]) => ({
+      const actions = Object.entries(files).map(([filePath, fileData]) => ({
         action: 'create' as const,
         file_path: filePath,
-        content,
+        content: fileData.content,
+        encoding: fileData.isBinary ? ('base64' as const) : ('text' as const),
       }));
 
       const commitRequest: GitLabCommitRequest = {
@@ -469,16 +486,17 @@ export class GitLabApiService {
     return project;
   }
 
-  async updateProjectWithFiles(projectId: number, files: Record<string, string>): Promise<void> {
+  async updateProjectWithFiles(projectId: number, files: Record<string, FileContent>): Promise<void> {
     if (Object.keys(files).length === 0) {
       return;
     }
 
     // For existing projects, we need to determine which files exist and which are new
-    const actions = Object.entries(files).map(([filePath, content]) => ({
+    const actions = Object.entries(files).map(([filePath, fileData]) => ({
       action: 'create' as const, // Start with create, we'll handle conflicts in the API response
       file_path: filePath,
-      content,
+      content: fileData.content,
+      encoding: fileData.isBinary ? ('base64' as const) : ('text' as const),
     }));
 
     const commitRequest: GitLabCommitRequest = {
@@ -492,10 +510,11 @@ export class GitLabApiService {
     } catch (error) {
       // If we get file conflicts, retry with update actions
       if (error instanceof Error && error.message.includes('already exists')) {
-        const updateActions = Object.entries(files).map(([filePath, content]) => ({
+        const updateActions = Object.entries(files).map(([filePath, fileData]) => ({
           action: 'update' as const,
           file_path: filePath,
-          content,
+          content: fileData.content,
+          encoding: fileData.isBinary ? ('base64' as const) : ('text' as const),
         }));
 
         const updateCommitRequest: GitLabCommitRequest = {

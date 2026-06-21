@@ -50,6 +50,7 @@ class LogStore {
   private _logs = map<Record<string, LogEntry>>({});
   showLogs = atom(true);
   private _readLogs = new Set<string>();
+  private _saveTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     // Load saved logs from cookies on initialization
@@ -118,7 +119,11 @@ class LogStore {
       return;
     }
 
-    localStorage.setItem(STORAGE_KEYS.readLogs, JSON.stringify(Array.from(this._readLogs)));
+    try {
+      localStorage.setItem(STORAGE_KEYS.readLogs, JSON.stringify(Array.from(this._readLogs)));
+    } catch (error) {
+      logger.error('Failed to save read logs to localStorage:', error);
+    }
   }
 
   private _generateId(): string {
@@ -158,9 +163,24 @@ class LogStore {
 
     this._logs.setKey(id, entry);
     this._trimLogs();
-    this._saveLogs();
+    this._debouncedSaveLogs();
 
     return id;
+  }
+
+  /**
+   * Debounced save — batches writes to localStorage every 2 seconds
+   * instead of serializing all logs on every single _addLog call.
+   */
+  private _debouncedSaveLogs() {
+    if (this._saveTimer) {
+      return; // A save is already scheduled
+    }
+
+    this._saveTimer = setTimeout(() => {
+      this._saveTimer = null;
+      this._saveLogs();
+    }, 2000);
   }
 
   // Specialized method for API logging

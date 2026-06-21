@@ -16,9 +16,24 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
 
   try {
     const { projectId, query } = (await request.json()) as { projectId: string; query: string };
+
+    if (!projectId || typeof projectId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+      return new Response(JSON.stringify({ error: 'Invalid project ID' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (!query || typeof query !== 'string' || query.trim().length === 0) {
+      return new Response(JSON.stringify({ error: 'Query is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     logger.debug('Executing query:', { projectId, query });
 
-    const response = await fetch(`https://api.supabase.com/v1/projects/${projectId}/database/query`, {
+    const response = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/database/query`, {
       method: 'POST',
       headers: {
         Authorization: authHeader,

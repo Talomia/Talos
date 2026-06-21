@@ -38,8 +38,8 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
         // Provider configurations from localStorage
         provider_settings: safeGetItem('provider_settings'),
 
-        // API keys from cookies
-        apiKeys: allCookies.apiKeys,
+        // NOTE: API keys are NOT exported — they are stored in an encrypted vault
+        // and must be re-entered manually after import for security.
 
         // Selected provider and model
         selectedModel: allCookies.selectedModel,
@@ -66,10 +66,6 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
 
         // Event logs
         isEventLogsEnabled: safeGetItem('isEventLogsEnabled'),
-
-        // Energy saver settings
-        energySaverMode: safeGetItem('energySaverMode'),
-        autoEnergySaver: safeGetItem('autoEnergySaver'),
       },
 
       // UI configuration
@@ -256,8 +252,8 @@ async function importComprehensiveFormat(data: SettingsData): Promise<void> {
       }
     }
 
-    // Import API keys and other provider cookies
-    const providerCookies = ['apiKeys', 'selectedModel', 'selectedProvider', 'providers'];
+    // Import provider cookies (skip apiKeys — keys must be re-entered via UI for vault storage)
+    const providerCookies = ['selectedModel', 'selectedProvider', 'providers'];
     providerCookies.forEach((key) => {
       if (data.providers?.[key]) {
         try {

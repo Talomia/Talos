@@ -28,6 +28,12 @@ export default function ProfileTab() {
       return;
     }
 
+    // Check file size limit (500KB)
+    if (file.size > 512000) {
+      toast.error('Profile picture must be 500KB or less');
+      return;
+    }
+
     try {
       setIsUploading(true);
 
@@ -55,10 +61,16 @@ export default function ProfileTab() {
   };
 
   const handleProfileUpdate = (field: 'username' | 'bio', value: string) => {
-    // Update the store immediately for UI responsiveness
-    updateProfile({ [field]: value });
+    // Update the store immediately for UI responsiveness (local only)
+    profileStore.set({ ...profileStore.get(), [field]: value });
 
-    // Debounce the toast notification
+    // Persist to localStorage immediately
+    if (typeof window !== 'undefined') {
+      const current = { ...profileStore.get() };
+      localStorage.setItem('bolt_profile', JSON.stringify(current));
+    }
+
+    // Debounce the server sync and toast notification
     debouncedUpdate(field, value);
   };
 
@@ -138,6 +150,7 @@ export default function ProfileTab() {
                 type="text"
                 value={profile.username}
                 onChange={(e) => handleProfileUpdate('username', e.target.value)}
+                maxLength={50}
                 className={classNames(
                   'w-full pl-11 pr-4 py-2.5 rounded-xl',
                   'bg-white dark:bg-gray-800/50',
@@ -162,6 +175,7 @@ export default function ProfileTab() {
               <textarea
                 value={profile.bio}
                 onChange={(e) => handleProfileUpdate('bio', e.target.value)}
+                maxLength={500}
                 className={classNames(
                   'w-full pl-11 pr-4 py-2.5 rounded-xl',
                   'bg-white dark:bg-gray-800/50',

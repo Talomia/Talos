@@ -1,4 +1,5 @@
 import { json, type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { Octokit } from '@octokit/rest';
 import { z } from 'zod';
 import { createScopedLogger } from '~/utils/logger';
@@ -160,7 +161,7 @@ function formatIssueBody(data: z.infer<typeof bugReportSchema>): string {
   return body;
 }
 
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = withSecurity(async ({ request, context }: ActionFunctionArgs) => {
   // Only allow POST requests
   if (request.method !== 'POST') {
     return json({ error: 'Method not allowed' }, { status: 405 });
@@ -268,4 +269,4 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     return json({ error: 'Failed to submit bug report. Please try again later.' }, { status: 500 });
   }
-}
+}, { allowedMethods: ['POST'] });

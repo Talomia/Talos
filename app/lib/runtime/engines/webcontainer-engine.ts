@@ -173,12 +173,23 @@ export class WebContainerEngine implements RuntimeEngine {
     this.#instance.on(event as any, callback as any);
   }
 
+  off<K extends keyof RuntimeEventMap>(event: K, callback: RuntimeEventMap[K]): void {
+    // WebContainer API doesn't provide off(), so this is a no-op.
+    // In practice, WebContainer events are cleaned up when the instance is torn down.
+    void event;
+    void callback;
+  }
+
   async setPreviewScript(script: string): Promise<void> {
     if (!this.#instance) {
       throw new Error('WebContainerEngine not booted');
     }
 
-    await this.#instance.setPreviewScript(script);
+    try {
+      await this.#instance.setPreviewScript(script);
+    } catch (error) {
+      logger.warn('Failed to set preview script — inspector may not work:', error);
+    }
   }
 
   getPreviewUrl(port: number): string {

@@ -373,6 +373,18 @@ export class DockerEngine implements RuntimeEngine {
     }
   }
 
+  off<K extends keyof RuntimeEventMap>(event: K, callback: RuntimeEventMap[K]): void {
+    const listeners = this.#eventListeners[event];
+
+    if (listeners) {
+      const idx = listeners.indexOf(callback as any);
+
+      if (idx !== -1) {
+        listeners.splice(idx, 1);
+      }
+    }
+  }
+
   // ─── Preview ──────────────────────────────────────────────────────────────
 
   async setPreviewScript(script: string): Promise<void> {
@@ -401,8 +413,18 @@ export class DockerEngine implements RuntimeEngine {
 
     // Wait for search completion
     return new Promise<void>((resolve, reject) => {
+      // Timeout fallback
+      const timeoutTimer = setTimeout(() => {
+        if (this.#searchProgressCallbacks.has(result.searchId)) {
+          this.#searchProgressCallbacks.delete(result.searchId);
+          this.#searchCompleteResolvers.delete(result.searchId);
+          reject(new Error(`Text search timed out for query: "${query}"`));
+        }
+      }, 60_000);
+
       const checkCompletion = (searchId: string) => {
         if (searchId === result.searchId) {
+          clearTimeout(timeoutTimer);
           this.#searchProgressCallbacks.delete(result.searchId);
           resolve();
         }
@@ -410,15 +432,6 @@ export class DockerEngine implements RuntimeEngine {
 
       // Store resolver to be called when 'search-complete' event arrives
       this.#searchCompleteResolvers.set(result.searchId, checkCompletion);
-
-      // Timeout fallback
-      setTimeout(() => {
-        if (this.#searchProgressCallbacks.has(result.searchId)) {
-          this.#searchProgressCallbacks.delete(result.searchId);
-          this.#searchCompleteResolvers.delete(result.searchId);
-          reject(new Error(`Text search timed out for query: "${query}"`));
-        }
-      }, 60_000);
     });
   }
 

@@ -15,6 +15,14 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Runtime');
 
+// ─── Configuration ────────────────────────────────────────────────────────────
+
+/** Maximum number of boot retry attempts before giving up. */
+const MAX_BOOT_RETRIES = 3;
+
+/** Base delay (ms) for exponential backoff between retries. */
+const BOOT_RETRY_BASE_DELAY_MS = 1000;
+
 // ─── HMR Context ──────────────────────────────────────────────────────────────
 
 interface RuntimeContext {
@@ -27,6 +35,35 @@ export const runtimeContext: RuntimeContext = import.meta.hot?.data.runtimeConte
 
 if (import.meta.hot) {
   import.meta.hot.data.runtimeContext = runtimeContext;
+}
+
+// ─── Boot with Retry ──────────────────────────────────────────────────────────
+
+/**
+ * Attempt to create and boot the runtime engine with exponential backoff.
+ *
+ * On each failure, waits `BOOT_RETRY_BASE_DELAY_MS * 2^attempt` before retrying.
+ * After `MAX_BOOT_RETRIES` failures, the error propagates to the caller.
+ */
+async function bootEngineWithRetry(): Promise<RuntimeEngine> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < MAX_BOOT_RETRIES; attempt++) {
+    try {
+      const engine = await createEngine();
+      return engine;
+    } catch (error) {
+      lastError = error;
+      const delay = BOOT_RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
+
+      logger.warn(`Boot attempt ${attempt + 1}/${MAX_BOOT_RETRIES} failed, retrying in ${delay}ms...`, error);
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  logger.error(`Runtime engine failed to boot after ${MAX_BOOT_RETRIES} attempts`);
+  throw lastError;
 }
 
 // ─── Engine Singleton ─────────────────────────────────────────────────────────
@@ -45,7 +82,7 @@ if (!import.meta.env.SSR) {
   runtime =
     import.meta.hot?.data.runtime ??
     Promise.resolve()
-      .then(() => createEngine())
+      .then(() => bootEngineWithRetry())
       .then(async (engine) => {
         runtimeContext.loaded = true;
         logger.info('Runtime engine booted');
@@ -80,9 +117,72 @@ if (!import.meta.env.SSR) {
         });
 
         return engine;
+      })
+      .catch((error) => {
+        logger.error('Fatal: Runtime engine could not be initialized:', error);
+
+        /*
+         * Surface the boot failure to the user via the workbench alert system.
+         * The lazy import avoids circular dependency issues.
+         */
+        import('~/lib/stores/workbench')
+          .then(({ workbenchStore }) => {
+            workbenchStore.actionAlert.set({
+              type: 'preview',
+              title: 'Runtime Boot Failure',
+              description:
+                'The execution runtime failed to start. This may be caused by browser restrictions, ' +
+                'insufficient memory, or a third-party extension blocking SharedArrayBuffer. ' +
+                'Try refreshing the page or disabling extensions.',
+              content: error instanceof Error ? error.message : String(error),
+              source: 'preview',
+            });
+          })
+          .catch(() => {
+            // Best-effort — if workbench also fails, there's nothing more we can do
+          });
+
+        // Re-throw so consumers of the `runtime` promise know it failed
+        throw error;
       });
+
+  // ─── Graceful Teardown on Page Unload ─────────────────────────────────────
+  //
+  // Ensures the runtime engine is properly shut down when the user navigates
+  // away or closes the tab. This releases WebContainer's underlying
+  // ServiceWorker and iframe resources, preventing memory leaks across
+  // page transitions.
+
+  const teardownRuntime = () => {
+    runtime
+      .then((engine) => {
+        logger.info('Tearing down runtime engine on page unload');
+        engine.teardown();
+      })
+      .catch(() => {
+        // Engine never booted or already failed — nothing to tear down
+      });
+  };
+
+  window.addEventListener('beforeunload', teardownRuntime);
+
+  // Also tear down on actual page unload for mobile browsers that may not fire
+  // beforeunload. Only triggers on real navigation away, NOT on tab switches.
+  const onPageHide = (event: PageTransitionEvent) => {
+    if (!event.persisted) {
+      teardownRuntime();
+    }
+  };
+  window.addEventListener('pagehide', onPageHide);
 
   if (import.meta.hot) {
     import.meta.hot.data.runtime = runtime;
+
+    // Clean up event listeners on HMR to avoid duplicates
+    import.meta.hot.dispose(() => {
+      window.removeEventListener('beforeunload', teardownRuntime);
+      window.removeEventListener('pagehide', onPageHide);
+    });
   }
 }
+

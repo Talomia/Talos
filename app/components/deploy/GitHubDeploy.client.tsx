@@ -9,6 +9,8 @@ import type { ActionCallbackData } from '~/lib/runtime/message-parser';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import { getLocalStorage } from '~/lib/persistence/localStorage';
 import { formatBuildFailureOutput } from './deployUtils';
+import { isBinaryFile } from '~/utils/deployUtils';
+import type { FileContent } from '~/utils/deployUtils';
 
 const logger = createScopedLogger('GitHubDeploy');
 
@@ -89,8 +91,8 @@ export function useGitHubDeploy() {
       const container = await runtime;
 
       // Get all files recursively - we'll deploy the entire project, not just the build directory
-      async function getAllFiles(dirPath: string, basePath: string = ''): Promise<Record<string, string>> {
-        const files: Record<string, string> = {};
+      async function getAllFiles(dirPath: string, basePath: string = ''): Promise<Record<string, FileContent>> {
+        const files: Record<string, FileContent> = {};
         const entries = await container.fs.readdir(dirPath, { withFileTypes: true });
 
         for (const entry of entries) {
@@ -113,16 +115,19 @@ export function useGitHubDeploy() {
           }
 
           if (entry.isFile()) {
-            // Skip binary files, large files and other common excludes
+            // Skip system files, logs, and env files
             if (entry.name.endsWith('.DS_Store') || entry.name.endsWith('.log') || entry.name.startsWith('.env')) {
               continue;
             }
 
             try {
-              const content = await container.fs.readFile(fullPath, 'utf-8');
+              const binary = isBinaryFile(entry.name);
+              const content = binary
+                ? btoa(Array.from(new Uint8Array(await container.fs.readFile(fullPath) as Uint8Array)).map((b) => String.fromCharCode(b)).join(''))
+                : await container.fs.readFile(fullPath, 'utf-8');
 
               // Store the file with its relative path, not the full system path
-              files[relativePath] = content;
+              files[relativePath] = { content, isBinary: binary };
             } catch (error) {
               logger.warn(`Could not read file ${fullPath}:`, error);
               continue;
@@ -147,12 +152,12 @@ export function useGitHubDeploy() {
        * For now, we'll just complete the deployment with a success message
        * Notify that deployment preparation is complete
        */
-      deployArtifact.runner.handleDeployAction('deploying', 'complete', {
+      deployArtifact.runner.handleDeployAction('deploying', 'pending', {
         source: 'github',
       });
 
-      // Show success toast notification
-      toast.success(`🚀 GitHub deployment preparation completed successfully!`);
+      // Show info toast — deployment is not complete until the user configures the repository
+      toast.info(`📦 Files collected. Configure your repository to continue.`);
 
       return {
         success: true,

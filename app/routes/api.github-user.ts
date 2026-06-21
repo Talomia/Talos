@@ -166,6 +166,11 @@ async function githubUserAction({ request, context }: { request: Request; contex
         return json({ error: 'Repository name is required' }, { status: 400 });
       }
 
+      // Validate repo format: must be owner/repo with safe characters
+      if (!/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repoFullName)) {
+        return json({ error: 'Invalid repository format. Expected owner/repo' }, { status: 400 });
+      }
+
       // Fetch repository branches
       const response = await fetch(`https://api.github.com/repos/${repoFullName}/branches`, {
         headers: {

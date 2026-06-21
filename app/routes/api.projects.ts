@@ -1,4 +1,5 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { getAuthenticatedUser } from '~/lib/.server/supabase';
 import {
   listProjects,
@@ -16,7 +17,7 @@ const logger = createScopedLogger('api.projects');
  * GET /api/projects — List all projects for the authenticated user
  * GET /api/projects?id=<projectId> — Get a specific project with messages + snapshot
  */
-export async function loader({ request, context }: LoaderFunctionArgs) {
+export const loader = withSecurity(async ({ request, context }: LoaderFunctionArgs) => {
   const { user, supabase, responseHeaders } = await getAuthenticatedUser(request, context);
 
   if (!user) {
@@ -46,7 +47,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
 
     return json({ error: 'Failed to load projects' }, { status: 500, headers: responseHeaders });
   }
-}
+});
 
 /**
  * POST /api/projects — Create or update a project
@@ -58,7 +59,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
  * DELETE /api/projects — Delete a project
  * Body: { id }
  */
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = withSecurity(async ({ request, context }: ActionFunctionArgs) => {
   const { user, supabase, responseHeaders } = await getAuthenticatedUser(request, context);
 
   if (!user) {
@@ -135,4 +136,4 @@ export async function action({ request, context }: ActionFunctionArgs) {
 
     return json({ error: 'Internal server error' }, { status: 500, headers: responseHeaders });
   }
-}
+});

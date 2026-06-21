@@ -7,6 +7,7 @@ export interface StreamRecoveryOptions {
   timeout?: number;
   onTimeout?: () => void;
   onRecovery?: () => void;
+  onMaxRetriesReached?: () => void;
 }
 
 export class StreamRecoveryManager {
@@ -52,6 +53,11 @@ export class StreamRecoveryManager {
   private _handleTimeout() {
     if (this._retryCount >= (this._options.maxRetries || 3)) {
       logger.error('Max retries reached for stream recovery');
+
+      if (this._options.onMaxRetriesReached) {
+        this._options.onMaxRetriesReached();
+      }
+
       this.stop();
 
       return;

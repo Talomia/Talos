@@ -14,12 +14,18 @@ const logger = createScopedLogger('api.auth');
 async function authAction({ request, context }: ActionFunctionArgs) {
   const { supabase, responseHeaders } = createSupabaseServerClient(request, context);
 
-  const body = await request.json<{
-    action: 'signup' | 'login' | 'logout' | 'oauth';
+  let body: {
+    action: 'signup' | 'login' | 'logout' | 'oauth' | 'reset-password';
     email?: string;
     password?: string;
     provider?: string;
-  }>();
+  };
+
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Invalid or malformed JSON in request body' }, { status: 400 });
+  }
 
   try {
     switch (body.action) {
@@ -82,8 +88,18 @@ async function authAction({ request, context }: ActionFunctionArgs) {
           return json({ error: 'OAuth provider required' }, { status: 400 });
         }
 
+        const supportedOAuthProviders = ['github', 'google', 'gitlab', 'bitbucket', 'azure'] as const;
+        type SupportedProvider = (typeof supportedOAuthProviders)[number];
+
+        if (!supportedOAuthProviders.includes(body.provider as SupportedProvider)) {
+          return json(
+            { error: `Unsupported OAuth provider: ${body.provider}` },
+            { status: 400 },
+          );
+        }
+
         const { data, error } = await supabase.auth.signInWithOAuth({
-          provider: body.provider as any,
+          provider: body.provider as SupportedProvider,
           options: {
             redirectTo: `${new URL(request.url).origin}/api/auth/callback`,
           },
@@ -95,6 +111,23 @@ async function authAction({ request, context }: ActionFunctionArgs) {
         }
 
         return json({ url: data.url }, { headers: responseHeaders });
+      }
+
+      case 'reset-password': {
+        if (!body.email) {
+          return json({ error: 'Email is required' }, { status: 400 });
+        }
+
+        const { error } = await supabase.auth.resetPasswordForEmail(body.email, {
+          redirectTo: `${new URL(request.url).origin}/api/auth/callback?next=/`,
+        });
+
+        if (error) {
+          logger.error('Password reset error:', error.message);
+          return json({ error: error.message }, { status: 400, headers: responseHeaders });
+        }
+
+        return json({ success: true }, { headers: responseHeaders });
       }
 
       default:

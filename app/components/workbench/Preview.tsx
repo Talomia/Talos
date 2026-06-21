@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { ScreenshotSelector } from '~/components/workbench/ScreenshotSelector';
@@ -34,6 +34,11 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isInspectorMode, setIsInspectorMode] = useState(false);
   const [isDeviceModeOn, setIsDeviceModeOn] = useState(false);
+  // Fix 6: Track iframe loading and error states
+  const [iframeLoading, setIframeLoading] = useState(false);
+  const [iframeError, setIframeError] = useState<string | null>(null);
+  // Fix 5: Track URL validation warnings
+  const [urlWarning, setUrlWarning] = useState<string | null>(null);
 
   const { widthPercent, currentWidth, startResizing, resizingState } = usePreviewResize({
     isDeviceModeOn,
@@ -48,18 +53,67 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const expoUrl = useStore(expoUrlAtom);
   const [isExpoQrModalOpen, setIsExpoQrModalOpen] = useState(false);
 
+  /*
+   * Fix 5: Validate preview URLs before loading them in the iframe.
+   * Only localhost and WebContainer URLs are allowed. This prevents
+   * the preview iframe from navigating to arbitrary external sites.
+   */
+  const isValidPreviewUrl = useCallback((url: string | undefined): boolean => {
+    if (!url) {
+      return false;
+    }
+
+    try {
+      const parsed = new URL(url);
+
+      // Allow localhost URLs (any port)
+      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+        return true;
+      }
+
+      // Allow WebContainer URLs (*.webcontainer-api.io, *.local-credentialless.webcontainer-api.io, etc.)
+      if (parsed.hostname.endsWith('.webcontainer-api.io') || parsed.hostname.endsWith('.webcontainer.io')) {
+        return true;
+      }
+
+      // Allow StackBlitz preview URLs
+      if (parsed.hostname.endsWith('.local.webcontainer.io') || parsed.hostname.endsWith('.stackblitz.io')) {
+        return true;
+      }
+
+      return false;
+    } catch {
+      return false;
+    }
+  }, []);
+
   useEffect(() => {
     if (!activePreview) {
       setIframeUrl(undefined);
       setDisplayPath('/');
+      setUrlWarning(null);
+      setIframeError(null);
 
       return;
     }
 
     const { baseUrl } = activePreview;
-    setIframeUrl(baseUrl);
+
+    // Fix 5: Validate the URL before setting it
+    if (isValidPreviewUrl(baseUrl)) {
+      setIframeUrl(baseUrl);
+      setUrlWarning(null);
+      setIframeLoading(true);
+      setIframeError(null);
+    } else {
+      setIframeUrl(undefined);
+      setUrlWarning(
+        `Blocked URL: "${baseUrl}" is not a recognized localhost or WebContainer URL.`,
+      );
+    }
+
     setDisplayPath('/');
-  }, [activePreview]);
+  }, [activePreview, isValidPreviewUrl]);
 
   useEffect(() => {
     if (previews.length > 1 && !hasSelectedPreview.current) {
@@ -70,9 +124,22 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   const reloadPreview = () => {
     if (iframeRef.current) {
+      setIframeLoading(true);
+      setIframeError(null);
       iframeRef.current.src = iframeRef.current.src;
     }
   };
+
+  // Fix 6: Iframe load/error handlers
+  const handleIframeLoad = useCallback(() => {
+    setIframeLoading(false);
+    setIframeError(null);
+  }, []);
+
+  const handleIframeError = useCallback(() => {
+    setIframeLoading(false);
+    setIframeError('Preview failed to load. The dev server may still be starting — try reloading.');
+  }, []);
 
   const toggleFullscreen = async () => {
     if (!isFullscreen && containerRef.current) {
@@ -118,6 +185,21 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
+      const allowedOrigins = [window.location.origin];
+
+      // Allow WebContainer origins (used by StackBlitz/WebContainer runtime)
+      if (activePreview?.baseUrl) {
+        try {
+          allowedOrigins.push(new URL(activePreview.baseUrl).origin);
+        } catch {
+          // ignore invalid URL
+        }
+      }
+
+      if (!allowedOrigins.includes(event.origin) && event.origin !== '') {
+        return;
+      }
+
       if (event.data.type === 'INSPECTOR_READY') {
         if (iframeRef.current?.contentWindow) {
           iframeRef.current.contentWindow.postMessage(
@@ -132,6 +214,9 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         const element = event.data.elementInfo;
 
         navigator.clipboard.writeText(element.displayText).then(() => {
+          setSelectedElement?.(element);
+        }).catch(() => {
+          // Clipboard write may fail without permissions — still update selection
           setSelectedElement?.(element);
         });
       }
@@ -213,8 +298,40 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             alignItems: 'center',
           }}
         >
-          {activePreview ? (
+          {/* Fix 5: Show URL validation warning */}
+          {urlWarning ? (
+            <div className="flex w-full h-full justify-center items-center bg-ui-background-depth-1 text-ui-textPrimary">
+              <div className="flex flex-col items-center gap-2 p-4 max-w-md text-center">
+                <div className="i-ph:warning-circle text-3xl text-yellow-500" />
+                <p className="text-sm text-ui-textSecondary">{urlWarning}</p>
+              </div>
+            </div>
+          ) : activePreview ? (
             <>
+              {/* Fix 6: Loading spinner overlay */}
+              {iframeLoading && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-ui-background-depth-1/80">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="i-svg-spinners:90-ring-with-bg text-4xl text-ui-accentColor" />
+                    <p className="text-sm text-ui-textSecondary">Loading preview…</p>
+                  </div>
+                </div>
+              )}
+              {/* Fix 6: Error state display */}
+              {iframeError && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-ui-background-depth-1/90">
+                  <div className="flex flex-col items-center gap-3 p-4 max-w-md text-center">
+                    <div className="i-ph:x-circle text-4xl text-red-500" />
+                    <p className="text-sm text-ui-textSecondary">{iframeError}</p>
+                    <button
+                      onClick={reloadPreview}
+                      className="px-4 py-1.5 text-sm rounded-md bg-ui-accentColor text-white hover:opacity-90 transition-opacity"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              )}
               {isDeviceModeOn && showDeviceFrameInPreview ? (
                 <DeviceFramePreview
                   iframeRef={iframeRef}
@@ -230,8 +347,10 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                   title="preview"
                   className="border-none w-full h-full bg-ui-background-depth-1"
                   src={iframeUrl}
-                  sandbox="allow-scripts allow-forms allow-popups allow-modals allow-storage-access-by-user-activation allow-same-origin"
-                  allow="geolocation; ch-ua-full-version-list; cross-origin-isolated; screen-wake-lock; publickey-credentials-get; shared-storage-select-url; ch-ua-arch; bluetooth; compute-pressure; ch-prefers-reduced-transparency; deferred-fetch; usb; ch-save-data; publickey-credentials-create; shared-storage; deferred-fetch-minimal; run-ad-auction; ch-ua-form-factors; ch-downlink; otp-credentials; payment; ch-ua; ch-ua-model; ch-ect; autoplay; camera; private-state-token-issuance; accelerometer; ch-ua-platform-version; idle-detection; private-aggregation; interest-cohort; ch-viewport-height; local-fonts; ch-ua-platform; midi; ch-ua-full-version; xr-spatial-tracking; clipboard-read; gamepad; display-capture; keyboard-map; join-ad-interest-group; ch-width; ch-prefers-reduced-motion; browsing-topics; encrypted-media; gyroscope; serial; ch-rtt; ch-ua-mobile; window-management; unload; ch-dpr; ch-prefers-color-scheme; ch-ua-wow64; attribution-reporting; fullscreen; identity-credentials-get; private-state-token-redemption; hid; ch-ua-bitness; storage-access; sync-xhr; ch-device-memory; ch-viewport-width; picture-in-picture; magnetometer; clipboard-write; microphone"
+                  // Fix 4: Sandbox restricts what user-generated code can do in the preview
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                  onLoad={handleIframeLoad}
+                  onError={handleIframeError}
                 />
               )}
               <ScreenshotSelector

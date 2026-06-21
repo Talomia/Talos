@@ -80,16 +80,21 @@ export const getDebugStatus = async (): Promise<DebugStatus> => {
     const errorLogs = localStorage.getItem('error_logs');
 
     if (errorLogs) {
-      const errors = JSON.parse(errorLogs);
-      errors.forEach((error: any) => {
-        issues.errors.push({
-          id: `error-${error.timestamp}`,
-          message: error.message,
-          type: 'error',
-          timestamp: error.timestamp,
-          details: error.details,
+      try {
+        const errors = JSON.parse(errorLogs);
+
+        errors.forEach((error: any) => {
+          issues.errors.push({
+            id: `error-${error.timestamp}`,
+            message: error.message,
+            type: 'error',
+            timestamp: error.timestamp,
+            details: error.details,
+          });
         });
-      });
+      } catch (parseError) {
+        logger.error('Failed to parse error_logs from localStorage:', parseError);
+      }
     }
 
     // Filter out acknowledged issues
@@ -105,6 +110,13 @@ export const getDebugStatus = async (): Promise<DebugStatus> => {
 
 export const acknowledgeWarning = async (id: string): Promise<void> => {
   acknowledgedIssues.add(id);
+
+  // Prevent unbounded growth
+  if (acknowledgedIssues.size > 200) {
+    const entries = [...acknowledgedIssues];
+    acknowledgedIssues.clear();
+    entries.slice(-100).forEach((e) => acknowledgedIssues.add(e));
+  }
 };
 
 export const acknowledgeError = async (id: string): Promise<void> => {

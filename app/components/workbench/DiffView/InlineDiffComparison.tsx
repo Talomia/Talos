@@ -30,7 +30,7 @@ export const InlineDiffComparison = memo(({ beforeCode, afterCode, filename, lan
 
   useEffect(() => {
     // Fetch the shared highlighter instance
-    getSharedHighlighter().then(setHighlighter);
+    getSharedHighlighter().then(setHighlighter).catch(() => {});
 
     /*
      * No cleanup needed here for the highlighter instance itself,

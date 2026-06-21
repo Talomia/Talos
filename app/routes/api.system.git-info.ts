@@ -86,7 +86,9 @@ export const loader: LoaderFunction = withSecurity(
         .get('Cookie')
         ?.split(';')
         .find((cookie) => cookie.trim().startsWith('githubToken='))
-        ?.split('=')[1];
+        ?.split('=')
+        .slice(1)
+        .join('=');
 
       // Also check for token in Authorization header
       const authHeader = request.headers.get('Authorization');
@@ -221,11 +223,18 @@ export const loader: LoaderFunction = withSecurity(
             .get('Cookie')
             ?.split(';')
             .find((cookie) => cookie.trim().startsWith('githubUsername='))
-            ?.split('=')[1];
+            ?.split('=')
+            .slice(1)
+            .join('=');
 
           if (!username) {
             logger.error('GitHub username not found in cookies');
             return json({ error: 'GitHub username not found in cookies' }, { status: 400 });
+          }
+
+          // Validate username format to prevent URL path traversal
+          if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+            return json({ error: 'Invalid GitHub username format' }, { status: 400 });
           }
 
           const response = await fetch(`https://api.github.com/users/${username}/events?per_page=30`, {

@@ -52,12 +52,20 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
       return json({ error: 'Not connected to Netlify' }, { status: 401 });
     }
 
+    // Validate siteId format if provided
+    if (siteId && (typeof siteId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(siteId))) {
+      return json({ error: 'Invalid site ID format' }, { status: 400 });
+    }
+
+    // Sanitize chatId for use in site names
+    const safeChatId = (chatId || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+
     let targetSiteId = siteId;
     let siteInfo: NetlifySiteInfo | undefined;
 
     // If no siteId provided, create a new site
     if (!targetSiteId) {
-      const siteName = `app-${chatId}-${Date.now()}`;
+      const siteName = `app-${safeChatId}-${Date.now()}`;
       const createSiteResponse = await fetch('https://api.netlify.com/api/v1/sites', {
         method: 'POST',
         headers: {
@@ -89,7 +97,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     } else {
       // Get existing site info
       if (targetSiteId) {
-        const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}`, {
+        const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -153,7 +161,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     }
 
     // Create a new deploy with digests
-    const deployResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}/deploys`, {
+    const deployResponse = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -184,7 +192,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
 
     // Poll until deploy is ready for file uploads
     while (retryCount < maxRetries) {
-      const statusResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}/deploys/${deploy.id}`, {
+      const statusResponse = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys/${encodeURIComponent(deploy.id)}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -215,7 +223,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
           while (!uploadSuccess && uploadRetries < 3) {
             try {
               const uploadResponse = await fetch(
-                `https://api.netlify.com/api/v1/deploys/${deploy.id}/files${encodedPath}`,
+                `https://api.netlify.com/api/v1/deploys/${encodeURIComponent(deploy.id)}/files${encodedPath}`,
                 {
                   method: 'PUT',
                   headers: {

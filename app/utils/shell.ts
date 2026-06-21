@@ -59,10 +59,12 @@ export async function newShellProcess(engine: RuntimeEngine, terminal: ITerminal
         }
       },
     }),
-  );
+  ).catch((error) => {
+    logger.error('Shell stream pipe error:', error);
+  });
 
   terminal.onData((data) => {
-    // console.log('terminal onData', { data, isInteractive });
+
 
     if (isInteractive) {
       input.write(data);
@@ -165,7 +167,9 @@ export class AppShell {
           terminal.write(data);
         },
       }),
-    );
+    ).catch((error) => {
+      logger.error('Shell stream pipe error:', error);
+    });
 
     terminal.onData((data) => {
       if (isInteractive) {

@@ -123,27 +123,87 @@ export function useDataImport({
 
       try {
         // Step 1: Read file
-        showProgress('Reading file', 20);
+        showProgress('Reading file', 10);
 
         const fileContent = await file.text();
 
-        // Step 2: Parse JSON and validate structure
-        showProgress('Parsing chat data', 40);
+        // Step 2: Parse JSON and validate top-level structure
+        showProgress('Parsing chat data', 20);
 
-        const importedData = JSON.parse(fileContent);
+        let importedData: unknown;
 
-        if (!importedData.chats || !Array.isArray(importedData.chats)) {
-          throw new Error('Invalid chat data format: missing or invalid chats array');
+        try {
+          importedData = JSON.parse(fileContent);
+        } catch {
+          toast.dismiss('progress-toast');
+          toast.error('Invalid JSON: the file does not contain valid JSON data.', {
+            position: 'bottom-right',
+            autoClose: 5000,
+          });
+          return;
+        }
+
+        // Validate the parsed data is an object or array
+        if (importedData === null || typeof importedData !== 'object') {
+          toast.dismiss('progress-toast');
+          toast.error('Invalid format: imported data must be a JSON object or array.', {
+            position: 'bottom-right',
+            autoClose: 5000,
+          });
+          return;
+        }
+
+        // Normalize: if it's an array, wrap it as { chats: [...] }
+        const normalizedData = Array.isArray(importedData)
+          ? { chats: importedData }
+          : (importedData as Record<string, unknown>);
+
+        if (!normalizedData.chats || !Array.isArray(normalizedData.chats)) {
+          toast.dismiss('progress-toast');
+          toast.error('Invalid chat data format: missing or invalid "chats" array in the imported file.', {
+            position: 'bottom-right',
+            autoClose: 5000,
+          });
+          return;
         }
 
         // Step 3: Validate each chat object
-        showProgress('Validating chat data', 60);
+        showProgress('Validating chat data', 30);
 
-        const validatedChats = importedData.chats.map((chat: any) => {
-          if (!chat.id || !Array.isArray(chat.messages)) {
-            throw new Error('Invalid chat format: missing required fields');
+        for (let i = 0; i < (normalizedData.chats as any[]).length; i++) {
+          const chat = (normalizedData.chats as any[])[i];
+
+          if (!chat || typeof chat !== 'object') {
+            toast.dismiss('progress-toast');
+            toast.error(`Invalid chat at index ${i}: each chat must be a JSON object.`, {
+              position: 'bottom-right',
+              autoClose: 5000,
+            });
+            return;
           }
 
+          if (!chat.id || typeof chat.id !== 'string') {
+            toast.dismiss('progress-toast');
+            toast.error(`Invalid chat at index ${i}: missing or non-string "id" field.`, {
+              position: 'bottom-right',
+              autoClose: 5000,
+            });
+            return;
+          }
+
+          if (!Array.isArray(chat.messages)) {
+            toast.dismiss('progress-toast');
+            toast.error(`Invalid chat "${chat.id}": missing or non-array "messages" field.`, {
+              position: 'bottom-right',
+              autoClose: 5000,
+            });
+            return;
+          }
+        }
+
+        showProgress('Building validated chat objects', 40);
+
+        const validatedChats = (normalizedData.chats as any[]).map((chat: any) => {
           // Ensure each message has required fields
           const validatedMessages = chat.messages.map((msg: any) => {
             if (!msg.role || !msg.content) {
@@ -171,13 +231,13 @@ export function useDataImport({
         });
 
         // Step 4: Save current chats for potential undo
-        showProgress('Preparing database transaction', 70);
+        showProgress('Preparing database transaction', 50);
 
         const currentChats = await ImportExportService.exportAllChats(db);
         setLastOperation({ type: 'import-chats', data: { previous: currentChats } });
 
         // Step 5: Import chats
-        showProgress(`Importing ${validatedChats.length} chats`, 80);
+        showProgress(`Importing ${validatedChats.length} chats`, 60);
 
         const transaction = db.transaction(['chats'], 'readwrite');
         const store = transaction.objectStore('chats');
@@ -191,7 +251,7 @@ export function useDataImport({
           if (processed % 5 === 0 || processed === validatedChats.length) {
             showProgress(
               `Imported ${processed} of ${validatedChats.length} chats`,
-              80 + (processed / validatedChats.length) * 20,
+              60 + (processed / validatedChats.length) * 20,
             );
           }
         }
@@ -201,13 +261,40 @@ export function useDataImport({
           transaction.onerror = reject;
         });
 
-        // Step 6: Complete
+        // Step 6: Import snapshots if present
+        const importedSnapshots = (normalizedData as Record<string, unknown>).snapshots;
+
+        if (Array.isArray(importedSnapshots) && importedSnapshots.length > 0 && db.objectStoreNames.contains('snapshots')) {
+          showProgress(`Importing ${importedSnapshots.length} snapshots`, 85);
+
+          const snapshotTx = db.transaction(['snapshots'], 'readwrite');
+          const snapshotStore = snapshotTx.objectStore('snapshots');
+
+          for (const snapshot of importedSnapshots) {
+            if (snapshot && typeof snapshot === 'object') {
+              snapshotStore.put(snapshot);
+            }
+          }
+
+          await new Promise((resolve, reject) => {
+            snapshotTx.oncomplete = resolve;
+            snapshotTx.onerror = () => {
+              logger.warn('Snapshot import failed, continuing:', snapshotTx.error);
+              resolve(undefined);
+            };
+          });
+        }
+
+        // Step 7: Complete
         showProgress('Completing import', 100);
 
         // Dismiss progress toast before showing success toast
         toast.dismiss('progress-toast');
 
-        toast.success(`${validatedChats.length} chats imported successfully`, {
+        const snapshotCount = Array.isArray(importedSnapshots) ? importedSnapshots.length : 0;
+        const snapshotMsg = snapshotCount > 0 ? ` and ${snapshotCount} snapshots` : '';
+
+        toast.success(`${validatedChats.length} chats${snapshotMsg} imported successfully`, {
           position: 'bottom-right',
           autoClose: 3000,
         });
@@ -268,12 +355,10 @@ export function useDataImport({
         const currentApiKeys = apiKeysStr ? JSON.parse(decodeURIComponent(apiKeysStr.split('=')[1])) : {};
         setLastOperation({ type: 'import-api-keys', data: { previous: currentApiKeys } });
 
-        // Step 4: Import API keys
+        // Step 4: Import API keys to encrypted vault
         showProgress('Applying API keys', 80);
 
-        const newKeys = ImportExportService.importAPIKeys(importedData);
-        const apiKeysJson = JSON.stringify(newKeys);
-        document.cookie = `apiKeys=${apiKeysJson}; path=/; max-age=31536000`;
+        const newKeys = await ImportExportService.importAPIKeys(importedData);
 
         // Step 5: Complete
         showProgress('Completing import', 100);
@@ -283,13 +368,10 @@ export function useDataImport({
 
         // Count how many keys were imported
         const keyCount = Object.keys(newKeys).length;
-        const newKeyCount = Object.keys(newKeys).filter(
-          (key) => !currentApiKeys[key] || currentApiKeys[key] !== newKeys[key],
-        ).length;
 
         toast.success(
-          `${keyCount} API keys imported successfully (${newKeyCount} new/updated)\n` +
-            'Note: Keys are stored in browser cookies. For server-side usage, add them to your .env.local file.',
+          `${keyCount} API keys imported to encrypted vault successfully.\n` +
+            'Keys are securely stored server-side.',
           { position: 'bottom-right', autoClose: 5000 },
         );
 

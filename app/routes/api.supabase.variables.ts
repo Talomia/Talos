@@ -14,7 +14,11 @@ async function supabaseVariablesAction({ request }: ActionFunctionArgs) {
       return json({ error: 'Project ID and token are required' }, { status: 400 });
     }
 
-    const response = await fetch(`https://api.supabase.com/v1/projects/${projectId}/api-keys`, {
+    if (!/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+      return json({ error: 'Invalid project ID format' }, { status: 400 });
+    }
+
+    const response = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,

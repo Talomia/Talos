@@ -73,6 +73,10 @@ export default class OpenAIProvider extends BaseProvider {
       },
     });
 
+    if (!response.ok) {
+      throw new Error(`Failed to fetch OpenAI models: ${response.status} ${response.statusText}`);
+    }
+
     const res = (await response.json()) as {
       data: Array<{
         id: string;

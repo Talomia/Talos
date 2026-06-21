@@ -1,8 +1,21 @@
 import { type LoaderFunctionArgs, redirect } from '@remix-run/cloudflare';
 import { createSupabaseServerClient } from '~/lib/.server/supabase';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.auth.callback');
+
+/**
+ * Validate redirect target to prevent open redirects.
+ * Must start with `/` and must NOT start with `//` (protocol-relative URL).
+ */
+function sanitizeRedirect(next: string | null): string {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) {
+    return '/';
+  }
+
+  return next;
+}
 
 /**
  * GET /api/auth/callback
@@ -10,10 +23,10 @@ const logger = createScopedLogger('api.auth.callback');
  * Handles the OAuth callback from Supabase Auth.
  * Exchanges the authorization code for a session.
  */
-export async function loader({ request, context }: LoaderFunctionArgs) {
+async function authCallbackLoader({ request, context }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const code = url.searchParams.get('code');
-  const next = url.searchParams.get('next') || '/';
+  const next = sanitizeRedirect(url.searchParams.get('next'));
 
   if (!code) {
     logger.error('No code parameter in auth callback');
@@ -36,3 +49,5 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     return redirect('/?error=auth_callback_failed');
   }
 }
+
+export const loader = withSecurity(authCallbackLoader, { allowedMethods: ['GET'] });

@@ -2,7 +2,7 @@ import type { Message } from 'ai';
 import { createScopedLogger } from '~/utils/logger';
 import type { ChatHistoryItem } from './useChatHistory';
 import type { Snapshot } from './types'; // Import Snapshot type
-import { syncChatToCloud, syncDeleteToCloud } from './cloudSync';
+import { syncChatToCloud, syncDeleteToCloud, syncDeleteAllToCloud, syncDescriptionToCloud } from './cloudSync';
 
 export interface IChatMetadata {
   gitUrl: string;
@@ -305,7 +305,11 @@ export async function updateChatDescription(db: IDBDatabase, id: string, descrip
     throw new Error('Description cannot be empty');
   }
 
+  // Update locally
   await setMessages(db, id, chat.messages, chat.urlId, description, chat.timestamp, chat.metadata);
+
+  // Sync only the description change (lightweight) instead of re-uploading all messages
+  syncDescriptionToCloud(id, description);
 }
 
 export async function updateChatMetadata(
@@ -376,6 +380,8 @@ export async function deleteAllChats(db: IDBDatabase): Promise<void> {
 
     const checkCompletion = () => {
       if (chatsCleared && snapshotsCleared) {
+        // Sync delete-all to cloud
+        syncDeleteAllToCloud();
         resolve();
       }
     };

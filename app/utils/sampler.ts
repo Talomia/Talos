@@ -8,7 +8,7 @@
  * @param sampleInterval How often to sample calls (in ms)
  * @returns The sampled function
  */
-export function createSampler<T extends (...args: any[]) => any>(fn: T, sampleInterval: number): T {
+export function createSampler<T extends (...args: any[]) => any>(fn: T, sampleInterval: number): T & { cancel: () => void } {
   let lastArgs: Parameters<T> | null = null;
   let lastTime = 0;
   let timeout: NodeJS.Timeout | null = null;
@@ -43,7 +43,16 @@ export function createSampler<T extends (...args: any[]) => any>(fn: T, sampleIn
     lastTime = now;
     fn.apply(this, args);
     lastArgs = null;
-  } as T;
+  } as T & { cancel: () => void };
+
+  sampled.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+      timeout = null;
+    }
+
+    lastArgs = null;
+  };
 
   return sampled;
 }

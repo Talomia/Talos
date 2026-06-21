@@ -9,6 +9,7 @@ const logger = createScopedLogger('cloud-persistence');
  * 1. Transparent sync — local writes are mirrored to the server when authenticated
  * 2. Graceful degradation — works fully offline or when unauthenticated
  * 3. Background sync — doesn't block the UI thread
+ * 4. Deduplication — rapid saves to the same chat are coalesced
  *
  * The local IndexedDB remains the source of truth for the UI,
  * while the server provides cross-device sync and backup.
@@ -28,12 +29,21 @@ interface SyncableChat {
 }
 
 let _isAuthenticated = false;
-const _syncQueue: Array<() => Promise<void>> = [];
 let _isSyncing = false;
 
 /**
+ * Pending sync operations keyed by chat ID.
+ * When a new sync for the same chat arrives, it replaces the pending one
+ * instead of queuing a redundant request.
+ */
+const _pendingChatSyncs = new Map<string, SyncableChat>();
+const _pendingDeletes = new Set<string>();
+const _pendingDescriptions = new Map<string, { chatId: string; description: string }>();
+let _syncScheduled = false;
+
+/**
  * Initialize cloud persistence.
- * Checks authentication status and starts any pending sync.
+ * Checks authentication status, pulls cloud projects, and starts any pending sync.
  */
 export async function initCloudPersistence(): Promise<void> {
   try {
@@ -43,7 +53,13 @@ export async function initCloudPersistence(): Promise<void> {
 
     if (_isAuthenticated) {
       logger.info('Cloud persistence enabled — user is authenticated');
-      processSyncQueue();
+
+      // Pull cloud projects into local IDB (non-blocking)
+      pullFromCloud().catch((error) => {
+        logger.error('Cloud pull failed:', error);
+      });
+
+      scheduleSyncFlush();
     } else {
       logger.info('Cloud persistence disabled — user not authenticated');
     }
@@ -54,34 +70,120 @@ export async function initCloudPersistence(): Promise<void> {
 }
 
 /**
+ * Pull projects from cloud and merge into local IndexedDB.
+ *
+ * Only imports projects that don't already exist locally — local IDB
+ * is always the source of truth for existing chats. This enables
+ * cross-device sync: projects created on device A appear on device B.
+ *
+ * Writes directly to IDB (bypasses `setMessages`) to avoid triggering
+ * a circular sync-to-cloud for data that already lives in the cloud.
+ */
+export async function pullFromCloud(): Promise<number> {
+  const cloudProjects = await loadProjectsFromCloud();
+
+  if (!cloudProjects || cloudProjects.length === 0) {
+    return 0;
+  }
+
+  // Lazy-import to avoid circular dependency (db.ts imports cloudSync.ts)
+  const { openDatabase } = await import('./db');
+  const db = await openDatabase();
+
+  if (!db) {
+    logger.warn('Cloud pull: local database unavailable');
+    return 0;
+  }
+
+  // Get all local chat IDs
+  const localIds = await new Promise<Set<string>>((resolve, reject) => {
+    const transaction = db.transaction('chats', 'readonly');
+    const store = transaction.objectStore('chats');
+    const request = store.getAllKeys();
+
+    request.onsuccess = () => resolve(new Set(request.result.map(String)));
+    request.onerror = () => reject(request.error);
+  });
+
+  // Find cloud projects that don't exist locally
+  const missingProjects = cloudProjects.filter((project) => !localIds.has(project.id));
+
+  if (missingProjects.length === 0) {
+    logger.debug('Cloud pull: all cloud projects already exist locally');
+    return 0;
+  }
+
+  // Import missing projects directly into IDB (no circular sync)
+  let imported = 0;
+
+  for (const project of missingProjects) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const transaction = db.transaction('chats', 'readwrite');
+        const store = transaction.objectStore('chats');
+
+        const request = store.put({
+          id: project.id,
+          urlId: project.urlId || project.id,
+          description: project.description || '',
+          messages: project.messages || [],
+          timestamp: new Date().toISOString(),
+          metadata: project.metadata,
+        });
+
+        request.onsuccess = () => {
+          imported++;
+          resolve();
+        };
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      logger.error(`Cloud pull: failed to import project ${project.id}:`, error);
+    }
+  }
+
+  if (imported > 0) {
+    logger.info(`Cloud pull: imported ${imported} project(s) from cloud`);
+  }
+
+  return imported;
+}
+
+/**
+ * Re-check auth state. Call this when auth state may have changed
+ * (e.g., login/logout in another tab).
+ */
+export async function refreshCloudAuthState(): Promise<void> {
+  try {
+    const response = await fetch('/api/auth/user');
+    const data = (await response.json()) as { user: any };
+    const wasAuthenticated = _isAuthenticated;
+    _isAuthenticated = !!data.user;
+
+    if (_isAuthenticated && !wasAuthenticated) {
+      logger.info('Cloud persistence re-enabled after auth refresh');
+      scheduleSyncFlush();
+    } else if (!_isAuthenticated && wasAuthenticated) {
+      logger.info('Cloud persistence disabled — user logged out');
+    }
+  } catch {
+    _isAuthenticated = false;
+  }
+}
+
+/**
  * Sync a chat save to the server.
- * Called after every local IndexedDB write.
+ * Deduplicates: if a sync for the same chatId is already pending,
+ * it's replaced with the latest data instead of queuing twice.
  */
 export function syncChatToCloud(chat: SyncableChat): void {
   if (!_isAuthenticated) {
     return;
   }
 
-  _syncQueue.push(async () => {
-    try {
-      await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: chat.id,
-          urlId: chat.urlId,
-          description: chat.description,
-          messages: chat.messages,
-          metadata: chat.metadata,
-          snapshot: chat.snapshot,
-        }),
-      });
-    } catch (error) {
-      logger.error('Failed to sync chat to cloud:', error);
-    }
-  });
-
-  processSyncQueue();
+  // Replace any pending sync for the same chat (deduplication)
+  _pendingChatSyncs.set(chat.id, chat);
+  scheduleSyncFlush();
 }
 
 /**
@@ -92,42 +194,49 @@ export function syncDeleteToCloud(chatId: string): void {
     return;
   }
 
-  _syncQueue.push(async () => {
-    try {
-      await fetch('/api/projects', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: chatId }),
-      });
-    } catch (error) {
-      logger.error('Failed to sync deletion to cloud:', error);
-    }
-  });
+  // If there's a pending save for this chat, remove it — it's being deleted
+  _pendingChatSyncs.delete(chatId);
+  _pendingDescriptions.delete(chatId);
+  _pendingDeletes.add(chatId);
+  scheduleSyncFlush();
+}
 
-  processSyncQueue();
+/**
+ * Sync all chat deletions to the server.
+ */
+export function syncDeleteAllToCloud(): void {
+  if (!_isAuthenticated) {
+    return;
+  }
+
+  // Clear all pending operations since everything is being deleted
+  _pendingChatSyncs.clear();
+  _pendingDescriptions.clear();
+  _pendingDeletes.clear();
+
+  // Queue the delete-all operation directly
+  flushDeleteAll();
 }
 
 /**
  * Sync a description update to the server.
+ * Uses lightweight PUT instead of re-uploading all messages.
  */
 export function syncDescriptionToCloud(chatId: string, description: string): void {
   if (!_isAuthenticated) {
     return;
   }
 
-  _syncQueue.push(async () => {
-    try {
-      await fetch('/api/projects', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: chatId, description }),
-      });
-    } catch (error) {
-      logger.error('Failed to sync description to cloud:', error);
-    }
-  });
+  // If there's already a pending full chat sync, just update its description
+  const pendingChat = _pendingChatSyncs.get(chatId);
 
-  processSyncQueue();
+  if (pendingChat) {
+    pendingChat.description = description;
+    return;
+  }
+
+  _pendingDescriptions.set(chatId, { chatId, description });
+  scheduleSyncFlush();
 }
 
 /**
@@ -141,6 +250,12 @@ export async function loadProjectsFromCloud(): Promise<SyncableChat[] | null> {
 
   try {
     const response = await fetch('/api/projects');
+
+    if (!response.ok) {
+      logger.error(`Failed to load projects: ${response.status} ${response.statusText}`);
+      return null;
+    }
+
     const data = (await response.json()) as { projects?: any[]; authenticated?: boolean };
 
     if (!data.authenticated || !data.projects) {
@@ -166,6 +281,7 @@ export async function loadProjectFromCloud(projectId: string): Promise<{ chat: S
     const response = await fetch(`/api/projects?id=${encodeURIComponent(projectId)}`);
 
     if (!response.ok) {
+      logger.error(`Failed to load project: ${response.status} ${response.statusText}`);
       return null;
     }
 
@@ -191,26 +307,136 @@ export function isCloudEnabled(): boolean {
 
 /*
  * ==========================================
- * Internal queue processor
+ * Internal sync engine with deduplication
  * ==========================================
  */
 
-async function processSyncQueue(): Promise<void> {
-  if (_isSyncing || _syncQueue.length === 0) {
+/**
+ * Schedule a debounced sync flush.
+ * Coalesces rapid operations into a single flush.
+ */
+function scheduleSyncFlush(): void {
+  if (_syncScheduled) {
+    return;
+  }
+
+  _syncScheduled = true;
+
+  // Debounce: wait 300ms to coalesce rapid saves
+  setTimeout(() => {
+    _syncScheduled = false;
+    flushPendingSyncs();
+  }, 300);
+}
+
+async function flushPendingSyncs(): Promise<void> {
+  if (_isSyncing) {
+    // If already syncing, reschedule
+    scheduleSyncFlush();
     return;
   }
 
   _isSyncing = true;
 
   try {
-    while (_syncQueue.length > 0) {
-      const task = _syncQueue.shift();
+    // Re-check auth before syncing
+    if (!_isAuthenticated) {
+      await refreshCloudAuthState();
 
-      if (task) {
-        await task();
+      if (!_isAuthenticated) {
+        return;
       }
     }
+
+    // Process deletes first
+    for (const chatId of _pendingDeletes) {
+      await executeSyncOperation(async () => {
+        const response = await fetch('/api/projects', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: chatId }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Delete sync failed: ${response.status}`);
+        }
+      }, 'deletion', chatId);
+    }
+    _pendingDeletes.clear();
+
+    // Process description-only updates
+    for (const [chatId, { description }] of _pendingDescriptions) {
+      await executeSyncOperation(async () => {
+        const response = await fetch('/api/projects', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: chatId, description }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Description sync failed: ${response.status}`);
+        }
+      }, 'description', chatId);
+    }
+    _pendingDescriptions.clear();
+
+    // Process full chat syncs (already deduplicated by Map key)
+    for (const [chatId, chat] of _pendingChatSyncs) {
+      await executeSyncOperation(async () => {
+        const response = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: chat.id,
+            urlId: chat.urlId,
+            description: chat.description,
+            messages: chat.messages,
+            metadata: chat.metadata,
+            snapshot: chat.snapshot,
+          }),
+        });
+
+        if (!response.ok) {
+          // Handle auth expiry
+          if (response.status === 401 || response.status === 403) {
+            _isAuthenticated = false;
+            logger.warn('Cloud sync auth expired — disabling cloud persistence');
+          }
+
+          throw new Error(`Chat sync failed: ${response.status}`);
+        }
+      }, 'chat', chatId);
+    }
+    _pendingChatSyncs.clear();
   } finally {
     _isSyncing = false;
+  }
+}
+
+async function flushDeleteAll(): Promise<void> {
+  try {
+    const response = await fetch('/api/projects', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deleteAll: true }),
+    });
+
+    if (!response.ok) {
+      logger.error(`Delete-all sync failed: ${response.status}`);
+    }
+  } catch (error) {
+    logger.error('Failed to sync delete-all to cloud:', error);
+  }
+}
+
+async function executeSyncOperation(
+  operation: () => Promise<void>,
+  type: string,
+  id: string,
+): Promise<void> {
+  try {
+    await operation();
+  } catch (error) {
+    logger.error(`Failed to sync ${type} (${id}) to cloud:`, error);
   }
 }

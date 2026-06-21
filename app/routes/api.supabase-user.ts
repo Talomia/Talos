@@ -156,12 +156,12 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
     if (action === 'get_api_keys') {
       const projectId = formData.get('projectId');
 
-      if (!projectId) {
-        return json({ error: 'Project ID is required' }, { status: 400 });
+      if (!projectId || typeof projectId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+        return json({ error: 'Invalid project ID' }, { status: 400 });
       }
 
       // Fetch project API keys
-      const response = await fetch(`https://api.supabase.com/v1/projects/${projectId}/api-keys`, {
+      const response = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`, {
         headers: {
           Authorization: `Bearer ${supabaseToken}`,
           'User-Agent': 'app',

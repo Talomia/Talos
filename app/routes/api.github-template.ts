@@ -1,4 +1,5 @@
 import { json } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.github-template');
@@ -222,12 +223,17 @@ async function fetchRepoContentsZip(repo: string, githubToken?: string) {
   return results.filter(Boolean);
 }
 
-export async function loader({ request, context }: { request: Request; context: any }) {
+export const loader = withSecurity(async ({ request, context }: { request: Request; context: any }) => {
   const url = new URL(request.url);
   const repo = url.searchParams.get('repo');
 
   if (!repo) {
     return json({ error: 'Repository name is required' }, { status: 400 });
+  }
+
+  // Validate repo format: must be owner/repo with safe characters
+  if (!/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(repo)) {
+    return json({ error: 'Invalid repository format. Expected owner/repo' }, { status: 400 });
   }
 
   try {
@@ -260,4 +266,4 @@ export async function loader({ request, context }: { request: Request; context: 
       { status: 500 },
     );
   }
-}
+});

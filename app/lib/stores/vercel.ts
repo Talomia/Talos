@@ -126,11 +126,11 @@ export async function autoConnectVercel() {
 
 export function initializeVercelConnection() {
   // Auto-connect using environment variable if available
-  const envToken = import.meta.env?.VITE_VERCEL_ACCESS_TOKEN;
+  const configuredEnvToken = import.meta.env?.VITE_VERCEL_ACCESS_TOKEN;
 
-  if (envToken && !vercelConnection.get().token) {
-    updateVercelConnection({ token: envToken });
-    fetchVercelStats(envToken).catch((e) => logger.error('Failed to fetch Vercel stats:', e));
+  if (configuredEnvToken && !vercelConnection.get().token) {
+    updateVercelConnection({ token: configuredEnvToken });
+    fetchVercelStats(configuredEnvToken).catch((e) => logger.error('Failed to fetch Vercel stats:', e));
   }
 }
 

@@ -115,6 +115,9 @@ export interface RuntimeEngine {
   /** Subscribe to runtime events */
   on<K extends keyof RuntimeEventMap>(event: K, callback: RuntimeEventMap[K]): void;
 
+  /** Unsubscribe from runtime events */
+  off<K extends keyof RuntimeEventMap>(event: K, callback: RuntimeEventMap[K]): void;
+
   /** Inject a script into preview iframes */
   setPreviewScript(script: string): Promise<void>;
 

@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { bundledLanguages, codeToHtml, isSpecialLang, type BundledLanguage, type SpecialLanguage } from 'shiki';
 import { classNames } from '~/utils/classNames';
 import { createScopedLogger } from '~/utils/logger';
@@ -20,19 +20,36 @@ export const CodeBlock = memo(
     const [html, setHTML] = useState<string | undefined>(undefined);
     const [copied, setCopied] = useState(false);
 
+    const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
     const copyToClipboard = () => {
       if (copied) {
         return;
       }
 
-      navigator.clipboard.writeText(code);
+      navigator.clipboard.writeText(code).catch(() => {
+        // Clipboard API may fail without permissions
+      });
 
       setCopied(true);
 
-      setTimeout(() => {
+      if (copyTimeoutRef.current) {
+        clearTimeout(copyTimeoutRef.current);
+      }
+
+      copyTimeoutRef.current = setTimeout(() => {
         setCopied(false);
+        copyTimeoutRef.current = null;
       }, 2000);
     };
+
+    useEffect(() => {
+      return () => {
+        if (copyTimeoutRef.current) {
+          clearTimeout(copyTimeoutRef.current);
+        }
+      };
+    }, []);
 
     useEffect(() => {
       let effectiveLanguage = language;

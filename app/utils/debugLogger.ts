@@ -391,10 +391,11 @@ class DebugLogger {
       this.stopCapture();
     }
 
+    const oldMaxEntries = this._config.maxEntries;
     this._config = { ...this._config, ...newConfig };
 
     // Recreate buffers if maxEntries changed
-    if (newConfig.maxEntries && newConfig.maxEntries !== this._config.maxEntries) {
+    if (newConfig.maxEntries && newConfig.maxEntries !== oldMaxEntries) {
       const oldLogs = this._logs.toArray();
       const oldErrors = this._errors.toArray();
       const oldNetworkRequests = this._networkRequests.toArray();

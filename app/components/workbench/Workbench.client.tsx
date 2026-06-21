@@ -86,8 +86,6 @@ export const Workbench = memo(
 
     const [fileHistory, setFileHistory] = useState<Record<string, FileHistory>>({});
 
-    // const modifiedFiles = Array.from(useStore(workbenchStore.unsavedFiles).keys());
-
     const hasPreview = useStore(computed(workbenchStore.previews, (previews) => previews.length > 0));
     const showWorkbench = useStore(workbenchStore.showWorkbench);
     const selectedFile = useStore(workbenchStore.selectedFile);

@@ -15,6 +15,7 @@ import {
   updateContextOptimization,
   updateEventLogs,
   updatePromptId,
+  updateDebugMode,
 } from '~/lib/stores/settings';
 import { useCallback, useEffect, useState } from 'react';
 import { setSecureCookie } from '~/lib/api/secureCookies';
@@ -113,7 +114,7 @@ export function useSettings(): UseSettingsReturn {
   }, []);
 
   const enableDebugMode = useCallback((enabled: boolean) => {
-    isDebugMode.set(enabled);
+    updateDebugMode(enabled);
     logStore.logSystem(`Debug mode ${enabled ? 'enabled' : 'disabled'}`);
     setSecureCookie('isDebugEnabled', String(enabled));
   }, []);

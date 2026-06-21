@@ -215,9 +215,11 @@ export const updateProviderSettings = (provider: string, settings: ProviderSetti
   // Update the store with new settings
   providersStore.setKey(provider, updatedProvider);
 
-  // Save to localStorage
-  const allSettings = providersStore.get();
-  localStorage.setItem(PROVIDER_SETTINGS_KEY, JSON.stringify(allSettings));
+  // Save to localStorage (SSR-safe)
+  if (typeof window !== 'undefined') {
+    const allSettings = providersStore.get();
+    localStorage.setItem(PROVIDER_SETTINGS_KEY, JSON.stringify(allSettings));
+  }
 
   // If this is a local provider, update the auto-enabled tracking
   if (LOCAL_PROVIDERS.includes(provider) && updatedProvider.settings.enabled !== undefined) {
@@ -251,7 +253,13 @@ const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => 
   }
 };
 
-export const isDebugMode = atom(false);
+export const isDebugMode = atom(isBrowser ? (() => {
+  try {
+    return JSON.parse(localStorage.getItem('isDebugMode') || 'false');
+  } catch {
+    return false;
+  }
+})() : false);
 
 // Define keys for localStorage
 const SETTINGS_KEYS = {
@@ -261,6 +269,7 @@ const SETTINGS_KEYS = {
   EVENT_LOGS: 'isEventLogsEnabled',
   PROMPT_ID: 'promptId',
   DEVELOPER_MODE: 'isDeveloperMode',
+  DEBUG_MODE: 'isDebugMode',
 } as const;
 
 // Initialize settings from localStorage or defaults
@@ -290,6 +299,7 @@ const getInitialSettings = () => {
     eventLogs: getStoredBoolean(SETTINGS_KEYS.EVENT_LOGS, true),
     promptId: isBrowser ? localStorage.getItem(SETTINGS_KEYS.PROMPT_ID) || 'default' : 'default',
     developerMode: getStoredBoolean(SETTINGS_KEYS.DEVELOPER_MODE, false),
+    debugMode: getStoredBoolean(SETTINGS_KEYS.DEBUG_MODE, false),
   };
 };
 
@@ -328,6 +338,14 @@ export const updatePromptId = (id: string) => {
   localStorage.setItem(SETTINGS_KEYS.PROMPT_ID, id);
 };
 
+export const updateDebugMode = (enabled: boolean) => {
+  isDebugMode.set(enabled);
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(SETTINGS_KEYS.DEBUG_MODE, JSON.stringify(enabled));
+  }
+};
+
 // Initialize tab configuration from localStorage or defaults
 const getInitialTabConfiguration = (): TabWindowConfig => {
   const defaultConfig: TabWindowConfig = {
@@ -361,9 +379,19 @@ const getInitialTabConfiguration = (): TabWindowConfig => {
   }
 };
 
-// console.log('Initial tab configuration:', getInitialTabConfiguration());
 
 export const tabConfigurationStore = map<TabWindowConfig>(getInitialTabConfiguration());
+
+// Auto-persist tab configuration changes to localStorage
+if (isBrowser) {
+  tabConfigurationStore.subscribe((config) => {
+    try {
+      localStorage.setItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(config));
+    } catch (error) {
+      logger.error('Failed to persist tab configuration:', error);
+    }
+  });
+}
 
 // Helper function to reset tab configuration
 export const resetTabConfiguration = () => {
@@ -372,5 +400,8 @@ export const resetTabConfiguration = () => {
   };
 
   tabConfigurationStore.set(defaultConfig);
-  localStorage.setItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(defaultConfig));
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(defaultConfig));
+  }
 };

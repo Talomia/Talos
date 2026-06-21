@@ -18,9 +18,9 @@ export class PreviewsStore {
   #engine: Promise<RuntimeEngine>;
   #broadcastChannel?: BroadcastChannel;
   #lastUpdate = new Map<string, number>();
-  #watchedFiles = new Set<string>();
   #refreshTimeouts = new Map<string, NodeJS.Timeout>();
   #REFRESH_DELAY = 300;
+  #MAX_TRACKED_UPDATES = 100;
   #storageListener?: (event: StorageEvent) => void;
 
   previews = atom<PreviewInfo[]>([]);
@@ -91,7 +91,6 @@ export class PreviewsStore {
 
     this.#availablePreviews.clear();
     this.#lastUpdate.clear();
-    this.#watchedFiles.clear();
   }
 
   #maybeCreateChannel(name: string): BroadcastChannel | undefined {
@@ -198,7 +197,7 @@ export class PreviewsStore {
   // Broadcast state change to all tabs
   broadcastStateChange(previewId: string) {
     const timestamp = Date.now();
-    this.#lastUpdate.set(previewId, timestamp);
+    this.#trackUpdate(previewId, timestamp);
 
     this.#broadcastChannel?.postMessage({
       type: 'state-change',
@@ -210,7 +209,7 @@ export class PreviewsStore {
   // Broadcast file change to all tabs
   broadcastFileChange(previewId: string) {
     const timestamp = Date.now();
-    this.#lastUpdate.set(previewId, timestamp);
+    this.#trackUpdate(previewId, timestamp);
 
     this.#broadcastChannel?.postMessage({
       type: 'file-change',
@@ -225,13 +224,30 @@ export class PreviewsStore {
 
     if (previewId) {
       const timestamp = Date.now();
-      this.#lastUpdate.set(previewId, timestamp);
+      this.#trackUpdate(previewId, timestamp);
 
       this.#broadcastChannel?.postMessage({
         type: 'file-change',
         previewId,
         timestamp,
       });
+    }
+  }
+
+  /**
+   * Track update timestamps with bounded growth.
+   * Prunes oldest entries when the map exceeds MAX_TRACKED_UPDATES.
+   */
+  #trackUpdate(previewId: string, timestamp: number) {
+    this.#lastUpdate.set(previewId, timestamp);
+
+    if (this.#lastUpdate.size > this.#MAX_TRACKED_UPDATES) {
+      // Remove the oldest entry
+      const oldestKey = this.#lastUpdate.keys().next().value;
+
+      if (oldestKey !== undefined) {
+        this.#lastUpdate.delete(oldestKey);
+      }
     }
   }
 

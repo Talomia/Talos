@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('GitLabDeploymentDialog');
@@ -11,7 +12,7 @@ import { GitLabApiService } from '~/lib/services/gitlabApiService';
 import { Badge } from '~/components/ui';
 import { formatSize } from '~/utils/formatSize';
 import { GitLabAuthDialog } from '~/components/@settings/tabs/gitlab/components/GitLabAuthDialog';
-import { classifyDeploymentError } from '~/components/deploy/deployUtils';
+import { sanitizeRepoName, classifyDeploymentError } from '~/components/deploy/deployUtils';
 import {
   DeploymentSuccessDialog,
   ConnectionRequiredDialog,
@@ -20,6 +21,7 @@ import {
 import { useDeploymentDialog } from '~/components/deploy/useDeploymentDialog';
 import { RepoListSection } from '~/components/deploy/RepoListSection';
 import { DeploymentFormShell } from '~/components/deploy/DeploymentFormShell';
+import type { FileContent } from '~/utils/deployUtils';
 
 const GITLAB_PROVIDER: DeploymentProviderConfig = {
   name: 'GitLab',
@@ -31,7 +33,7 @@ interface GitLabDeploymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectName: string;
-  files: Record<string, string>;
+  files: Record<string, FileContent>;
 }
 
 /**
@@ -63,8 +65,27 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
     getToken: (conn) => (typeof conn.token === 'string' ? conn.token : null),
     fetchRepos: fetchGitLabRepos,
     onClose,
-    sanitizeName: (name) => name.replace(/\s+/g, '-').toLowerCase(),
+    sanitizeName: sanitizeRepoName,
   });
+
+  // React-based overwrite confirmation (replaces window.confirm)
+  const overwriteResolveRef = useRef<((confirmed: boolean) => void) | null>(null);
+  const [showOverwriteConfirm, setShowOverwriteConfirm] = useState(false);
+  const [overwriteConfirmMessage, setOverwriteConfirmMessage] = useState('');
+
+  function requestOverwriteConfirmation(message: string): Promise<boolean> {
+    setOverwriteConfirmMessage(message);
+    setShowOverwriteConfirm(true);
+    return new Promise<boolean>((resolve) => {
+      overwriteResolveRef.current = resolve;
+    });
+  }
+
+  function handleOverwriteResponse(confirmed: boolean) {
+    setShowOverwriteConfirm(false);
+    overwriteResolveRef.current?.(confirmed);
+    overwriteResolveRef.current = null;
+  }
 
   // Function to create a new repository or push to an existing one
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,11 +106,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
     dialog.setIsLoading(true);
 
     // Sanitize repository name to match what the API will create
-    const sanitizedRepoName = dialog.repoName
-      .replace(/[^a-zA-Z0-9-_.]/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '')
-      .toLowerCase();
+    const sanitizedRepoName = sanitizeRepoName(dialog.repoName);
 
     try {
       const gitlabUrl = connection.gitlabUrl || 'https://gitlab.com';
@@ -105,6 +122,8 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       const existingProject = await apiService.getProjectByPath(projectPath);
       const projectExists = existingProject !== null;
 
+      let repoUrl = '';
+
       if (projectExists && existingProject) {
         // Confirm overwrite
         const visibilityChange =
@@ -112,7 +131,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
             ? `\n\nThis will also change the repository from ${existingProject.visibility} to ${dialog.isPrivate ? 'private' : 'public'}.`
             : '';
 
-        const confirmOverwrite = window.confirm(
+        const confirmOverwrite = await requestOverwriteConfirmation(
           `Repository "${sanitizedRepoName}" already exists. Do you want to update it? This will add or modify files in the repository.${visibilityChange}`,
         );
 
@@ -130,21 +149,25 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         // Update project with files
         toast.info('Uploading files to existing repository...');
         await apiService.updateProjectWithFiles(existingProject.id, files);
-        dialog.setCreatedRepoUrl(existingProject.http_url_to_repo);
+        repoUrl = existingProject.http_url_to_repo;
+        dialog.setCreatedRepoUrl(repoUrl);
         toast.success('Repository updated successfully!');
       } else {
         // Create new project with files
         toast.info('Creating new repository...');
 
         const newProject = await apiService.createProjectWithFiles(sanitizedRepoName, dialog.isPrivate, files);
-        dialog.setCreatedRepoUrl(newProject.http_url_to_repo);
+        repoUrl = newProject.http_url_to_repo;
+        dialog.setCreatedRepoUrl(repoUrl);
         toast.success('Repository created successfully!');
       }
 
       // Set pushed files for display
-      const fileList = Object.entries(files).map(([filePath, content]) => ({
+      const fileList = Object.entries(files).map(([filePath, fileData]) => ({
         path: filePath,
-        size: new TextEncoder().encode(content).length,
+        size: fileData.isBinary
+          ? Math.ceil(fileData.content.length * 3 / 4)
+          : new TextEncoder().encode(fileData.content).length,
       }));
 
       dialog.setPushedFiles(fileList);
@@ -156,7 +179,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         JSON.stringify({
           owner: connection.user.username,
           name: sanitizedRepoName,
-          url: dialog.createdRepoUrl,
+          url: repoUrl,
         }),
       );
 
@@ -313,6 +336,33 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
       {/* GitLab Auth Dialog */}
       <GitLabAuthDialog isOpen={dialog.showAuthDialog} onClose={dialog.handleAuthDialogClose} />
+
+      {/* Overwrite Confirmation Dialog */}
+      {showOverwriteConfirm && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/50">
+          <div className="bg-ui-background-depth-2 border border-ui-borderColor rounded-xl p-6 max-w-md mx-4 shadow-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="i-ph:warning-circle w-5 h-5 text-yellow-500" />
+              <h3 className="text-sm font-semibold text-ui-textPrimary">Confirm Overwrite</h3>
+            </div>
+            <p className="text-sm text-ui-textSecondary whitespace-pre-line mb-5">{overwriteConfirmMessage}</p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => handleOverwriteResponse(false)}
+                className="px-4 py-2 text-sm rounded-lg border border-ui-borderColor text-ui-textSecondary hover:bg-ui-item-backgroundActive transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleOverwriteResponse(true)}
+                className="px-4 py-2 text-sm rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+              >
+                Update Repository
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

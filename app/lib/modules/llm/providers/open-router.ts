@@ -62,6 +62,10 @@ export default class OpenRouterProvider extends BaseProvider {
         },
       });
 
+      if (!response.ok) {
+        throw new Error(`Failed to fetch OpenRouter models: ${response.status} ${response.statusText}`);
+      }
+
       const data = (await response.json()) as OpenRouterModelsResponse;
 
       return data.data

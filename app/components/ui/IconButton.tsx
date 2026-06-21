@@ -53,6 +53,8 @@ export const IconButton = memo(
             className,
           )}
           title={title}
+          aria-label={title}
+          type="button"
           disabled={disabled}
           onClick={(event) => {
             if (disabled) {
@@ -62,7 +64,7 @@ export const IconButton = memo(
             onClick?.(event);
           }}
         >
-          {children ? children : <div className={classNames(icon, getIconSize(size), iconClassName)}></div>}
+          {children ? children : <div className={classNames(icon, getIconSize(size), iconClassName)} aria-hidden="true"></div>}
         </button>
       );
     },

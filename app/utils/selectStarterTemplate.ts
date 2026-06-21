@@ -104,6 +104,11 @@ export const selectStarterTemplate = async (options: { message: string; model: s
     method: 'POST',
     body: JSON.stringify(requestBody),
   });
+
+  if (!response.ok) {
+    throw new Error(`LLM call failed: ${response.status} ${response.statusText}`);
+  }
+
   const respJson: { text: string } = await response.json();
   logger.trace('Template selection response:', respJson);
 

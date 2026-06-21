@@ -1,10 +1,11 @@
 import { motion, type Variants } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
 import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
-import { ControlPanel } from '~/components/@settings/core/ControlPanel';
+const ControlPanel = lazy(() => import('~/components/@settings/core/ControlPanel').then(m => ({ default: m.ControlPanel })));
+import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 import { SettingsButton, HelpButton } from '~/components/ui/SettingsButton';
 import { Button } from '~/components/ui/Button';
 import { getDb, deleteById, getAll, chatId, type ChatHistoryItem, useChatHistory } from '~/lib/persistence';
@@ -76,10 +77,13 @@ export const Menu = () => {
   const profile = useStore(profileStore);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const { filteredItems: filteredList, handleSearchChange } = useSearchFilter({
     items: list,
     searchFields: ['description'],
+    debounceMs: 200,
   });
 
   const [db, setDb] = useState<IDBDatabase | undefined>(undefined);
@@ -101,10 +105,16 @@ export const Menu = () => {
 
   const loadEntries = useCallback(() => {
     if (db) {
+      setLoadError(null);
+
       getAll(db)
         .then((list) => list.filter((item) => item.urlId && item.description))
         .then(setList)
-        .catch((error) => toast.error(error.message));
+        .catch((error) => {
+          const message = error instanceof Error ? error.message : 'Failed to load chats';
+          logger.error('Failed to load chat entries:', error);
+          setLoadError(message);
+        });
     }
   }, [db]);
 
@@ -133,7 +143,8 @@ export const Menu = () => {
       event.preventDefault();
       event.stopPropagation();
 
-      // Log the delete operation to help debugging
+      setDeletingId(item.id);
+
       deleteChat(item.id)
         .then(() => {
           toast.success('Chat deleted successfully', {
@@ -158,6 +169,9 @@ export const Menu = () => {
 
           // Still try to reload entries in case data has changed
           loadEntries();
+        })
+        .finally(() => {
+          setDeletingId(null);
         });
     },
     [loadEntries, deleteChat],
@@ -272,16 +286,6 @@ export const Menu = () => {
     }
   }, [open, loadEntries]);
 
-  // Exit selection mode when sidebar is closed
-  useEffect(() => {
-    if (!open && selectionMode) {
-      /*
-       * Don't clear selection state anymore when sidebar closes
-       * This allows the selection to persist when reopening the sidebar
-       */
-    }
-  }, [open, selectionMode]);
-
   useEffect(() => {
     const enterThreshold = 20;
     const exitThreshold = 20;
@@ -339,6 +343,8 @@ export const Menu = () => {
           'shadow-sm text-sm',
           isSettingsOpen ? 'z-40' : 'z-sidebar',
         )}
+        role="navigation"
+        aria-label="Chat history"
       >
         <div className="h-12 flex items-center justify-between px-4 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50 rounded-tr-2xl">
           <div className="text-gray-900 dark:text-white font-medium"></div>
@@ -417,12 +423,23 @@ export const Menu = () => {
               </div>
             )}
           </div>
-          <div className="flex-1 overflow-auto px-3 pb-3">
-            {filteredList.length === 0 && (
+          <div className="flex-1 overflow-auto px-3 pb-3" role="list">
+            {loadError ? (
+              <div className="px-4 py-6 text-center">
+                <div className="i-ph:warning-circle h-8 w-8 text-red-400 mx-auto mb-2" />
+                <p className="text-sm text-red-500 dark:text-red-400 mb-3">{loadError}</p>
+                <button
+                  onClick={loadEntries}
+                  className="text-sm px-4 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : filteredList.length === 0 ? (
               <div className="px-4 text-gray-500 dark:text-gray-400 text-sm">
                 {list.length === 0 ? 'No previous conversations' : 'No matches found'}
               </div>
-            )}
+            ) : null}
             <DialogRoot open={dialogContent !== null}>
               {binDates(filteredList).map(({ category, items }) => (
                 <div key={category} className="mt-2 first:mt-0 space-y-1">
@@ -444,6 +461,7 @@ export const Menu = () => {
                         selectionMode={selectionMode}
                         isSelected={selectedItems.includes(item.id)}
                         onToggleSelection={toggleItemSelection}
+                        isDeleting={deletingId === item.id}
                       />
                     ))}
                   </div>
@@ -534,7 +552,11 @@ export const Menu = () => {
         </div>
       </motion.div>
 
-      <ControlPanel open={isSettingsOpen} onClose={handleSettingsClose} />
+      <ErrorBoundary panelName="the settings panel">
+        <Suspense fallback={null}>
+          <ControlPanel open={isSettingsOpen} onClose={handleSettingsClose} />
+        </Suspense>
+      </ErrorBoundary>
     </>
   );
 };

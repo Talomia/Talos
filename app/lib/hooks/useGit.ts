@@ -190,13 +190,7 @@ const getFs = (engine: RuntimeEngine, record: MutableRefObject<Record<string, { 
       const encoding = options?.encoding;
       const relativePath = pathUtils.relative(engine.workdir, path);
 
-      try {
-        const result = await engine.fs.readFile(relativePath, encoding);
-
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      return await engine.fs.readFile(relativePath, encoding);
     },
     writeFile: async (path: string, data: any, options: any = {}) => {
       const relativePath = pathUtils.relative(engine.workdir, path);
@@ -205,75 +199,35 @@ const getFs = (engine: RuntimeEngine, record: MutableRefObject<Record<string, { 
         record.current[relativePath] = { data, encoding: options?.encoding };
       }
 
-      try {
-        // Handle encoding properly based on data type
-        if (data instanceof Uint8Array) {
-          // For binary data, don't pass encoding
-          const result = await engine.fs.writeFile(relativePath, data);
-          return result;
-        } else {
-          // For text data, use the encoding if provided
-          const encoding = options?.encoding || 'utf8';
-          const result = await engine.fs.writeFile(relativePath, data, encoding);
-
-          return result;
-        }
-      } catch (error) {
-        throw error;
+      // Handle encoding properly based on data type
+      if (data instanceof Uint8Array) {
+        // For binary data, don't pass encoding
+        return await engine.fs.writeFile(relativePath, data);
+      } else {
+        // For text data, use the encoding if provided
+        const encoding = options?.encoding || 'utf8';
+        return await engine.fs.writeFile(relativePath, data, encoding);
       }
     },
     mkdir: async (path: string, options: any) => {
       const relativePath = pathUtils.relative(engine.workdir, path);
-
-      try {
-        const result = await engine.fs.mkdir(relativePath, { ...options, recursive: true });
-
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      return await engine.fs.mkdir(relativePath, { ...options, recursive: true });
     },
     readdir: async (path: string, options: any) => {
       const relativePath = pathUtils.relative(engine.workdir, path);
-
-      try {
-        const result = await engine.fs.readdir(relativePath, options);
-
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      return await engine.fs.readdir(relativePath, options);
     },
     rm: async (path: string, options: any) => {
       const relativePath = pathUtils.relative(engine.workdir, path);
-
-      try {
-        const result = await engine.fs.rm(relativePath, { ...(options || {}) });
-
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      return await engine.fs.rm(relativePath, { ...(options || {}) });
     },
     rmdir: async (path: string, options: any) => {
       const relativePath = pathUtils.relative(engine.workdir, path);
-
-      try {
-        const result = await engine.fs.rm(relativePath, { recursive: true, ...options });
-
-        return result;
-      } catch (error) {
-        throw error;
-      }
+      return await engine.fs.rm(relativePath, { recursive: true, ...options });
     },
     unlink: async (path: string) => {
       const relativePath = pathUtils.relative(engine.workdir, path);
-
-      try {
-        return await engine.fs.rm(relativePath, { recursive: false });
-      } catch (error) {
-        throw error;
-      }
+      return await engine.fs.rm(relativePath, { recursive: false });
     },
     stat: async (path: string) => {
       try {

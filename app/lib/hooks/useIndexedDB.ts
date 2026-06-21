@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * Hook to initialize and provide access to the IndexedDB database
@@ -7,6 +7,7 @@ export function useIndexedDB() {
   const [db, setDb] = useState<IDBDatabase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const dbRef = useRef<IDBDatabase | null>(null);
 
   useEffect(() => {
     const initDB = async () => {
@@ -31,6 +32,7 @@ export function useIndexedDB() {
 
         request.onsuccess = (event) => {
           const database = (event.target as IDBOpenDBRequest).result;
+          dbRef.current = database;
           setDb(database);
           setIsLoading(false);
         };
@@ -48,9 +50,8 @@ export function useIndexedDB() {
     initDB();
 
     return () => {
-      if (db) {
-        db.close();
-      }
+      dbRef.current?.close();
+      dbRef.current = null;
     };
   }, []);
 

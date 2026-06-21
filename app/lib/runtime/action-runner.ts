@@ -111,10 +111,6 @@ export class ActionRunner {
       },
       abortSignal: abortController.signal,
     });
-
-    this.#currentExecutionPromise.then(() => {
-      this.#updateAction(actionId, { status: 'running' });
-    });
   }
 
   async runAction(data: ActionCallbackData, isStreaming: boolean = false) {
@@ -148,6 +144,19 @@ export class ActionRunner {
     return;
   }
 
+  /**
+   * Get a user-friendly alert title based on the action type.
+   */
+  #getAlertTitleForAction(actionType: string): string {
+    switch (actionType) {
+      case 'shell': return 'Command Failed';
+      case 'file': return 'File Write Failed';
+      case 'build': return 'Build Failed';
+      case 'start': return 'Dev Server Failed';
+      default: return 'Action Failed';
+    }
+  }
+
   async #executeAction(actionId: string, isStreaming: boolean = false) {
     const action = this.actions.get()[actionId];
 
@@ -167,13 +176,22 @@ export class ActionRunner {
           try {
             await this.handleSupabaseAction(action as SupabaseAction);
           } catch (error: any) {
-            // Update action status
+            const errorMessage = error instanceof Error ? error.message : 'Supabase action failed';
+
             this.#updateAction(actionId, {
               status: 'failed',
-              error: error instanceof Error ? error.message : 'Supabase action failed',
+              error: errorMessage,
             });
 
-            // Return early without re-throwing
+            // Surface supabase failures to the user
+            this.onSupabaseAlert?.({
+              type: 'error',
+              title: 'Supabase Action Failed',
+              description: errorMessage,
+              content: error instanceof Error ? error.stack || errorMessage : errorMessage,
+              source: 'supabase',
+            });
+
             return;
           }
           break;
@@ -186,8 +204,7 @@ export class ActionRunner {
           break;
         }
         case 'start': {
-          // making the start app non blocking
-
+          // Making the start app non-blocking
           this.#runStartAction(action)
             .then(() => this.#updateAction(actionId, { status: 'complete' }))
             .catch((err: Error) => {
@@ -195,26 +212,34 @@ export class ActionRunner {
                 return;
               }
 
-              this.#updateAction(actionId, { status: 'failed', error: 'Action failed' });
+              const errorMessage = err.message || 'Start action failed';
+              this.#updateAction(actionId, { status: 'failed', error: errorMessage });
               logger.error(`[${action.type}]:Action failed\n\n`, err);
 
-              if (!(err instanceof ActionCommandError)) {
-                return;
-              }
+              // Show alert for ALL errors, not just ActionCommandError
+              const alertTitle = this.#getAlertTitleForAction(action.type);
 
-              this.onAlert?.({
-                type: 'error',
-                title: 'Dev Server Failed',
-                description: err.header,
-                content: err.output,
-              });
+              if (err instanceof ActionCommandError) {
+                this.onAlert?.({
+                  type: 'error',
+                  title: alertTitle,
+                  description: err.header,
+                  content: err.output,
+                });
+              } else {
+                this.onAlert?.({
+                  type: 'error',
+                  title: alertTitle,
+                  description: errorMessage,
+                  content: err.stack || errorMessage,
+                });
+              }
             });
 
-          /*
-           * adding a delay to avoid any race condition between 2 start actions
-           * i am up for a better approach
-           */
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          // Wait for the start command to be submitted to the shell before proceeding
+          // to the next action. This prevents port-binding collisions between consecutive
+          // start actions by ensuring the shell has accepted and begun executing the command.
+          await this.#waitForStartReady(action);
 
           return;
         }
@@ -228,22 +253,28 @@ export class ActionRunner {
         return;
       }
 
-      this.#updateAction(actionId, { status: 'failed', error: 'Action failed' });
+      const errorMessage = error instanceof Error ? error.message : 'Action failed';
+      this.#updateAction(actionId, { status: 'failed', error: errorMessage });
       logger.error(`[${action.type}]:Action failed\n\n`, error);
 
-      if (!(error instanceof ActionCommandError)) {
-        return;
+      // Show alert for ALL errors with contextual title
+      const alertTitle = this.#getAlertTitleForAction(action.type);
+
+      if (error instanceof ActionCommandError) {
+        this.onAlert?.({
+          type: 'error',
+          title: alertTitle,
+          description: error.header,
+          content: error.output,
+        });
+      } else {
+        this.onAlert?.({
+          type: 'error',
+          title: alertTitle,
+          description: errorMessage,
+          content: error instanceof Error ? (error.stack || errorMessage) : errorMessage,
+        });
       }
-
-      this.onAlert?.({
-        type: 'error',
-        title: 'Dev Server Failed',
-        description: error.header,
-        content: error.output,
-      });
-
-      // re-throw the error to be caught in the promise chain
-      throw error;
     }
   }
 
@@ -261,19 +292,20 @@ export class ActionRunner {
 
     // Pre-validate command for common issues
     const validationResult = await this.#validateShellCommand(action.content);
+    let commandToExecute = action.content;
 
     if (validationResult.shouldModify && validationResult.modifiedCommand) {
       logger.debug(`Modified command: ${action.content} -> ${validationResult.modifiedCommand}`);
-      action.content = validationResult.modifiedCommand;
+      commandToExecute = validationResult.modifiedCommand;
     }
 
-    const resp = await shell.executeCommand(this.runnerId.get(), action.content, () => {
+    const resp = await shell.executeCommand(this.runnerId.get(), commandToExecute, () => {
       logger.debug(`[${action.type}]:Aborting Action\n\n`, action);
       action.abort();
     });
     logger.debug(`${action.type} Shell Response: [exit code:${resp?.exitCode}]`);
 
-    if (resp?.exitCode != 0) {
+    if (resp?.exitCode !== undefined && resp.exitCode !== 0) {
       const enhancedError = this.#createEnhancedShellError(action.content, resp?.exitCode, resp?.output);
       throw new ActionCommandError(enhancedError.title, enhancedError.details);
     }
@@ -281,7 +313,7 @@ export class ActionRunner {
 
   async #runStartAction(action: ActionState) {
     if (action.type !== 'start') {
-      unreachable('Expected shell action');
+      unreachable('Expected start action');
     }
 
     if (!this.#shellTerminal) {
@@ -301,11 +333,52 @@ export class ActionRunner {
     });
     logger.debug(`${action.type} Shell Response: [exit code:${resp?.exitCode}]`);
 
-    if (resp?.exitCode != 0) {
+    if (resp?.exitCode !== undefined && resp.exitCode !== 0) {
       throw new ActionCommandError('Failed To Start Application', resp?.output || 'No Output Available');
     }
 
     return resp;
+  }
+
+  /**
+   * Wait for a start action to be properly submitted to the shell.
+   *
+   * Instead of using a fixed delay, this method polls the shell's execution
+   * state to detect when the command is actively running. This provides a
+   * proper ready signal — we know the shell has accepted the command and
+   * started executing it before we allow the next action to proceed.
+   *
+   * Falls back to a max timeout (3s) for safety in case the shell state
+   * doesn't update as expected.
+   */
+  async #waitForStartReady(_action: ActionState): Promise<void> {
+    const shell = this.#shellTerminal();
+    const maxWaitMs = 3000;
+    const pollIntervalMs = 50;
+    let elapsed = 0;
+
+    // Brief initial delay to let the shell accept and begin executing the command
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    elapsed += 100;
+
+    // Wait until the shell's execution state shows the command is active,
+    // OR until we've waited long enough to be safe
+    while (elapsed < maxWaitMs) {
+      const state = shell.executionState?.get?.();
+
+      if (state?.active) {
+        // The shell has accepted and begun executing the start command.
+        // Give it a brief moment to acquire its port, then proceed.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
+      elapsed += pollIntervalMs;
+    }
+
+    // Safety fallback: max timeout reached without detecting active state
+    logger.debug('Start action ready signal: max timeout reached, proceeding');
   }
 
   async #runFileAction(action: ActionState) {
@@ -327,6 +400,7 @@ export class ActionRunner {
         logger.debug('Created folder', folder);
       } catch (error) {
         logger.error('Failed to create folder\n\n', error);
+        throw new ActionCommandError('Failed to create directory', `Could not create directory: ${folder}`);
       }
     }
 
@@ -335,6 +409,7 @@ export class ActionRunner {
       logger.debug(`File written ${relativePath}`);
     } catch (error) {
       logger.error('Failed to write file\n\n', error);
+      throw new ActionCommandError('Failed to write file', `Could not write file: ${relativePath}`);
     }
   }
 
@@ -358,7 +433,6 @@ export class ActionRunner {
   }
 
   async saveFileHistory(filePath: string, history: FileHistory) {
-    // const webcontainer = await this.#webcontainer;
     const historyPath = this.#getHistoryPath(filePath);
 
     await this.#runFileAction({
@@ -385,7 +459,6 @@ export class ActionRunner {
       stage: 'building',
       buildStatus: 'running',
       deployStatus: 'pending',
-      source: 'netlify',
     });
 
     const engine = await this.#engine;
@@ -427,7 +500,6 @@ export class ActionRunner {
         stage: 'building',
         buildStatus: 'failed',
         deployStatus: 'pending',
-        source: 'netlify',
       });
 
       throw new ActionCommandError('Build Failed', output || 'No Output Available');
@@ -441,7 +513,6 @@ export class ActionRunner {
       stage: 'deploying',
       buildStatus: 'complete',
       deployStatus: 'running',
-      source: 'netlify',
     });
 
     // Check for common build directories
@@ -718,7 +789,7 @@ export class ActionRunner {
         pattern: /command not found/,
         title: 'Command Not Found',
         getMessage: () =>
-          `The command '${firstWord}' is not available in WebContainer.\n\nSuggestion: Check available commands or use a package manager to install it.`,
+          `The command '${firstWord}' is not available in this runtime environment.\n\nSuggestion: Check available commands or use a package manager to install it.`,
       },
       {
         pattern: /Is a directory/,

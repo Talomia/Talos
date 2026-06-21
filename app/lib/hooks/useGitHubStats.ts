@@ -114,6 +114,10 @@ export function useGitHubStats(
   }, [refreshInterval, connection, isStale]);
 
   const loadCachedStats = useCallback(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     try {
       const cached = localStorage.getItem(STATS_CACHE_KEY);
 
@@ -138,6 +142,10 @@ export function useGitHubStats(
   }, [connection?.user?.login]);
 
   const saveCachedStats = useCallback((stats: GitHubStats, userLogin: string) => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     try {
       const cacheData = {
         stats,
@@ -260,7 +268,9 @@ export function useGitHubStats(
     });
 
     // Clear cache
-    localStorage.removeItem(STATS_CACHE_KEY);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STATS_CACHE_KEY);
+    }
   }, []);
 
   return {

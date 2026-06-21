@@ -21,15 +21,25 @@ export const getNotifications = async (): Promise<Notification[]> => {
 
   return logs
     .filter((log) => log.category !== 'system') // Filter out system logs
-    .map((log) => ({
-      id: log.id,
-      title: (log.details?.title as string) || log.message.split('\n')[0],
-      message: log.message,
-      type: log.level as 'info' | 'warning' | 'error' | 'success',
-      timestamp: log.timestamp,
-      read: logStore.isRead(log.id),
-      details: log.details,
-    }))
+    .map((log) => {
+      const typeMap: Record<string, 'info' | 'warning' | 'error' | 'success'> = {
+        debug: 'info',
+        info: 'info',
+        warning: 'warning',
+        error: 'error',
+        success: 'success',
+      };
+
+      return {
+        id: log.id,
+        title: (log.details?.title as string) || log.message.split('\n')[0],
+        message: log.message,
+        type: typeMap[log.level] || 'info',
+        timestamp: log.timestamp,
+        read: logStore.isRead(log.id),
+        details: log.details,
+      };
+    })
     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 };
 

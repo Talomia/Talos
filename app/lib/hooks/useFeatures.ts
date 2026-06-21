@@ -20,6 +20,10 @@ const markFeatureViewed = async (_featureId: string): Promise<void> => {
 const VIEWED_FEATURES_KEY = 'app_viewed_features';
 
 const getViewedFeatures = (): string[] => {
+  if (typeof window === 'undefined') {
+    return [];
+  }
+
   try {
     const stored = localStorage.getItem(VIEWED_FEATURES_KEY);
     return stored ? JSON.parse(stored) : [];
@@ -29,6 +33,10 @@ const getViewedFeatures = (): string[] => {
 };
 
 const setViewedFeatures = (featureIds: string[]) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     localStorage.setItem(VIEWED_FEATURES_KEY, JSON.stringify(featureIds));
   } catch (error) {

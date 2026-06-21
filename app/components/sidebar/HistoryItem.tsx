@@ -3,8 +3,9 @@ import { classNames } from '~/utils/classNames';
 import { type ChatHistoryItem } from '~/lib/persistence';
 import WithTooltip from '~/components/ui/Tooltip';
 import { useEditChatDescription } from '~/lib/hooks';
-import { forwardRef, type ForwardedRef, useCallback } from 'react';
+import { forwardRef, memo, type ForwardedRef, useCallback } from 'react';
 import { Checkbox } from '~/components/ui/Checkbox';
+import { toast } from 'react-toastify';
 
 interface HistoryItemProps {
   item: ChatHistoryItem;
@@ -14,9 +15,10 @@ interface HistoryItemProps {
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (id: string) => void;
+  isDeleting?: boolean;
 }
 
-export function HistoryItem({
+export const HistoryItem = memo(function HistoryItem({
   item,
   onDelete,
   onDuplicate,
@@ -24,6 +26,7 @@ export function HistoryItem({
   selectionMode = false,
   isSelected = false,
   onToggleSelection,
+  isDeleting = false,
 }: HistoryItemProps) {
   const { id: urlId } = useParams();
   const isActiveChat = urlId === item.urlId;
@@ -55,11 +58,30 @@ export function HistoryItem({
       event.preventDefault();
       event.stopPropagation();
 
+      if (isDeleting) {
+        return;
+      }
+
       if (onDelete) {
         onDelete(event as unknown as React.UIEvent);
       }
     },
-    [onDelete, item.id],
+    [onDelete, item.id, isDeleting],
+  );
+
+  const handleItemKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+
+        if (selectionMode) {
+          onToggleSelection?.(item.id);
+        } else {
+          window.location.href = `/chat/${item.urlId}`;
+        }
+      }
+    },
+    [selectionMode, item.id, item.urlId, onToggleSelection],
   );
 
   return (
@@ -70,6 +92,8 @@ export function HistoryItem({
         { 'cursor-pointer': selectionMode },
       )}
       onClick={selectionMode ? handleItemClick : undefined}
+      tabIndex={0}
+      onKeyDown={handleItemKeyDown}
     >
       {selectionMode && (
         <div className="flex items-center mr-2" onClick={(e) => e.stopPropagation()}>
@@ -97,6 +121,7 @@ export function HistoryItem({
             type="submit"
             className="i-ph:check h-4 w-4 text-gray-500 hover:text-purple-500 transition-colors"
             onMouseDown={handleSubmit}
+            aria-label="Save chat name"
           />
         </form>
       ) : (
@@ -128,7 +153,13 @@ export function HistoryItem({
                   icon="i-ph:copy h-4 w-4"
                   onClick={(event) => {
                     event.preventDefault();
-                    onDuplicate?.(item.id);
+
+                    try {
+                      onDuplicate?.(item.id);
+                    } catch (error) {
+                      const message = error instanceof Error ? error.message : 'Failed to duplicate chat';
+                      toast.error(message);
+                    }
                   }}
                 />
               )}
@@ -141,9 +172,9 @@ export function HistoryItem({
                 }}
               />
               <ChatActionButton
-                toolTipContent="Delete"
-                icon="i-ph:trash h-4 w-4"
-                className="hover:text-red-500 dark:hover:text-red-400"
+                toolTipContent={isDeleting ? 'Deleting...' : 'Delete'}
+                icon={isDeleting ? 'i-ph:spinner animate-spin h-4 w-4' : 'i-ph:trash h-4 w-4'}
+                className={isDeleting ? 'opacity-50 pointer-events-none' : 'hover:text-red-500 dark:hover:text-red-400'}
                 onClick={handleDeleteClick}
               />
             </div>
@@ -152,7 +183,7 @@ export function HistoryItem({
       )}
     </div>
   );
-}
+});
 
 const ChatActionButton = forwardRef(
   (
@@ -177,6 +208,7 @@ const ChatActionButton = forwardRef(
           type="button"
           className={`text-gray-400 dark:text-gray-500 hover:text-purple-500 dark:hover:text-purple-400 transition-colors ${icon} ${className ? className : ''}`}
           onClick={onClick}
+          aria-label={toolTipContent}
         />
       </WithTooltip>
     );

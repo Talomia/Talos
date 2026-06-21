@@ -50,12 +50,10 @@ export const useConnectionStatus = () => {
 
   const acknowledgeIssue = () => {
     setAcknowledgedIssue(currentIssue);
-    setAcknowledgedIssue(currentIssue);
     setHasConnectionIssues(false);
   };
 
   const resetAcknowledgment = () => {
-    setAcknowledgedIssue(null);
     setAcknowledgedIssue(null);
     checkStatus();
   };

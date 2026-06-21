@@ -11,7 +11,7 @@ export interface ConnectionStatus {
 export const checkConnection = async (): Promise<ConnectionStatus> => {
   try {
     // Check if we have network connectivity
-    const online = navigator.onLine;
+    const online = typeof navigator !== 'undefined' ? navigator.onLine : true;
 
     if (!online) {
       return {

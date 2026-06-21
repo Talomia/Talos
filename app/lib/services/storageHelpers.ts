@@ -9,6 +9,10 @@ const logger = createScopedLogger('StorageHelpers');
  * @returns The value or null if not found
  */
 export function safeGetItem(key: string): unknown {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
   try {
     const item = localStorage.getItem(key);
     return item ? JSON.parse(item) : null;
@@ -24,6 +28,10 @@ export function safeGetItem(key: string): unknown {
  * @param value The value to set
  */
 export function safeSetItem(key: string, value: unknown): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (err) {

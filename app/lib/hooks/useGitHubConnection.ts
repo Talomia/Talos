@@ -68,8 +68,8 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
     }
   }, [connection]);
 
-  const refreshConnectionData = useCallback(async (connection: GitHubConnection) => {
-    if (!connection.token) {
+  const refreshConnectionData = useCallback(async (conn: GitHubConnection) => {
+    if (!conn.token) {
       return;
     }
 
@@ -78,19 +78,36 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
       const response = await fetch('https://api.github.com/user', {
         headers: {
           Accept: 'application/vnd.github.v3+json',
-          Authorization: `${connection.tokenType === 'classic' ? 'token' : 'Bearer'} ${connection.token}`,
+          Authorization: `${conn.tokenType === 'classic' ? 'token' : 'Bearer'} ${conn.token}`,
           'User-Agent': 'app',
         },
       });
 
       if (!response.ok) {
+        // Token expired or revoked — clear connection and prompt re-auth
+        if (response.status === 401 || response.status === 403) {
+          logger.warn('GitHub token expired or revoked (HTTP ' + response.status + ')');
+
+          localStorage.removeItem(STORAGE_KEY);
+          removeCookie('githubToken');
+          removeCookie('githubUsername');
+          removeCookie('git:github.com');
+          updateGitHubConnection({ user: null, token: '', tokenType: 'classic' });
+
+          toast.warning('GitHub token expired. Please reconnect your GitHub account.', {
+            autoClose: 8000,
+          });
+
+          return;
+        }
+
         throw new Error(`API error: ${response.status}`);
       }
 
       const userData = (await response.json()) as GitHubUserResponse;
 
       const updatedConnection: GitHubConnection = {
-        ...connection,
+        ...conn,
         user: userData,
       };
 

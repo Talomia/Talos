@@ -30,7 +30,7 @@ export default class SwitchableStream extends TransformStream {
 
     this._currentReader = newStream.getReader();
 
-    this._pumpStream();
+    await this._pumpStream();
 
     this._switches++;
   }
@@ -56,12 +56,16 @@ export default class SwitchableStream extends TransformStream {
     }
   }
 
-  close() {
+  async close() {
     if (this._currentReader) {
-      this._currentReader.cancel();
+      try { await this._currentReader.cancel(); } catch { }
+      this._currentReader = null;
     }
 
-    this._controller?.terminate();
+    if (this._controller) {
+      this._controller.close();
+      this._controller = null;
+    }
   }
 
   get switches() {

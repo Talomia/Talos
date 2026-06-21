@@ -6,15 +6,16 @@ import { isGitLabConnected } from '~/lib/stores/gitlabConnection';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { streamingState } from '~/lib/stores/streaming';
 import { classNames } from '~/utils/classNames';
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { NetlifyDeploymentLink } from '~/components/chat/NetlifyDeploymentLink.client';
 import { VercelDeploymentLink } from '~/components/chat/VercelDeploymentLink.client';
 import { useVercelDeploy } from '~/components/deploy/VercelDeploy.client';
 import { useNetlifyDeploy } from '~/components/deploy/NetlifyDeploy.client';
 import { useGitHubDeploy } from '~/components/deploy/GitHubDeploy.client';
 import { useGitLabDeploy } from '~/components/deploy/GitLabDeploy.client';
-import { GitHubDeploymentDialog } from '~/components/deploy/GitHubDeploymentDialog';
-import { GitLabDeploymentDialog } from '~/components/deploy/GitLabDeploymentDialog';
+const GitHubDeploymentDialog = lazy(() => import('~/components/deploy/GitHubDeploymentDialog').then(m => ({ default: m.GitHubDeploymentDialog })));
+const GitLabDeploymentDialog = lazy(() => import('~/components/deploy/GitLabDeploymentDialog').then(m => ({ default: m.GitLabDeploymentDialog })));
+import type { FileContent } from '~/utils/deployUtils';
 
 interface DeployButtonProps {
   onVercelDeploy?: () => Promise<void>;
@@ -32,9 +33,8 @@ export const DeployButton = ({
   const netlifyConn = useStore(netlifyConnection);
   const vercelConn = useStore(vercelConnection);
   const gitlabIsConnected = useStore(isGitLabConnected);
-  const [activePreviewIndex] = useState(0);
   const previews = useStore(workbenchStore.previews);
-  const activePreview = previews[activePreviewIndex];
+  const activePreview = previews[0];
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployingTo, setDeployingTo] = useState<'netlify' | 'vercel' | 'github' | 'gitlab' | null>(null);
   const isStreaming = useStore(streamingState);
@@ -44,8 +44,8 @@ export const DeployButton = ({
   const { handleGitLabDeploy } = useGitLabDeploy();
   const [showGitHubDeploymentDialog, setShowGitHubDeploymentDialog] = useState(false);
   const [showGitLabDeploymentDialog, setShowGitLabDeploymentDialog] = useState(false);
-  const [githubDeploymentFiles, setGithubDeploymentFiles] = useState<Record<string, string> | null>(null);
-  const [gitlabDeploymentFiles, setGitlabDeploymentFiles] = useState<Record<string, string> | null>(null);
+  const [githubDeploymentFiles, setGithubDeploymentFiles] = useState<Record<string, FileContent> | null>(null);
+  const [gitlabDeploymentFiles, setGitlabDeploymentFiles] = useState<Record<string, FileContent> | null>(null);
   const [githubProjectName, setGithubProjectName] = useState('');
   const [gitlabProjectName, setGitlabProjectName] = useState('');
 
@@ -164,7 +164,17 @@ export const DeployButton = ({
                 width="24"
                 crossOrigin="anonymous"
                 src="https://cdn.simpleicons.org/netlify"
+                alt="netlify"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling;
+
+                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
+                    fallback.style.display = 'flex';
+                  }
+                }}
               />
+              <div className="icon-fallback w-5 h-5 i-ph:globe-simple text-ui-textSecondary" style={{ display: 'none' }} />
               <span className="mx-auto">
                 {!netlifyConn.user ? 'No Netlify Account Connected' : 'Deploy to Netlify'}
               </span>
@@ -188,7 +198,16 @@ export const DeployButton = ({
                 crossOrigin="anonymous"
                 src="https://cdn.simpleicons.org/vercel/white"
                 alt="vercel"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling;
+
+                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
+                    fallback.style.display = 'flex';
+                  }
+                }}
               />
+              <div className="icon-fallback w-5 h-5 i-ph:triangle text-ui-textSecondary" style={{ display: 'none' }} />
               <span className="mx-auto">{!vercelConn.user ? 'No Vercel Account Connected' : 'Deploy to Vercel'}</span>
               {vercelConn.user && <VercelDeploymentLink />}
             </DropdownMenu.Item>
@@ -210,7 +229,16 @@ export const DeployButton = ({
                 crossOrigin="anonymous"
                 src="https://cdn.simpleicons.org/github"
                 alt="github"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling;
+
+                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
+                    fallback.style.display = 'flex';
+                  }
+                }}
               />
+              <div className="icon-fallback w-5 h-5 i-ph:github-logo text-ui-textSecondary" style={{ display: 'none' }} />
               <span className="mx-auto">Deploy to GitHub</span>
             </DropdownMenu.Item>
 
@@ -231,7 +259,16 @@ export const DeployButton = ({
                 crossOrigin="anonymous"
                 src="https://cdn.simpleicons.org/gitlab"
                 alt="gitlab"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling;
+
+                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
+                    fallback.style.display = 'flex';
+                  }
+                }}
               />
+              <div className="icon-fallback w-5 h-5 i-ph:gitlab-logo text-ui-textSecondary" style={{ display: 'none' }} />
               <span className="mx-auto">{!gitlabIsConnected ? 'No GitLab Account Connected' : 'Deploy to GitLab'}</span>
             </DropdownMenu.Item>
 
@@ -246,7 +283,16 @@ export const DeployButton = ({
                 crossOrigin="anonymous"
                 src="https://cdn.simpleicons.org/cloudflare"
                 alt="cloudflare"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  const fallback = e.currentTarget.nextElementSibling;
+
+                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
+                    fallback.style.display = 'flex';
+                  }
+                }}
               />
+              <div className="icon-fallback w-5 h-5 i-ph:cloud text-ui-textSecondary" style={{ display: 'none' }} />
               <span className="mx-auto">Deploy to Cloudflare (Coming Soon)</span>
             </DropdownMenu.Item>
           </DropdownMenu.Content>
@@ -255,22 +301,26 @@ export const DeployButton = ({
 
       {/* GitHub Deployment Dialog */}
       {showGitHubDeploymentDialog && githubDeploymentFiles && (
-        <GitHubDeploymentDialog
-          isOpen={showGitHubDeploymentDialog}
-          onClose={() => setShowGitHubDeploymentDialog(false)}
-          projectName={githubProjectName}
-          files={githubDeploymentFiles}
-        />
+        <Suspense fallback={null}>
+          <GitHubDeploymentDialog
+            isOpen={showGitHubDeploymentDialog}
+            onClose={() => setShowGitHubDeploymentDialog(false)}
+            projectName={githubProjectName}
+            files={githubDeploymentFiles}
+          />
+        </Suspense>
       )}
 
       {/* GitLab Deployment Dialog */}
       {showGitLabDeploymentDialog && gitlabDeploymentFiles && (
-        <GitLabDeploymentDialog
-          isOpen={showGitLabDeploymentDialog}
-          onClose={() => setShowGitLabDeploymentDialog(false)}
-          projectName={gitlabProjectName}
-          files={gitlabDeploymentFiles}
-        />
+        <Suspense fallback={null}>
+          <GitLabDeploymentDialog
+            isOpen={showGitLabDeploymentDialog}
+            onClose={() => setShowGitLabDeploymentDialog(false)}
+            projectName={gitlabProjectName}
+            files={gitlabDeploymentFiles}
+          />
+        </Suspense>
       )}
     </>
   );

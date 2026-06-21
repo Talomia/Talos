@@ -42,7 +42,7 @@ interface ChatBoxProps {
   handleFileUpload: () => void;
 }
 
-export const ChatBox: React.FC<ChatBoxProps> = (props) => {
+export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
   const {
     chat: { input, chatStarted, isStreaming, enhancingPrompt },
     model: { model, setModel, provider, setProvider, providerList },
@@ -146,6 +146,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             'transition-all duration-200',
             'hover:border-ui-focus',
           )}
+          aria-label="Chat message input"
           onDragEnter={(e) => {
             e.preventDefault();
             e.currentTarget.style.border = '2px solid #1488fc';
@@ -163,14 +164,28 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             e.currentTarget.style.border = '1px solid var(--ui-borderColor)';
 
             const files = Array.from(e.dataTransfer.files);
+            const newFiles: File[] = [];
+            const newImages: string[] = [];
+            let remaining = files.filter((f) => f.type.startsWith('image/')).length;
+
+            if (remaining === 0) {
+              return;
+            }
+
             files.forEach((file) => {
               if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
 
-                reader.onload = (e) => {
-                  const base64Image = e.target?.result as string;
-                  setUploadedFiles([...uploadedFiles, file]);
-                  setImageDataList([...imageDataList, base64Image]);
+                reader.onload = (ev) => {
+                  const base64Image = ev.target?.result as string;
+                  newFiles.push(file);
+                  newImages.push(base64Image);
+                  remaining--;
+
+                  if (remaining === 0) {
+                    setUploadedFiles([...uploadedFiles, ...newFiles]);
+                    setImageDataList([...imageDataList, ...newImages]);
+                  }
                 };
                 reader.readAsDataURL(file);
               }
@@ -300,4 +315,4 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
       </div>
     </div>
   );
-};
+});

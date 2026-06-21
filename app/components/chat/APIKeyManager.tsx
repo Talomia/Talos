@@ -17,21 +17,29 @@ interface APIKeyManagerProps {
 // cache which stores whether the provider's API key is set via environment variable
 const providerEnvKeyStatusCache: Record<string, boolean> = {};
 
-const apiKeyMemoizeCache: { [k: string]: Record<string, string> } = {};
-
-export function getApiKeysFromCookies() {
+/**
+ * Get API keys from cookies.
+ *
+ * NOTE: API keys are now stored server-side in an encrypted vault (rc_vault cookie).
+ * The legacy plaintext 'apiKeys' cookie is no longer the source of truth.
+ * This function returns an empty object since keys are read server-side by API routes.
+ * It exists for backward compatibility with components that check for key presence.
+ */
+export function getApiKeysFromCookies(): Record<string, string> {
+  // Legacy plaintext cookie - read only for backward compatibility during migration
   const storedApiKeys = Cookies.get('apiKeys');
-  let parsedKeys: Record<string, string> = {};
 
-  if (storedApiKeys) {
-    parsedKeys = apiKeyMemoizeCache[storedApiKeys];
-
-    if (!parsedKeys) {
-      parsedKeys = apiKeyMemoizeCache[storedApiKeys] = JSON.parse(storedApiKeys);
-    }
+  if (!storedApiKeys) {
+    return {};
   }
 
-  return parsedKeys;
+  try {
+    return JSON.parse(storedApiKeys);
+  } catch {
+    // Corrupted cookie — clean up
+    Cookies.remove('apiKeys');
+    return {};
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

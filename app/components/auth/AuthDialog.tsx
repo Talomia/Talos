@@ -9,7 +9,7 @@ interface AuthDialogProps {
   onClose: () => void;
 }
 
-type AuthMode = 'login' | 'signup';
+type AuthMode = 'login' | 'signup' | 'reset-password';
 
 export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
   const [mode, setMode] = useState<AuthMode>('login');
@@ -24,6 +24,28 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
     e.preventDefault();
     setLocalError(null);
     setSuccessMessage(null);
+
+    if (mode === 'reset-password') {
+      try {
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'reset-password', email }),
+        });
+
+        const data = (await response.json()) as { error?: string };
+
+        if (!response.ok) {
+          setLocalError(data.error || 'Failed to send reset link');
+        } else {
+          setSuccessMessage('Password reset link sent! Check your email.');
+        }
+      } catch {
+        setLocalError('Failed to send reset link');
+      }
+
+      return;
+    }
 
     if (mode === 'signup' && password !== confirmPassword) {
       setLocalError('Passwords do not match');
@@ -98,47 +120,55 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
           {/* Header */}
           <div className="text-center mb-6">
             <h2 className="text-xl font-bold text-ui-textPrimary">
-              {mode === 'login' ? 'Welcome back' : 'Create account'}
+              {mode === 'login' ? 'Welcome back' : mode === 'signup' ? 'Create account' : 'Reset password'}
             </h2>
             <p className="text-sm text-ui-textSecondary mt-1">
-              {mode === 'login' ? 'Sign in to your account' : 'Start building'}
+              {mode === 'login'
+                ? 'Sign in to your account'
+                : mode === 'signup'
+                  ? 'Start building'
+                  : 'Enter your email to receive a reset link'}
             </p>
           </div>
 
-          {/* OAuth Buttons */}
-          <div className="flex flex-col gap-2 mb-4">
-            <button
-              onClick={() => handleOAuth('github')}
-              className={classNames(
-                'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
-                'border border-ui-borderColor',
-                'text-ui-textPrimary text-sm font-medium',
-                'hover:bg-ui-background-depth-2 transition-colors',
-              )}
-            >
-              <div className="i-ph:github-logo w-5 h-5" />
-              Continue with GitHub
-            </button>
-            <button
-              onClick={() => handleOAuth('google')}
-              className={classNames(
-                'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
-                'border border-ui-borderColor',
-                'text-ui-textPrimary text-sm font-medium',
-                'hover:bg-ui-background-depth-2 transition-colors',
-              )}
-            >
-              <div className="i-ph:google-logo w-5 h-5" />
-              Continue with Google
-            </button>
-          </div>
+          {/* OAuth Buttons (hidden in reset-password mode) */}
+          {mode !== 'reset-password' && (
+            <>
+              <div className="flex flex-col gap-2 mb-4">
+                <button
+                  onClick={() => handleOAuth('github')}
+                  className={classNames(
+                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
+                    'border border-ui-borderColor',
+                    'text-ui-textPrimary text-sm font-medium',
+                    'hover:bg-ui-background-depth-2 transition-colors',
+                  )}
+                >
+                  <div className="i-ph:github-logo w-5 h-5" />
+                  Continue with GitHub
+                </button>
+                <button
+                  onClick={() => handleOAuth('google')}
+                  className={classNames(
+                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
+                    'border border-ui-borderColor',
+                    'text-ui-textPrimary text-sm font-medium',
+                    'hover:bg-ui-background-depth-2 transition-colors',
+                  )}
+                >
+                  <div className="i-ph:google-logo w-5 h-5" />
+                  Continue with Google
+                </button>
+              </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px bg-ui-borderColor" />
-            <span className="text-xs text-ui-textTertiary">or</span>
-            <div className="flex-1 h-px bg-ui-borderColor" />
-          </div>
+              {/* Divider */}
+              <div className="flex items-center gap-3 my-4">
+                <div className="flex-1 h-px bg-ui-borderColor" />
+                <span className="text-xs text-ui-textTertiary">or</span>
+                <div className="flex-1 h-px bg-ui-borderColor" />
+              </div>
+            </>
+          )}
 
           {/* Email/Password Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
@@ -157,22 +187,24 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
                 'focus:outline-none focus:ring-2 focus:ring-accent-500/50',
               )}
             />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              required
-              minLength={6}
-              className={classNames(
-                'w-full px-3 py-2.5 rounded-lg text-sm',
-                'bg-ui-prompt-background',
-                'border border-ui-borderColor',
-                'text-ui-textPrimary',
-                'placeholder-ui-textTertiary',
-                'focus:outline-none focus:ring-2 focus:ring-accent-500/50',
-              )}
-            />
+            {mode !== 'reset-password' && (
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+                minLength={6}
+                className={classNames(
+                  'w-full px-3 py-2.5 rounded-lg text-sm',
+                  'bg-ui-prompt-background',
+                  'border border-ui-borderColor',
+                  'text-ui-textPrimary',
+                  'placeholder-ui-textTertiary',
+                  'focus:outline-none focus:ring-2 focus:ring-accent-500/50',
+                )}
+              />
+            )}
             {mode === 'signup' && (
               <input
                 type="password"
@@ -192,6 +224,22 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
               />
             )}
 
+            {mode === 'login' && (
+              <div className="text-right -mt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('reset-password');
+                    setLocalError(null);
+                    setSuccessMessage(null);
+                  }}
+                  className="text-xs text-accent-500 hover:text-accent-400"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
             {error && <div className="text-sm text-red-500 bg-red-500/10 rounded-lg px-3 py-2">{error}</div>}
 
             {successMessage && (
@@ -208,25 +256,44 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
                 'disabled:opacity-50 disabled:cursor-not-allowed',
               )}
             >
-              {auth.isLoading ? 'Loading...' : mode === 'login' ? 'Sign in' : 'Create account'}
+              {auth.isLoading
+                ? 'Loading...'
+                : mode === 'login'
+                  ? 'Sign in'
+                  : mode === 'signup'
+                    ? 'Create account'
+                    : 'Send Reset Link'}
             </button>
           </form>
 
           {/* Toggle mode */}
           <div className="text-center mt-4">
-            <span className="text-sm text-ui-textSecondary">
-              {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+            {mode === 'reset-password' ? (
               <button
                 onClick={() => {
-                  setMode(mode === 'login' ? 'signup' : 'login');
+                  setMode('login');
                   setLocalError(null);
                   setSuccessMessage(null);
                 }}
-                className="text-accent-500 hover:text-accent-400 font-medium"
+                className="text-sm text-accent-500 hover:text-accent-400 font-medium"
               >
-                {mode === 'login' ? 'Sign up' : 'Sign in'}
+                Back to Sign In
               </button>
-            </span>
+            ) : (
+              <span className="text-sm text-ui-textSecondary">
+                {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+                <button
+                  onClick={() => {
+                    setMode(mode === 'login' ? 'signup' : 'login');
+                    setLocalError(null);
+                    setSuccessMessage(null);
+                  }}
+                  className="text-accent-500 hover:text-accent-400 font-medium"
+                >
+                  {mode === 'login' ? 'Sign up' : 'Sign in'}
+                </button>
+              </span>
+            )}
           </div>
         </motion.div>
       </div>

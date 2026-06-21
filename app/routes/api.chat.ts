@@ -16,28 +16,11 @@ import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
+import { parseCookies, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 
 export const action = withSecurity(chatAction, { allowedMethods: ['POST'] });
 
 const logger = createScopedLogger('api.chat');
-
-function parseCookies(cookieHeader: string): Record<string, string> {
-  const cookies: Record<string, string> = {};
-
-  const items = cookieHeader.split(';').map((cookie) => cookie.trim());
-
-  items.forEach((item) => {
-    const [name, ...rest] = item.split('=');
-
-    if (name && rest) {
-      const decodedName = decodeURIComponent(name.trim());
-      const decodedValue = decodeURIComponent(rest.join('=').trim());
-      cookies[decodedName] = decodedValue;
-    }
-  });
-
-  return cookies;
-}
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
   const streamRecovery = new StreamRecoveryManager({
@@ -45,6 +28,9 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     maxRetries: 2,
     onTimeout: () => {
       logger.warn('Stream timeout - attempting recovery');
+    },
+    onMaxRetriesReached: () => {
+      logger.error('Stream stalled beyond recovery — notifying client');
     },
   });
 
@@ -91,9 +77,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
   const vault = await readVault(cookieHeader, env);
   const apiKeys = vault.apiKeys;
-  const providerSettings: Record<string, IProviderSetting> = JSON.parse(
-    parseCookies(cookieHeader || '').providers || '{}',
-  );
+  const providerSettings: Record<string, IProviderSetting> = getProviderSettingsFromCookie(cookieHeader);
 
   const stream = new SwitchableStream();
 
@@ -112,6 +96,12 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
     let lastChunk: string | undefined = undefined;
 
+    // Fix 2: Create a 5-minute timeout signal for LLM API calls.
+    // This prevents indefinite hangs when the provider is unresponsive.
+    const timeoutMs = 300000; // 5 minutes
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+
     const dataStream = createDataStream({
       async execute(dataStream) {
         streamRecovery.startMonitoring();
@@ -121,7 +111,40 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         let summary: string | undefined = undefined;
         let messageSliceId = 0;
 
-        const processedMessages = await mcpService.processToolInvocations(messages, dataStream);
+        let processedMessages = await mcpService.processToolInvocations(messages, dataStream);
+
+        /*
+         * Fix 3: Message trimming for long conversations.
+         *
+         * Strategy: When the conversation exceeds 40 messages, we risk overflowing
+         * the LLM's context window. To prevent this, we keep:
+         *   1. System-role messages (prompts/instructions) — always retained
+         *   2. Context annotation messages (role === 'data' or contain metadata) — always retained
+         *   3. The last 20 user/assistant messages — preserves recent conversational context
+         *
+         * This ensures the model always has the system prompt and enough recent
+         * context to produce coherent responses, without exceeding token limits.
+         */
+        const MAX_CONVERSATION_LENGTH = 40;
+        const RECENT_MESSAGES_TO_KEEP = 20;
+
+        if (processedMessages.length > MAX_CONVERSATION_LENGTH) {
+          logger.info(
+            `Trimming conversation from ${processedMessages.length} messages to avoid context window overflow`,
+          );
+
+          const systemMessages = processedMessages.filter((m) => m.role === 'system');
+          const contextMessages = processedMessages.filter(
+            (m) => m.role === 'data' || (m.role === 'assistant' && typeof m.content === 'string' && m.content.startsWith('{"type":"context')),
+          );
+          const conversationMessages = processedMessages.filter(
+            (m) => m.role === 'user' || (m.role === 'assistant' && !contextMessages.includes(m)),
+          );
+          const recentConversation = conversationMessages.slice(-RECENT_MESSAGES_TO_KEEP);
+
+          processedMessages = [...systemMessages, ...contextMessages, ...recentConversation];
+          logger.info(`Trimmed to ${processedMessages.length} messages`);
+        }
 
         if (processedMessages.length > 3) {
           messageSliceId = processedMessages.length - 3;
@@ -291,7 +314,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             const result = await streamText({
               messages: [...processedMessages],
               env: context.cloudflare?.env,
-              options,
+              options: { ...options, abortSignal: abortController.signal },
               apiKeys,
               files,
               providerSettings,
@@ -332,7 +355,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         const result = await streamText({
           messages: [...processedMessages],
           env: context.cloudflare?.env,
-          options,
+          options: { ...options, abortSignal: abortController.signal },
           apiKeys,
           files,
           providerSettings,
@@ -346,25 +369,55 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         });
 
         (async () => {
-          for await (const part of result.fullStream) {
-            streamRecovery.updateActivity();
+          try {
+            for await (const part of result.fullStream) {
+              streamRecovery.updateActivity();
 
-            if (part.type === 'error') {
-              const error: any = part.error;
-              logger.error('Streaming error:', error);
-              streamRecovery.stop();
+              if (part.type === 'error') {
+                const error: any = part.error;
+                logger.error('Streaming error:', error);
+                streamRecovery.stop();
 
-              // Enhanced error handling for common streaming issues
-              if (error.message?.includes('Invalid JSON response')) {
-                logger.error('Invalid JSON response detected - likely malformed API response');
-              } else if (error.message?.includes('token')) {
-                logger.error('Token-related error detected - possible token limit exceeded');
+                // Fix 1: Emit well-formed JSON error annotations that the client can parse
+                const errorMessage = error.message || 'An unexpected streaming error occurred';
+                const errorProvider = error.provider || 'unknown';
+
+                dataStream.writeMessageAnnotation({
+                  type: 'error',
+                  message: errorMessage.includes('Invalid JSON response')
+                    ? 'The AI service returned an invalid response. Try a different model or check your API key.'
+                    : errorMessage.includes('token')
+                      ? 'Token limit exceeded. Try a model with a larger context window or start a new conversation.'
+                      : errorMessage,
+                  provider: errorProvider,
+                });
+
+                return;
               }
-
-              return;
             }
+            streamRecovery.stop();
+          } catch (streamError: any) {
+            streamRecovery.stop();
+
+            // Fix 2: Catch timeout/abort errors and emit user-friendly message
+            if (streamError.name === 'AbortError' || streamError.message?.includes('aborted')) {
+              logger.error('LLM request timed out after 5 minutes');
+              dataStream.writeMessageAnnotation({
+                type: 'error',
+                message: 'The AI request timed out after 5 minutes. The model may be overloaded — please try again.',
+                provider: 'timeout',
+              });
+            } else {
+              logger.error('Unexpected stream consumption error:', streamError);
+              dataStream.writeMessageAnnotation({
+                type: 'error',
+                message: streamError.message || 'An unexpected error occurred during streaming.',
+                provider: 'unknown',
+              });
+            }
+          } finally {
+            clearTimeout(timeoutId);
           }
-          streamRecovery.stop();
         })();
         result.mergeIntoDataStream(dataStream);
       },

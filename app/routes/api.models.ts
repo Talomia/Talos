@@ -1,4 +1,5 @@
 import { json } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import type { ProviderInfo } from '~/types/model';
@@ -38,7 +39,7 @@ function getProviderInfo(llmManager: LLMManager) {
   return { providers: cachedProviders, defaultProvider: cachedDefaultProvider };
 }
 
-export async function loader({
+export const loader = withSecurity(async ({
   request,
   params,
   context,
@@ -50,7 +51,7 @@ export async function loader({
       env: Env;
     };
   };
-}): Promise<Response> {
+}) => {
   try {
     const llmManager = LLMManager.getInstance(context.cloudflare?.env);
 
@@ -92,4 +93,4 @@ export async function loader({
   } catch {
     return json({ error: 'Failed to fetch models' }, { status: 500 });
   }
-}
+});

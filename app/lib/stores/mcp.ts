@@ -51,7 +51,7 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
         try {
           const settings = JSON.parse(savedConfig) as MCPSettings;
           const serverTools = await updateServerConfig(settings.mcpConfig);
-          set(() => ({ settings, serverTools }));
+          set(() => ({ settings, serverTools, error: null }));
         } catch (error) {
           logger.error('Error parsing saved mcp config:', error);
           set(() => ({
@@ -79,7 +79,7 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
         localStorage.setItem(MCP_SETTINGS_KEY, JSON.stringify(newSettings));
       }
 
-      set(() => ({ settings: newSettings, serverTools }));
+      set(() => ({ settings: newSettings, serverTools, error: null }));
     } catch (error) {
       throw error;
     } finally {

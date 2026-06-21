@@ -156,7 +156,7 @@ export function DeploymentSuccessDialog({
             </code>
             <motion.button
               onClick={() => {
-                navigator.clipboard.writeText(repoUrl);
+                navigator.clipboard.writeText(repoUrl).catch(() => { /* clipboard permission denied */ });
                 toast.success('URL copied to clipboard');
               }}
               className="p-2 text-ui-textSecondary hover:text-ui-textPrimary dark:text-ui-textSecondary-dark dark:hover:text-ui-textPrimary-dark bg-ui-background-depth-1 dark:bg-ui-background-depth-4 rounded-lg border border-ui-borderColor dark:border-ui-borderColor-dark"
@@ -209,7 +209,7 @@ export function DeploymentSuccessDialog({
           </motion.a>
           <motion.button
             onClick={() => {
-              navigator.clipboard.writeText(repoUrl);
+              navigator.clipboard.writeText(repoUrl).catch(() => { /* clipboard permission denied */ });
               toast.success('URL copied to clipboard');
             }}
             className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary dark:text-ui-textSecondary-dark hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 text-sm inline-flex items-center gap-2 border border-ui-borderColor dark:border-ui-borderColor-dark"

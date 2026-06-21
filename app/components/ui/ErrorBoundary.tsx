@@ -14,6 +14,9 @@ interface ErrorBoundaryProps {
   /** Callback when an error is caught */
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 
+  /** Callback invoked before resetting the error state (e.g., clear stale stores) */
+  onReset?: () => void;
+
   /** Human-readable panel name for error messages */
   panelName?: string;
 }
@@ -42,10 +45,28 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     const panelName = this.props.panelName || 'Component';
     logger.error(`[${panelName}] Uncaught error:`, error);
     logger.debug(`[${panelName}] Component stack:`, errorInfo.componentStack);
+
+    // Log to the centralized logStore for visibility in the Event Logs tab.
+    // Dynamic import avoids circular-dependency issues and keeps the boundary
+    // usable on the server where logStore relies on `localStorage`.
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { logStore } = require('~/lib/stores/logs');
+      logStore.logError('ErrorBoundary caught error', error, {
+        component: panelName,
+        componentStack: errorInfo.componentStack ?? undefined,
+      });
+    } catch {
+      // logStore unavailable (SSR or import failure) — the scoped logger above
+      // already captured the error, so we can safely swallow this.
+    }
+
     this.props.onError?.(error, errorInfo);
   }
 
   private _handleRetry = () => {
+    // Allow the parent to clean up stale state before we re-mount children.
+    this.props.onReset?.();
     this.setState({ hasError: false, error: undefined });
   };
 

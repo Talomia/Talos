@@ -185,7 +185,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
 
     try {
       // Step 1: Export chats
-      showProgress('Retrieving chats from database', 25);
+      showProgress('Retrieving chats from database', 20);
 
       // Direct database query approach for more reliable access
       const directChats = await new Promise<any[]>((resolve, reject) => {
@@ -208,30 +208,61 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
         }
       });
 
-      // Export data with direct chats
+      // Step 2: Export snapshots
+      showProgress('Retrieving snapshots from database', 40);
+
+      let snapshots: any[] = [];
+
+      if (db.objectStoreNames.contains('snapshots')) {
+        snapshots = await new Promise<any[]>((resolve, reject) => {
+          try {
+            const transaction = db.transaction(['snapshots'], 'readonly');
+            const store = transaction.objectStore('snapshots');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+              resolve(request.result || []);
+            };
+
+            request.onerror = () => {
+              logger.warn('Error querying snapshots store:', request.error);
+              resolve([]); // Don't fail the export if snapshots can't be read
+            };
+          } catch (err) {
+            logger.warn('Snapshots store not accessible:', err);
+            resolve([]);
+          }
+        });
+      }
+
+      // Export data with direct chats and snapshots
       const exportData = {
         chats: directChats,
+        snapshots,
         exportDate: new Date().toISOString(),
       };
 
-      // Step 2: Create blob
-      showProgress('Creating file', 50);
+      // Step 3: Create blob
+      showProgress('Creating file', 60);
 
-      // Step 3: Download file
-      showProgress('Downloading file', 75);
+      // Step 4: Download file
+      showProgress('Downloading file', 80);
 
       downloadJsonFile(exportData, 'app-chats.json');
 
-      // Step 4: Complete
+      // Step 5: Complete
       showProgress('Completing export', 100);
 
       // Dismiss progress toast before showing success toast
       toast.dismiss('progress-toast');
 
-      toast.success(`${exportData.chats.length} chats exported successfully`, {
-        position: 'bottom-right',
-        autoClose: 3000,
-      });
+      toast.success(
+        `${exportData.chats.length} chats and ${snapshots.length} snapshots exported successfully`,
+        {
+          position: 'bottom-right',
+          autoClose: 3000,
+        },
+      );
 
       // Save operation for potential undo
       setLastOperation({ type: 'export-chats', data: exportData });
@@ -285,7 +316,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
 
       try {
         // Step 1: Get chats from database
-        showProgress('Retrieving chats from database', 25);
+        showProgress('Retrieving chats from database', 20);
 
         const transaction = db.transaction(['chats'], 'readonly');
         const store = transaction.objectStore('chats');
@@ -303,33 +334,61 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
         const chats = await Promise.all(chatPromises);
         const filteredChats = chats.filter(Boolean); // Remove any null/undefined results
 
+        // Step 2: Get associated snapshots
+        showProgress('Retrieving snapshots', 40);
+
+        let snapshots: any[] = [];
+
+        if (db.objectStoreNames.contains('snapshots')) {
+          const snapshotPromises = chatIds.map((chatId) => {
+            return new Promise<any>((resolve) => {
+              try {
+                const snapshotTx = db.transaction(['snapshots'], 'readonly');
+                const snapshotStore = snapshotTx.objectStore('snapshots');
+                const request = snapshotStore.get(chatId);
+                request.onsuccess = () => resolve(request.result || null);
+                request.onerror = () => resolve(null);
+              } catch {
+                resolve(null);
+              }
+            });
+          });
+
+          const snapshotResults = await Promise.all(snapshotPromises);
+          snapshots = snapshotResults.filter(Boolean);
+        }
+
         // Create export data
         const exportData = {
           chats: filteredChats,
+          snapshots,
           exportDate: new Date().toISOString(),
         };
 
-        // Step 2: Create blob
-        showProgress('Creating file', 50);
+        // Step 3: Create blob
+        showProgress('Creating file', 60);
 
-        // Step 3: Download file
-        showProgress('Downloading file', 75);
+        // Step 4: Download file
+        showProgress('Downloading file', 80);
 
         downloadJsonFile(exportData, 'app-selected-chats.json');
 
-        // Step 4: Complete
+        // Step 5: Complete
         showProgress('Completing export', 100);
 
         // Dismiss progress toast before showing success toast
         toast.dismiss('progress-toast');
 
-        toast.success(`${filteredChats.length} chats exported successfully`, {
-          position: 'bottom-right',
-          autoClose: 3000,
-        });
+        toast.success(
+          `${filteredChats.length} chats and ${snapshots.length} snapshots exported successfully`,
+          {
+            position: 'bottom-right',
+            autoClose: 3000,
+          },
+        );
 
         // Save operation for potential undo
-        setLastOperation({ type: 'export-selected-chats', data: { chatIds, chats: filteredChats } });
+        setLastOperation({ type: 'export-selected-chats', data: { chatIds, chats: filteredChats, snapshots } });
       } catch (error) {
         logger.error('Error exporting selected chats:', error);
 

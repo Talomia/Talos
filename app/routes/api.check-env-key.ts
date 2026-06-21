@@ -1,8 +1,8 @@
-import type { LoaderFunction } from '@remix-run/cloudflare';
+import { withSecurity } from '~/lib/security';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 
-export const loader: LoaderFunction = async ({ context, request }) => {
+export const loader = withSecurity(async ({ context, request }) => {
   try {
     const url = new URL(request.url);
     const provider = url.searchParams.get('provider');
@@ -43,4 +43,4 @@ export const loader: LoaderFunction = async ({ context, request }) => {
   } catch {
     return Response.json({ error: 'Failed to check environment key' }, { status: 500 });
   }
-};
+});

@@ -18,25 +18,26 @@ export function usePromptEnhancer() {
     setInput: (value: string) => void,
     model: string,
     provider: ProviderInfo,
-    apiKeys?: Record<string, string>,
   ) => {
     setEnhancingPrompt(true);
     setPromptEnhanced(false);
 
-    const requestBody: any = {
+    const requestBody = {
       message: input,
       model,
       provider,
     };
 
-    if (apiKeys) {
-      requestBody.apiKeys = apiKeys;
-    }
-
     const response = await fetch('/api/enhancer', {
       method: 'POST',
       body: JSON.stringify(requestBody),
     });
+
+    if (!response.ok) {
+      setEnhancingPrompt(false);
+      logger.error(`Enhancer API failed: ${response.status} ${response.statusText}`);
+      return;
+    }
 
     const reader = response.body?.getReader();
 
@@ -73,11 +74,13 @@ export function usePromptEnhancer() {
         }
 
         setEnhancingPrompt(false);
-        setPromptEnhanced(true);
+        setPromptEnhanced(!_error);
 
-        setTimeout(() => {
-          setInput(_input);
-        });
+        if (!_error) {
+          setTimeout(() => {
+            setInput(_input);
+          });
+        }
       }
     }
   };

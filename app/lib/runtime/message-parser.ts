@@ -65,7 +65,7 @@ function cleanoutMarkdownSyntax(content: string) {
   const codeBlockRegex = /^\s*```\w*\n([\s\S]*?)\n\s*```\s*$/;
   const match = content.match(codeBlockRegex);
 
-  // console.log('matching', !!match, content);
+
 
   if (match) {
     return match[1]; // Remove common leading 4-space indent
@@ -75,8 +75,16 @@ function cleanoutMarkdownSyntax(content: string) {
 }
 
 function cleanEscapedTags(content: string) {
-  return content.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+  return content
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'");
 }
+const MAX_PARSED_MESSAGES = 50;
+
 export class StreamingMessageParser {
   #messages = new Map<string, MessageState>();
   #artifactCounter = 0;
@@ -89,14 +97,28 @@ export class StreamingMessageParser {
     if (!state) {
       state = {
         position: 0,
-        insideAction: false,
         insideArtifact: false,
+        insideAction: false,
         artifactCounter: 0,
         currentAction: { content: '' },
         actionId: 0,
       };
 
       this.#messages.set(messageId, state);
+
+      // Prune old messages to prevent unbounded growth (skip actively-streaming ones)
+      if (this.#messages.size > MAX_PARSED_MESSAGES) {
+        for (const [key, msgState] of this.#messages) {
+          if (key === messageId) {
+            continue;
+          }
+
+          if (!msgState.insideArtifact && !msgState.insideAction) {
+            this.#messages.delete(key);
+            break;
+          }
+        }
+      }
     }
 
     let output = '';
@@ -171,19 +193,23 @@ export class StreamingMessageParser {
 
             currentAction.content = content;
 
-            this._options.callbacks?.onActionClose?.({
-              artifactId: currentArtifact.id,
-              messageId,
+            try {
+              this._options.callbacks?.onActionClose?.({
+                artifactId: currentArtifact.id,
+                messageId,
 
-              /**
-               * We decrement the id because it's been incremented already
-               * when `onActionOpen` was emitted to make sure the ids are
-               * the same.
-               */
-              actionId: String(state.actionId - 1),
+                /**
+                 * We decrement the id because it's been incremented already
+                 * when `onActionOpen` was emitted to make sure the ids are
+                 * the same.
+                 */
+                actionId: String(state.actionId - 1),
 
-              action: currentAction as CodeAction,
-            });
+                action: currentAction as CodeAction,
+              });
+            } catch (callbackError) {
+              logger.error('Callback error in onActionClose:', callbackError);
+            }
 
             state.insideAction = false;
             state.currentAction = { content: '' };
@@ -199,16 +225,20 @@ export class StreamingMessageParser {
                 content = cleanEscapedTags(content);
               }
 
-              this._options.callbacks?.onActionStream?.({
-                artifactId: currentArtifact.id,
-                messageId,
-                actionId: String(state.actionId - 1),
-                action: {
-                  ...(currentAction as FileAction),
-                  content,
-                  filePath: currentAction.filePath,
-                },
-              });
+              try {
+                this._options.callbacks?.onActionStream?.({
+                  artifactId: currentArtifact.id,
+                  messageId,
+                  actionId: String(state.actionId - 1),
+                  action: {
+                    ...(currentAction as FileAction),
+                    content,
+                    filePath: currentAction.filePath,
+                  },
+                });
+              } catch (callbackError) {
+                logger.error('Callback error in onActionStream:', callbackError);
+              }
             }
 
             break;
@@ -225,23 +255,31 @@ export class StreamingMessageParser {
 
               state.currentAction = this.#parseActionTag(input, actionOpenIndex, actionEndIndex);
 
-              this._options.callbacks?.onActionOpen?.({
-                artifactId: currentArtifact.id,
-                messageId,
-                actionId: String(state.actionId++),
-                action: state.currentAction as CodeAction,
-              });
+              try {
+                this._options.callbacks?.onActionOpen?.({
+                  artifactId: currentArtifact.id,
+                  messageId,
+                  actionId: String(state.actionId++),
+                  action: state.currentAction as CodeAction,
+                });
+              } catch (callbackError) {
+                logger.error('Callback error in onActionOpen:', callbackError);
+              }
 
               i = actionEndIndex + 1;
             } else {
               break;
             }
           } else if (artifactCloseIndex !== -1) {
-            this._options.callbacks?.onArtifactClose?.({
-              messageId,
-              artifactId: currentArtifact.id,
-              ...currentArtifact,
-            });
+            try {
+              this._options.callbacks?.onArtifactClose?.({
+                messageId,
+                artifactId: currentArtifact.id,
+                ...currentArtifact,
+              });
+            } catch (callbackError) {
+              logger.error('Callback error in onArtifactClose:', callbackError);
+            }
 
             state.insideArtifact = false;
             state.currentArtifact = undefined;
@@ -299,11 +337,15 @@ export class StreamingMessageParser {
 
               state.currentArtifact = currentArtifact;
 
-              this._options.callbacks?.onArtifactOpen?.({
-                messageId,
-                artifactId: currentArtifact.id,
-                ...currentArtifact,
-              });
+              try {
+                this._options.callbacks?.onArtifactOpen?.({
+                  messageId,
+                  artifactId: currentArtifact.id,
+                  ...currentArtifact,
+                });
+              } catch (callbackError) {
+                logger.error('Callback error in onArtifactOpen:', callbackError);
+              }
 
               const artifactFactory = this._options.artifactElement ?? createArtifactElement;
 
@@ -365,7 +407,7 @@ export class StreamingMessageParser {
 
       if (!operation || !['migration', 'query'].includes(operation)) {
         logger.warn(`Invalid or missing operation for Supabase action: ${operation}`);
-        throw new Error(`Invalid Supabase operation: ${operation}`);
+        return { type: 'shell' as ActionType, content: `echo "Invalid Supabase operation: ${operation}"` };
       }
 
       (actionAttributes as SupabaseAction).operation = operation as 'migration' | 'query';
@@ -375,7 +417,7 @@ export class StreamingMessageParser {
 
         if (!filePath) {
           logger.warn('Migration requires a filePath');
-          throw new Error('Migration requires a filePath');
+          return { type: 'shell' as ActionType, content: 'echo "Migration requires a filePath"' };
         }
 
         (actionAttributes as SupabaseAction).filePath = filePath;
@@ -396,8 +438,11 @@ export class StreamingMessageParser {
   }
 
   #extractAttribute(tag: string, attributeName: string): string | undefined {
-    const match = tag.match(new RegExp(`${attributeName}="([^"]*)"`, 'i'));
-    return match ? match[1] : undefined;
+    // Try double-quote match first, then single-quote, to handle embedded quotes in values
+    const doubleMatch = tag.match(new RegExp(`${attributeName}="([^"]*)"`, 'i'));
+    if (doubleMatch) return doubleMatch[1];
+    const singleMatch = tag.match(new RegExp(`${attributeName}='([^']*)'`, 'i'));
+    return singleMatch ? singleMatch[1] : undefined;
   }
 }
 

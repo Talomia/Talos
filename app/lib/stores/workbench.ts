@@ -12,6 +12,16 @@ import { TerminalStore } from './terminal';
 import { path } from '~/utils/path';
 import { createSampler } from '~/utils/sampler';
 import type { ActionAlert, DeployAlert, SupabaseAlert } from '~/types/actions';
+
+/**
+ * Sampling interval (ms) for the action stream sampler.
+ *
+ * Design choice: 100 ms strikes a balance between responsiveness and avoiding
+ * excessive re-renders during rapid LLM-streamed actions. Lowering this value
+ * makes the UI update faster but costs more CPU; raising it batches more actions
+ * together but adds perceived latency.
+ */
+const ACTION_STREAM_SAMPLE_INTERVAL_MS = 100;
 import { createScopedLogger } from '~/utils/logger';
 import { pushToRepository as pushToRepositoryImpl } from '~/lib/stores/workbench/gitOperations';
 import { downloadZip as downloadZipImpl, syncFiles as syncFilesImpl } from '~/lib/stores/workbench/downloadOperations';
@@ -19,6 +29,7 @@ import {
   getFileModifications,
   getModifiedFiles,
   resetAllFileModifications as resetAllFileModificationsImpl,
+  resetFileModificationsForFile as resetFileModificationsForFileImpl,
   lockFile as lockFileImpl,
   lockFolder as lockFolderImpl,
   unlockFile as unlockFileImpl,
@@ -62,11 +73,19 @@ export class WorkbenchStore {
     import.meta.hot?.data.supabaseAlert ?? atom<SupabaseAlert | undefined>(undefined);
   deployAlert: WritableAtom<DeployAlert | undefined> =
     import.meta.hot?.data.deployAlert ?? atom<DeployAlert | undefined>(undefined);
-  modifiedFiles = new Set<string>();
+
   artifactIdList: string[] = [];
   #globalExecutionQueue = Promise.resolve();
   constructor() {
     if (import.meta.hot) {
+      // Fix 5: Destroy previous PreviewsStore to clean up BroadcastChannel listeners
+      const prevPreviewsStore = import.meta.hot.data.previewsStore as PreviewsStore | undefined;
+
+      if (prevPreviewsStore) {
+        prevPreviewsStore.destroy();
+      }
+
+      import.meta.hot.data.previewsStore = this.#previewsStore;
       import.meta.hot.data.artifacts = this.artifacts;
       import.meta.hot.data.unsavedFiles = this.unsavedFiles;
       import.meta.hot.data.showWorkbench = this.showWorkbench;
@@ -88,7 +107,17 @@ export class WorkbenchStore {
   }
 
   addToExecutionQueue(callback: () => Promise<void>) {
-    this.#globalExecutionQueue = this.#globalExecutionQueue.then(() => callback());
+    this.#globalExecutionQueue = this.#globalExecutionQueue.then(() => callback()).catch((error) => {
+      logger.error('Execution queue callback failed:', error);
+
+      // Fix 3: Surface queue errors to the user via actionAlert instead of swallowing silently
+      this.actionAlert.set({
+        type: 'error',
+        title: 'Action Failed',
+        description: error instanceof Error ? error.message : 'An unexpected error occurred in the execution queue',
+        content: error instanceof Error ? (error.stack ?? error.message) : String(error),
+      });
+    });
   }
 
   get previews() {
@@ -289,12 +318,43 @@ export class WorkbenchStore {
     return getFileModifications(this.#filesStore);
   }
 
+  /** Alias with corrected spelling */
+  getFileModifications() {
+    return getFileModifications(this.#filesStore);
+  }
+
   getModifiedFiles() {
     return getModifiedFiles(this.#filesStore);
   }
 
   resetAllFileModifications() {
     resetAllFileModificationsImpl(this.#filesStore);
+  }
+
+  /**
+   * Reset modification tracking for a single file only.
+   * Use this instead of resetAllFileModifications() when completing individual file actions
+   * to avoid wiping tracking for pending files in a batch.
+   */
+  resetFileModificationsForFile(filePath: string) {
+    resetFileModificationsForFileImpl(this.#filesStore, filePath);
+  }
+
+  /**
+   * Fix 4: Clear all artifacts and artifact ID list.
+   * Call this on conversation switch to prevent unbounded accumulation.
+   */
+  resetArtifacts() {
+    this.artifacts.set({});
+    this.artifactIdList = [];
+  }
+
+  /**
+   * Fix 5: Clean up resources (PreviewsStore BroadcastChannel, etc.).
+   * Call this on unmount or conversation teardown.
+   */
+  cleanup() {
+    this.#previewsStore.destroy();
   }
 
   /**
@@ -602,18 +662,27 @@ export class WorkbenchStore {
       const doc = this.#editorStore.documents.get()[fullPath];
 
       if (!doc) {
+        // File doesn't exist in editor yet — create it in the filesystem first
         await artifact.runner.runAction(data, isStreaming);
       }
 
-      this.#editorStore.updateFile(fullPath, data.action.content);
-
-      if (!isStreaming && data.action.content) {
-        await this.saveFile(fullPath);
-      }
-
-      if (!isStreaming) {
+      if (isStreaming) {
+        // During streaming, update editor immediately for live preview
+        this.#editorStore.updateFile(fullPath, data.action.content);
+      } else {
+        // Fix 1: Run the action first, then save, then update editor on success.
+        // This prevents phantom content in the editor if the write fails.
         await artifact.runner.runAction(data);
-        this.resetAllFileModifications();
+
+        if (data.action.content) {
+          await this.saveFile(fullPath);
+        }
+
+        this.#editorStore.updateFile(fullPath, data.action.content);
+
+        // Fix 2: Reset only this file's modification tracking, not all files.
+        // Prevents wiping tracking for other pending files in a batch.
+        this.resetFileModificationsForFile(fullPath);
       }
     } else {
       await artifact.runner.runAction(data);
@@ -622,7 +691,7 @@ export class WorkbenchStore {
 
   actionStreamSampler = createSampler(async (data: ActionCallbackData, isStreaming: boolean = false) => {
     return await this._runAction(data, isStreaming);
-  }, 100); // TODO: remove this magic number to have it configurable
+  }, ACTION_STREAM_SAMPLE_INTERVAL_MS);
 
   #getArtifact(id: string) {
     const artifacts = this.artifacts.get();

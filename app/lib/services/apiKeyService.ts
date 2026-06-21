@@ -1,31 +1,29 @@
-import Cookies from 'js-cookie';
+import { createScopedLogger } from '~/utils/logger';
+
+const logger = createScopedLogger('APIKeyService');
 
 /**
- * Import API keys from a JSON file
+ * Import API keys from a JSON file.
+ * Keys are stored in the server-side encrypted vault via /api/keys.
  * @param keys The API keys to import
+ * @returns The normalized keys that were imported (for display purposes only)
  */
-export function importAPIKeys(keys: Record<string, unknown>): Record<string, string> {
-  // Get existing keys from cookies
-  const existingKeys = (() => {
-    const storedApiKeys = Cookies.get('apiKeys');
-    return storedApiKeys ? JSON.parse(storedApiKeys) : {};
-  })();
+export async function importAPIKeys(keys: Record<string, unknown>): Promise<Record<string, string>> {
+  const importedKeys: Record<string, string> = {};
 
-  // Validate and save each key
-  const newKeys: Record<string, string> = { ...existingKeys };
-  Object.entries(keys).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(keys)) {
     // Skip comment fields
     if (key.startsWith('_')) {
-      return;
+      continue;
     }
 
     // Skip base URL fields (they should be set in .env.local)
     if (key.includes('_API_BASE_URL')) {
-      return;
+      continue;
     }
 
-    if (typeof value !== 'string') {
-      throw new Error(`Invalid value for key: ${key}`);
+    if (typeof value !== 'string' || !value) {
+      continue;
     }
 
     // Handle both old and new template formats
@@ -33,21 +31,23 @@ export function importAPIKeys(keys: Record<string, unknown>): Record<string, str
 
     // Check if this is the old format (e.g., "Anthropic_API_KEY")
     if (key.includes('_API_KEY')) {
-      // Extract the provider name from the old format
       normalizedKey = key.replace('_API_KEY', '');
     }
 
-    /*
-     * Only add non-empty keys
-     * Use the normalized key in the correct format
-     * (e.g., "OpenAI", "Google", "Anthropic")
-     */
-    if (value) {
-      newKeys[normalizedKey] = value;
+    // Store key in encrypted vault
+    try {
+      await fetch('/api/keys', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: normalizedKey, apiKey: value }),
+      });
+      importedKeys[normalizedKey] = value;
+    } catch (error) {
+      logger.error(`Failed to import key for ${normalizedKey}:`, error);
     }
-  });
+  }
 
-  return newKeys;
+  return importedKeys;
 }
 
 /**

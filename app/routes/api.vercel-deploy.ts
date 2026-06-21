@@ -205,15 +205,23 @@ const detectFramework = (files: Record<string, string>): string => {
 async function vercelDeployLoader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const projectId = url.searchParams.get('projectId');
-  const token = url.searchParams.get('token');
+
+  // Read token from Authorization header instead of URL query params
+  // to prevent it from leaking into logs, browser history, and referrer headers.
+  const authHeader = request.headers.get('Authorization') || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
 
   if (!projectId || !token) {
     return json({ error: 'Missing projectId or token' }, { status: 400 });
   }
 
+  if (typeof projectId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(projectId)) {
+    return json({ error: 'Invalid project ID format' }, { status: 400 });
+  }
+
   try {
     // Get project info
-    const projectResponse = await fetch(`https://api.vercel.com/v9/projects/${projectId}`, {
+    const projectResponse = await fetch(`https://api.vercel.com/v9/projects/${encodeURIComponent(projectId)}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -226,7 +234,7 @@ async function vercelDeployLoader({ request }: LoaderFunctionArgs) {
     const projectData = (await projectResponse.json()) as VercelProjectResponse;
 
     // Get latest deployment
-    const deploymentsResponse = await fetch(`https://api.vercel.com/v6/deployments?projectId=${projectId}&limit=1`, {
+    const deploymentsResponse = await fetch(`https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=1`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

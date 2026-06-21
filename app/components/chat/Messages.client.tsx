@@ -1,5 +1,5 @@
 import type { Message } from 'ai';
-import { Fragment } from 'react';
+import { Fragment, memo, useCallback } from 'react';
 import { classNames } from '~/utils/classNames';
 import { AssistantMessage } from './AssistantMessage';
 import { UserMessage } from './UserMessage';
@@ -24,19 +24,19 @@ interface MessagesProps {
   addToolResult: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
 }
 
-export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
+export const Messages = memo(forwardRef<HTMLDivElement, MessagesProps>(
   (props: MessagesProps, ref: ForwardedRef<HTMLDivElement> | undefined) => {
     const { id, isStreaming = false, messages = [] } = props;
     const location = useLocation();
     const navigate = useNavigate();
 
-    const handleRewind = (messageId: string) => {
+    const handleRewind = useCallback((messageId: string) => {
       const searchParams = new URLSearchParams(location.search);
       searchParams.set('rewindTo', messageId);
       navigate(`${location.pathname}?${searchParams.toString()}`, { replace: true });
-    };
+    }, [location.search, location.pathname, navigate]);
 
-    const handleFork = async (messageId: string) => {
+    const handleFork = useCallback(async (messageId: string) => {
       try {
         const db = await getDb();
 
@@ -50,10 +50,10 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
       } catch (error) {
         toast.error('Failed to fork chat: ' + (error as Error).message);
       }
-    };
+    }, [navigate]);
 
     return (
-      <div id={id} className={props.className} ref={ref}>
+      <div id={id} className={props.className} ref={ref} role="log" aria-live="polite">
         {messages.length > 0
           ? messages.map((message, index) => {
               const { role, content, id: messageId, annotations, parts } = message;
@@ -71,6 +71,7 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
                   className={classNames('flex gap-4 py-3 w-full rounded-lg', {
                     'mt-4': !isFirst,
                   })}
+                  aria-label={isUserMessage ? 'User message' : 'Assistant message'}
                 >
                   <div className="grid grid-col-1 w-full">
                     {isUserMessage ? (
@@ -102,4 +103,4 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
       </div>
     );
   },
-);
+));

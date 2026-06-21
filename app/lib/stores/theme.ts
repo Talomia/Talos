@@ -29,6 +29,10 @@ function initStore() {
 }
 
 export function toggleTheme() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
   const currentTheme = themeStore.get();
   const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
 

@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from '@remix-run/cloudflare';
 import { readVault, writeVault } from '~/lib/.server/api-key-vault';
+import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.keys');
@@ -7,7 +8,7 @@ const logger = createScopedLogger('api.keys');
 /**
  * GET /api/keys - List which providers have keys set (does NOT return actual keys)
  */
-export async function loader({ request, context }: LoaderFunctionArgs) {
+export const loader = withSecurity(async ({ request, context }: LoaderFunctionArgs) => {
   try {
     const cookieHeader = request.headers.get('Cookie');
     const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
@@ -23,7 +24,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
     logger.error('Failed to read vault:', error);
     return json({ providers: [], updatedAt: null }, { status: 500 });
   }
-}
+});
 
 /**
  * POST /api/keys - Store or update an API key
@@ -32,7 +33,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
  * DELETE /api/keys - Remove an API key
  * Body: { provider: string }
  */
-export async function action({ request, context }: ActionFunctionArgs) {
+export const action = withSecurity(async ({ request, context }: ActionFunctionArgs) => {
   const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
 
   if (request.method === 'POST') {
@@ -101,4 +102,4 @@ export async function action({ request, context }: ActionFunctionArgs) {
   }
 
   return json({ error: 'Method not allowed' }, { status: 405 });
-}
+});

@@ -106,21 +106,6 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
       },
     });
 
-    // Handle streaming errors in a non-blocking way
-    (async () => {
-      try {
-        for await (const part of result.fullStream) {
-          if (part.type === 'error') {
-            const error: any = part.error;
-            logger.error('Streaming error:', error);
-            break;
-          }
-        }
-      } catch (error) {
-        logger.error('Error processing stream:', error);
-      }
-    })();
-
     // Return the text stream directly since it's already text data
     return new Response(result.textStream, {
       status: 200,

@@ -8,6 +8,8 @@ import { useState } from 'react';
 import type { ActionCallbackData } from '~/lib/runtime/message-parser';
 import { chatId } from '~/lib/persistence/useChatHistory';
 import { formatBuildFailureOutput } from './deployUtils';
+import { isBinaryFile } from '~/utils/deployUtils';
+import type { FileContent } from '~/utils/deployUtils';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('NetlifyDeploy');
@@ -118,19 +120,22 @@ export function useNetlifyDeploy() {
         throw new Error('Could not find build output directory. Please check your build configuration.');
       }
 
-      async function getAllFiles(dirPath: string): Promise<Record<string, string>> {
-        const files: Record<string, string> = {};
+      async function getAllFiles(dirPath: string): Promise<Record<string, FileContent>> {
+        const files: Record<string, FileContent> = {};
         const entries = await container.fs.readdir(dirPath, { withFileTypes: true });
 
         for (const entry of entries) {
           const fullPath = path.join(dirPath, entry.name);
 
           if (entry.isFile()) {
-            const content = await container.fs.readFile(fullPath, 'utf-8');
+            const binary = isBinaryFile(entry.name);
+            const content = binary
+              ? btoa(Array.from(new Uint8Array(await container.fs.readFile(fullPath) as Uint8Array)).map((b) => String.fromCharCode(b)).join(''))
+              : await container.fs.readFile(fullPath, 'utf-8');
 
             // Remove build path prefix from the path
             const deployPath = fullPath.replace(finalBuildPath, '');
-            files[deployPath] = content;
+            files[deployPath] = { content, isBinary: binary };
           } else if (entry.isDirectory()) {
             const subFiles = await getAllFiles(fullPath);
             Object.assign(files, subFiles);
@@ -189,6 +194,10 @@ export function useNetlifyDeploy() {
               },
             },
           );
+
+          if (!statusResponse.ok) {
+            throw new Error(`Status check failed: ${statusResponse.status}`);
+          }
 
           deploymentStatus = (await statusResponse.json()) as {
             state?: string;
