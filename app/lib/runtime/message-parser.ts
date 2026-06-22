@@ -323,10 +323,6 @@ export class StreamingMessageParser {
                 logger.warn('Artifact title missing');
               }
 
-              if (!artifactId) {
-                logger.warn('Artifact id missing');
-              }
-
               state.insideArtifact = true;
 
               const currentArtifact = {

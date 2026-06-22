@@ -107,8 +107,19 @@ class LogStore {
       return;
     }
 
-    const currentLogs = this._logs.get();
-    const serialized = JSON.stringify(currentLogs);
+    const MAX_SERIALIZED_SIZE = 1_000_000; // 1 MB cap for localStorage
+    let currentLogs = this._logs.get();
+    let serialized = JSON.stringify(currentLogs);
+
+    // Proactively trim if serialized size exceeds the cap
+    if (serialized.length > MAX_SERIALIZED_SIZE) {
+      const entries = Object.entries(currentLogs)
+        .sort(([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const trimmed = Object.fromEntries(entries.slice(0, 500));
+      this._logs.set(trimmed);
+      currentLogs = trimmed;
+      serialized = JSON.stringify(trimmed);
+    }
 
     if (!safeSetItem('eventLogs', serialized)) {
       // Quota exceeded — trim to 500 and retry

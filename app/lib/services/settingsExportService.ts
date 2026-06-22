@@ -149,6 +149,17 @@ interface SettingsData {
  * @param importedData The imported data
  */
 export async function importSettings(importedData: SettingsData): Promise<void> {
+  // Validate top-level keys: reject prototype pollution attempts
+  for (const key of Object.keys(importedData)) {
+    if (key === '__proto__' || key === 'constructor' || key === 'prototype' || key.includes('__proto__')) {
+      throw new Error('Invalid settings data: forbidden key detected');
+    }
+
+    if (key.startsWith('__')) {
+      throw new Error('Invalid settings data: keys starting with __ are not allowed');
+    }
+  }
+
   // Check if this is the new comprehensive format (v2.0)
   const isNewFormat = importedData._meta?.version === '2.0';
 
@@ -409,6 +420,22 @@ async function importLegacyFormat(data: SettingsData): Promise<void> {
    * This is a simplified version that tries to import whatever is available
    */
 
+  // Allowlist of known localStorage keys
+  const ALLOWED_STORAGE_KEYS = new Set([
+    'user_profile', 'app_settings', 'theme', 'provider_settings',
+    'viewed_features', 'developer_mode', 'contextOptimizationEnabled',
+    'autoSelectTemplate', 'isLatestBranch', 'isEventLogsEnabled',
+    'promptId', 'netlify_connection', 'acknowledged_debug_issues',
+    'acknowledged_connection_issue', 'error_logs', 'update_settings',
+    'last_acknowledged_update',
+  ]);
+
+  // Allowlist of known cookie names
+  const ALLOWED_COOKIE_KEYS = new Set([
+    'apiKeys', 'selectedModel', 'selectedProvider', 'providers',
+    'tabConfiguration', 'cachedPrompt', 'isDebugEnabled', 'eventLogs',
+  ]);
+
   // Try to import settings directly
   Object.entries(data).forEach(([key, value]) => {
     if (value !== null && value !== undefined) {
@@ -417,23 +444,34 @@ async function importLegacyFormat(data: SettingsData): Promise<void> {
         return;
       }
 
+      // Reject prototype pollution and suspicious keys
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype' || key.includes('__proto__')) {
+        logger.warn(`Rejecting forbidden legacy key: ${key}`);
+        return;
+      }
+
+      if (key.startsWith('__')) {
+        logger.warn(`Rejecting key starting with __: ${key}`);
+        return;
+      }
+
+      // Validate values are strings or serializable primitives
+      if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean') {
+        logger.warn(`Rejecting non-primitive value for legacy key: ${key}`);
+        return;
+      }
+
       try {
         // Try to determine if this should be a cookie or localStorage item
-        const isCookie = [
-          'apiKeys',
-          'selectedModel',
-          'selectedProvider',
-          'providers',
-          'tabConfiguration', // legacy: kept for backward compat import only
-          'cachedPrompt',
-          'isDebugEnabled',
-          'eventLogs',
-        ].includes(key);
+        const isCookie = ALLOWED_COOKIE_KEYS.has(key);
+        const isStorage = ALLOWED_STORAGE_KEYS.has(key);
 
         if (isCookie) {
           safeSetCookie(key, value);
-        } else {
+        } else if (isStorage || key.startsWith('github_') || key.startsWith('snapshot:')) {
           safeSetItem(key, value);
+        } else {
+          logger.warn(`Skipping unknown legacy settings key: ${key}`);
         }
       } catch (err) {
         logger.error(`Error importing legacy setting ${key}:`, err);

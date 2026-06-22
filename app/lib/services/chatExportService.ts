@@ -1,5 +1,5 @@
 import { type Message } from 'ai';
-import { getAllChats, deleteChat } from '~/lib/persistence/db';
+import { getAllChats } from '~/lib/persistence/db';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('ChatExportService');
@@ -70,8 +70,23 @@ export async function deleteAllChats(db: IDBDatabase): Promise<void> {
     throw new Error('Database not initialized');
   }
 
-  // Get all chats and delete them one by one
-  const chats = await getAllChats(db);
-  const deletePromises = chats.map((chat) => deleteChat(db, chat.id));
-  await Promise.allSettled(deletePromises);
+  // Use a single transaction to clear the entire 'chats' store
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction('chats', 'readwrite');
+    const store = tx.objectStore('chats');
+    const clearReq = store.clear();
+
+    clearReq.onsuccess = () => {
+      // resolve when the transaction completes, not just the request
+    };
+    clearReq.onerror = () => {
+      reject(clearReq.error);
+    };
+    tx.oncomplete = () => {
+      resolve();
+    };
+    tx.onerror = () => {
+      reject(tx.error);
+    };
+  });
 }

@@ -290,6 +290,9 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
     let targetProjectId = projectId;
     let projectInfo: VercelProjectInfo | undefined;
 
+    // Sanitize chatId for use in project names
+    const safeChatId = (chatId || 'unknown').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 32);
+
     // Detect framework from the source files if not provided
     let detectedFramework = framework;
 
@@ -300,7 +303,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
 
     // If no projectId provided, create a new project
     if (!targetProjectId) {
-      const projectName = `app-${chatId}-${Date.now()}`;
+      const projectName = `app-${safeChatId}-${Date.now()}`;
       const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
         method: 'POST',
         headers: {
@@ -347,7 +350,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
         };
       } else {
         // If project doesn't exist, create a new one
-        const projectName = `app-${chatId}-${Date.now()}`;
+        const projectName = `app-${safeChatId}-${Date.now()}`;
         const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
           method: 'POST',
           headers: {

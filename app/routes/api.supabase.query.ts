@@ -115,9 +115,7 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
         JSON.stringify({
           error: {
             status: response.status,
-            statusText: response.statusText,
-            message: errorData.message || errorData.error || errorText,
-            details: errorData,
+            message: 'Query execution failed',
           },
         }),
         {
@@ -141,7 +139,7 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
     return new Response(
       JSON.stringify({
         error: {
-          message: error instanceof Error ? error.message : 'Query execution failed',
+          message: 'Query execution failed',
         },
       }),
       {

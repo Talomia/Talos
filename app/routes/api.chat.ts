@@ -330,13 +330,27 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             result.mergeIntoDataStream(dataStream);
 
             (async () => {
-              for await (const part of result.fullStream) {
-                if (part.type === 'error') {
-                  const error: any = part.error;
-                  logger.error(`${error}`);
+              try {
+                for await (const part of result.fullStream) {
+                  if (part.type === 'error') {
+                    const error: any = part.error;
+                    logger.error(`Continuation stream error: ${error}`);
+                    dataStream.writeMessageAnnotation({
+                      type: 'error',
+                      message: 'An error occurred during response continuation.',
+                      provider: 'unknown',
+                    });
 
-                  return;
+                    return;
+                  }
                 }
+              } catch (continuationError: any) {
+                logger.error('Continuation stream consumption error:', continuationError);
+                dataStream.writeMessageAnnotation({
+                  type: 'error',
+                  message: 'An error occurred during response continuation.',
+                  provider: 'unknown',
+                });
               }
             })();
 

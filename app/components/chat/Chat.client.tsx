@@ -2,7 +2,7 @@ import { useStore } from '@nanostores/react';
 import type { Message } from 'ai';
 import { useChat } from '@ai-sdk/react';
 import { useAnimate } from 'framer-motion';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
 import { description, useChatHistory } from '~/lib/persistence';
@@ -208,6 +208,10 @@ export const ChatImpl = memo(
         parseMessages,
         storeMessageHistory,
       });
+
+      return () => {
+        processSampledMessages.cancel();
+      };
     }, [messages, isLoading, parseMessages]);
 
     const scrollTextArea = () => {
@@ -321,16 +325,20 @@ export const ChatImpl = memo(
       [input, handleInputChange],
     );
 
-    const mappedMessages = messages.map((message, i) => {
-      if (message.role === 'user') {
-        return message;
-      }
+    const mappedMessages = useMemo(
+      () =>
+        messages.map((message, i) => {
+          if (message.role === 'user') {
+            return message;
+          }
 
-      return {
-        ...message,
-        content: parsedMessages[i] || '',
-      };
-    });
+          return {
+            ...message,
+            content: parsedMessages[i] || '',
+          };
+        }),
+      [messages, parsedMessages],
+    );
 
     const handleEnhancePrompt = useCallback(() => {
       enhancePrompt(
