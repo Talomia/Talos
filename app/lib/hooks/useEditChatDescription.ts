@@ -102,31 +102,34 @@ export function useEditChatDescription({
     toggleEditMode();
   }, [fetchLatestDescription, toggleEditMode]);
 
-  const isValidDescription = useCallback((desc: string): boolean => {
-    const trimmedDesc = desc.trim();
+  const isValidDescription = useCallback(
+    (desc: string): boolean => {
+      const trimmedDesc = desc.trim();
 
-    if (trimmedDesc === initialDescription) {
-      toggleEditMode();
-      return false; // No change, skip validation
-    }
+      if (trimmedDesc === initialDescription) {
+        toggleEditMode();
+        return false; // No change, skip validation
+      }
 
-    const lengthValid = trimmedDesc.length > 0 && trimmedDesc.length <= 100;
+      const lengthValid = trimmedDesc.length > 0 && trimmedDesc.length <= 100;
 
-    // Allow letters, numbers, spaces, and common punctuation but exclude characters that could cause issues
-    const characterValid = /^[a-zA-Z0-9\s\-_.,!?()[\]{}'"]+$/.test(trimmedDesc);
+      // Allow letters, numbers, spaces, and common punctuation but exclude characters that could cause issues
+      const characterValid = /^[a-zA-Z0-9\s\-_.,!?()[\]{}'"]+$/.test(trimmedDesc);
 
-    if (!lengthValid) {
-      toast.error('Description must be between 1 and 100 characters.');
-      return false;
-    }
+      if (!lengthValid) {
+        toast.error('Description must be between 1 and 100 characters.');
+        return false;
+      }
 
-    if (!characterValid) {
-      toast.error('Description can only contain letters, numbers, spaces, and basic punctuation.');
-      return false;
-    }
+      if (!characterValid) {
+        toast.error('Description can only contain letters, numbers, spaces, and basic punctuation.');
+        return false;
+      }
 
-    return true;
-  }, [initialDescription, toggleEditMode]);
+      return true;
+    },
+    [initialDescription, toggleEditMode],
+  );
 
   const handleSubmit = useCallback(
     async (event: React.FormEvent) => {

@@ -76,6 +76,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
   function requestOverwriteConfirmation(message: string): Promise<boolean> {
     setOverwriteConfirmMessage(message);
     setShowOverwriteConfirm(true);
+
     return new Promise<boolean>((resolve) => {
       overwriteResolveRef.current = resolve;
     });
@@ -166,7 +167,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       const fileList = Object.entries(files).map(([filePath, fileData]) => ({
         path: filePath,
         size: fileData.isBinary
-          ? Math.ceil(fileData.content.length * 3 / 4)
+          ? Math.ceil((fileData.content.length * 3) / 4)
           : new TextEncoder().encode(fileData.content).length,
       }));
 

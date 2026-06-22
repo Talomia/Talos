@@ -46,9 +46,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     logger.error(`[${panelName}] Uncaught error:`, error);
     logger.debug(`[${panelName}] Component stack:`, errorInfo.componentStack);
 
-    // Log to the centralized logStore for visibility in the Event Logs tab.
-    // Dynamic import avoids circular-dependency issues and keeps the boundary
-    // usable on the server where logStore relies on `localStorage`.
+    /*
+     * Log to the centralized logStore for visibility in the Event Logs tab.
+     * Dynamic import avoids circular-dependency issues and keeps the boundary
+     * usable on the server where logStore relies on `localStorage`.
+     */
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { logStore } = require('~/lib/stores/logs');
@@ -57,8 +59,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         componentStack: errorInfo.componentStack ?? undefined,
       });
     } catch {
-      // logStore unavailable (SSR or import failure) — the scoped logger above
-      // already captured the error, so we can safely swallow this.
+      /*
+       * logStore unavailable (SSR or import failure) — the scoped logger above
+       * already captured the error, so we can safely swallow this.
+       */
     }
 
     this.props.onError?.(error, errorInfo);

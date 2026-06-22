@@ -207,8 +207,10 @@ async function vercelDeployLoader({ request }: LoaderFunctionArgs) {
   const url = new URL(request.url);
   const projectId = url.searchParams.get('projectId');
 
-  // Read token from Authorization header instead of URL query params
-  // to prevent it from leaking into logs, browser history, and referrer headers.
+  /*
+   * Read token from Authorization header instead of URL query params
+   * to prevent it from leaking into logs, browser history, and referrer headers.
+   */
   const authHeader = request.headers.get('Authorization') || '';
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
 
@@ -222,12 +224,15 @@ async function vercelDeployLoader({ request }: LoaderFunctionArgs) {
 
   try {
     // Get project info
-    const projectResponse = await fetchWithTimeout(`https://api.vercel.com/v9/projects/${encodeURIComponent(projectId)}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const projectResponse = await fetchWithTimeout(
+      `https://api.vercel.com/v9/projects/${encodeURIComponent(projectId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        timeoutMs: 30000,
       },
-      timeoutMs: 30000,
-    });
+    );
 
     if (!projectResponse.ok) {
       return json({ error: 'Failed to fetch project' }, { status: 400 });
@@ -236,12 +241,15 @@ async function vercelDeployLoader({ request }: LoaderFunctionArgs) {
     const projectData = (await projectResponse.json()) as VercelProjectResponse;
 
     // Get latest deployment
-    const deploymentsResponse = await fetchWithTimeout(`https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=1`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const deploymentsResponse = await fetchWithTimeout(
+      `https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=1`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        timeoutMs: 30000,
       },
-      timeoutMs: 30000,
-    });
+    );
 
     if (!deploymentsResponse.ok) {
       return json({ error: 'Failed to fetch deployments' }, { status: 400 });

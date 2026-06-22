@@ -34,9 +34,11 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isInspectorMode, setIsInspectorMode] = useState(false);
   const [isDeviceModeOn, setIsDeviceModeOn] = useState(false);
+
   // Fix 6: Track iframe loading and error states
   const [iframeLoading, setIframeLoading] = useState(false);
   const [iframeError, setIframeError] = useState<string | null>(null);
+
   // Fix 5: Track URL validation warnings
   const [urlWarning, setUrlWarning] = useState<string | null>(null);
 
@@ -107,9 +109,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       setIframeError(null);
     } else {
       setIframeUrl(undefined);
-      setUrlWarning(
-        `Blocked URL: "${baseUrl}" is not a recognized localhost or WebContainer URL.`,
-      );
+      setUrlWarning(`Blocked URL: "${baseUrl}" is not a recognized localhost or WebContainer URL.`);
     }
 
     setDisplayPath('/');
@@ -213,12 +213,15 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       } else if (event.data.type === 'INSPECTOR_CLICK') {
         const element = event.data.elementInfo;
 
-        navigator.clipboard.writeText(element.displayText).then(() => {
-          setSelectedElement?.(element);
-        }).catch(() => {
-          // Clipboard write may fail without permissions — still update selection
-          setSelectedElement?.(element);
-        });
+        navigator.clipboard
+          .writeText(element.displayText)
+          .then(() => {
+            setSelectedElement?.(element);
+          })
+          .catch(() => {
+            // Clipboard write may fail without permissions — still update selection
+            setSelectedElement?.(element);
+          });
       }
     };
 
@@ -347,6 +350,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                   title="preview"
                   className="border-none w-full h-full bg-ui-background-depth-1"
                   src={iframeUrl}
+
                   // Fix 4: Sandbox restricts what user-generated code can do in the preview
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                   onLoad={handleIframeLoad}

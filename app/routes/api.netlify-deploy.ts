@@ -99,12 +99,15 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     } else {
       // Get existing site info
       if (targetSiteId) {
-        const siteResponse = await fetchWithTimeout(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
+        const siteResponse = await fetchWithTimeout(
+          `https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            timeoutMs: 30000,
           },
-          timeoutMs: 30000,
-        });
+        );
 
         if (siteResponse.ok) {
           const existingSite = (await siteResponse.json()) as NetlifySiteResponse;
@@ -165,22 +168,25 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     }
 
     // Create a new deploy with digests
-    const deployResponse = await fetchWithTimeout(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    const deployResponse = await fetchWithTimeout(
+      `https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          files: fileDigests,
+          async: true,
+          skip_processing: false,
+          draft: false, // Change this to false for production deployments
+          function_schedules: [],
+          framework: null,
+        }),
+        timeoutMs: 30000,
       },
-      body: JSON.stringify({
-        files: fileDigests,
-        async: true,
-        skip_processing: false,
-        draft: false, // Change this to false for production deployments
-        function_schedules: [],
-        framework: null,
-      }),
-      timeoutMs: 30000,
-    });
+    );
 
     if (!deployResponse.ok) {
       const errorDetail = await readNetlifyError(deployResponse);
@@ -197,12 +203,15 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
 
     // Poll until deploy is ready for file uploads
     while (retryCount < maxRetries) {
-      const statusResponse = await fetchWithTimeout(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys/${encodeURIComponent(deploy.id)}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+      const statusResponse = await fetchWithTimeout(
+        `https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys/${encodeURIComponent(deploy.id)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          timeoutMs: 30000,
         },
-        timeoutMs: 30000,
-      });
+      );
 
       if (!statusResponse.ok) {
         const errorDetail = await readNetlifyError(statusResponse);

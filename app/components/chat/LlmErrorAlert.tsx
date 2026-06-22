@@ -32,7 +32,7 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
       case 'quota':
         return `Quota exceeded for ${provider}. Please check your account limits.`;
       default:
-        return 'An error occurred while processing your request.';
+        return 'I ran into an error while processing your request.';
     }
   };
 

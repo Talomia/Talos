@@ -113,8 +113,9 @@ class LogStore {
 
     // Proactively trim if serialized size exceeds the cap
     if (serialized.length > MAX_SERIALIZED_SIZE) {
-      const entries = Object.entries(currentLogs)
-        .sort(([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const entries = Object.entries(currentLogs).sort(
+        ([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      );
       const trimmed = Object.fromEntries(entries.slice(0, 500));
       this._logs.set(trimmed);
       currentLogs = trimmed;
@@ -123,8 +124,9 @@ class LogStore {
 
     if (!safeSetItem('eventLogs', serialized)) {
       // Quota exceeded — trim to 500 and retry
-      const entries = Object.entries(currentLogs)
-        .sort(([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const entries = Object.entries(currentLogs).sort(
+        ([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime(),
+      );
       const trimmed500 = Object.fromEntries(entries.slice(0, 500));
       this._logs.set(trimmed500);
 

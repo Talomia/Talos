@@ -65,8 +65,6 @@ function cleanoutMarkdownSyntax(content: string) {
   const codeBlockRegex = /^\s*```\w*\n([\s\S]*?)\n\s*```\s*$/;
   const match = content.match(codeBlockRegex);
 
-
-
   if (match) {
     return match[1]; // Remove common leading 4-space indent
   } else {
@@ -83,6 +81,7 @@ function cleanEscapedTags(content: string) {
     .replace(/&#39;/g, "'")
     .replace(/&apos;/g, "'");
 }
+
 const MAX_PARSED_MESSAGES = 50;
 
 export class StreamingMessageParser {
@@ -436,8 +435,13 @@ export class StreamingMessageParser {
   #extractAttribute(tag: string, attributeName: string): string | undefined {
     // Try double-quote match first, then single-quote, to handle embedded quotes in values
     const doubleMatch = tag.match(new RegExp(`${attributeName}="([^"]*)"`, 'i'));
-    if (doubleMatch) return doubleMatch[1];
+
+    if (doubleMatch) {
+      return doubleMatch[1];
+    }
+
     const singleMatch = tag.match(new RegExp(`${attributeName}='([^']*)'`, 'i'));
+
     return singleMatch ? singleMatch[1] : undefined;
   }
 }

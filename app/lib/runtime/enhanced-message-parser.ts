@@ -178,6 +178,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
         // Generate artifact wrapper
         const counter = this._artifactCounters.get(messageId) || 0;
         this._artifactCounters.set(messageId, counter + 1);
+
         const artifactId = `artifact-${messageId}-${counter}`;
         const wrapped = this._wrapInArtifact(artifactId, filePath, content);
 
@@ -208,6 +209,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
 
       const counter2 = this._artifactCounters.get(messageId) || 0;
       this._artifactCounters.set(messageId, counter2 + 1);
+
       const artifactId = `artifact-${messageId}-${counter2}`;
 
       // Clean content - remove leading/trailing whitespace but preserve indentation
@@ -235,6 +237,7 @@ ${ARTIFACT_TAG_CLOSE}`;
   private _wrapInShellAction(content: string, messageId: string): string {
     const shellCounter = this._artifactCounters.get(messageId) || 0;
     this._artifactCounters.set(messageId, shellCounter + 1);
+
     const artifactId = `artifact-${messageId}-${shellCounter}`;
 
     return `${ARTIFACT_TAG_OPEN} id="${artifactId}" title="Shell Command" type="shell">

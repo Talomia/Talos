@@ -9,7 +9,9 @@ export function useHistoryDB() {
 
   useEffect(() => {
     // Clean up phantom 'appDB' database from legacy code
-    try { indexedDB.deleteDatabase('appDB'); } catch { }
+    try {
+      indexedDB.deleteDatabase('appDB');
+    } catch {}
 
     const initDB = async () => {
       try {

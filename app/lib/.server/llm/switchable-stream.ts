@@ -58,7 +58,9 @@ export default class SwitchableStream extends TransformStream {
 
   async close() {
     if (this._currentReader) {
-      try { await this._currentReader.cancel(); } catch { }
+      try {
+        await this._currentReader.cancel();
+      } catch {}
       this._currentReader = null;
     }
 

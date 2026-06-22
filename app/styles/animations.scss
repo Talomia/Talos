@@ -47,3 +47,53 @@
     transform: translateY(6px);
   }
 }
+
+/* Landing page staggered entrance */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--stagger-delay, 0s);
+}
+
+/* Command palette animations */
+@keyframes cmdFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cmdScaleIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: cmdFadeIn 0.15s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: cmdScaleIn 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

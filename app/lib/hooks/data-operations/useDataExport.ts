@@ -256,13 +256,10 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
       // Dismiss progress toast before showing success toast
       toast.dismiss('progress-toast');
 
-      toast.success(
-        `${exportData.chats.length} chats and ${snapshots.length} snapshots exported successfully`,
-        {
-          position: 'bottom-right',
-          autoClose: 3000,
-        },
-      );
+      toast.success(`${exportData.chats.length} chats and ${snapshots.length} snapshots exported successfully`, {
+        position: 'bottom-right',
+        autoClose: 3000,
+      });
 
       // Save operation for potential undo
       setLastOperation({ type: 'export-chats', data: exportData });
@@ -380,13 +377,10 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
         // Dismiss progress toast before showing success toast
         toast.dismiss('progress-toast');
 
-        toast.success(
-          `${filteredChats.length} chats and ${snapshots.length} snapshots exported successfully`,
-          {
-            position: 'bottom-right',
-            autoClose: 3000,
-          },
-        );
+        toast.success(`${filteredChats.length} chats and ${snapshots.length} snapshots exported successfully`, {
+          position: 'bottom-right',
+          autoClose: 3000,
+        });
 
         // Save operation for potential undo
         setLastOperation({ type: 'export-selected-chats', data: { chatIds, chats: filteredChats, snapshots } });

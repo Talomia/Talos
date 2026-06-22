@@ -5,6 +5,9 @@ import { useAnimate } from 'framer-motion';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
+import { useDocumentTitle } from '~/lib/hooks/useDocumentTitle';
+import { useNotificationOnComplete } from '~/lib/hooks/useNotificationOnComplete';
+import { downloadChatAsMarkdown } from '~/lib/export/chatToMarkdown';
 import { description, useChatHistory } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
@@ -83,6 +86,8 @@ interface ChatProps {
 export const ChatImpl = memo(
   ({ description: _description, initialMessages, storeMessageHistory, importChat, exportChat }: ChatProps) => {
     useShortcuts();
+    useDocumentTitle();
+    useNotificationOnComplete();
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [chatStarted, setChatStarted] = useState(initialMessages.length > 0);
@@ -213,6 +218,24 @@ export const ChatImpl = memo(
         processSampledMessages.cancel();
       };
     }, [messages, isLoading, parseMessages]);
+
+    // Listen for markdown export from command palette
+    useEffect(() => {
+      const handleExportMarkdown = () => {
+        if (messages.length === 0) {
+          toast.info('No messages to export');
+
+          return;
+        }
+
+        downloadChatAsMarkdown(messages, description.get());
+        toast.success('Chat exported as Markdown');
+      };
+
+      window.addEventListener('talos:export-markdown', handleExportMarkdown);
+
+      return () => window.removeEventListener('talos:export-markdown', handleExportMarkdown);
+    }, [messages]);
 
     const scrollTextArea = () => {
       const textarea = textareaRef.current;

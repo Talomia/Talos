@@ -280,7 +280,7 @@ export const ColorSchemeDialog: React.FC<ColorSchemeDialogProps> = ({ setDesignS
             <div className="">
               <DialogTitle className="text-2xl font-bold text-ui-textPrimary">Design Palette & Features</DialogTitle>
               <DialogDescription className="text-ui-textSecondary leading-relaxed">
-                Customize your color palette, typography, and design features. These preferences will guide the AI in
+                Customize your color palette, typography, and design features. These preferences will guide me in
                 creating designs that match your style.
               </DialogDescription>
             </div>

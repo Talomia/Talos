@@ -64,8 +64,7 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
     }
 
     // Reject DDL and dangerous statements anywhere in the query
-    const DDL_PATTERN =
-      /\b(DROP|ALTER|CREATE|TRUNCATE|COPY|GRANT|REVOKE|EXECUTE|VACUUM|ANALYZE|CLUSTER|REINDEX)\b/i;
+    const DDL_PATTERN = /\b(DROP|ALTER|CREATE|TRUNCATE|COPY|GRANT|REVOKE|EXECUTE|VACUUM|ANALYZE|CLUSTER|REINDEX)\b/i;
     const DANGEROUS_PATTERN = /\bCOMMENT\s+ON\b/i;
     const ANON_BLOCK_PATTERN = /\bDO\b\s*\$/i; // PL/pgSQL anonymous blocks: DO $$...$$
     const SET_PATTERN = /^\s*SET\b/i; // Block SET as statement start (allow inside expressions)
@@ -102,15 +101,18 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
 
     logger.debug('Executing query:', { projectId, queryLength: query.length, preview: query.slice(0, 80) });
 
-    const response = await fetchWithTimeout(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/database/query`, {
-      method: 'POST',
-      headers: {
-        Authorization: authHeader,
-        'Content-Type': 'application/json',
+    const response = await fetchWithTimeout(
+      `https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/database/query`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query }),
+        timeoutMs: 30000,
       },
-      body: JSON.stringify({ query }),
-      timeoutMs: 30000,
-    });
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

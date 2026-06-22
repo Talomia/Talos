@@ -9,6 +9,7 @@ function withResolvers<T>(): { promise: Promise<T>; resolve: (value: T) => void;
     resolve = res;
     reject = rej;
   });
+
   return { promise, resolve, reject };
 }
 import { atom } from 'nanostores';
@@ -34,48 +35,48 @@ export async function newShellProcess(engine: RuntimeEngine, terminal: ITerminal
   const jshReady = withResolvers<void>();
 
   let isInteractive = false;
-  output.pipeTo(
-    new WritableStream({
-      write(data) {
-        if (!isInteractive) {
-          const [, osc] = data.match(/\x1b\]654;([^\x07]+)\x07/) || [];
+  output
+    .pipeTo(
+      new WritableStream({
+        write(data) {
+          if (!isInteractive) {
+            const [, osc] = data.match(/\x1b\]654;([^\x07]+)\x07/) || [];
 
-          if (osc === 'interactive') {
-            // wait until we see the interactive OSC
-            isInteractive = true;
+            if (osc === 'interactive') {
+              // wait until we see the interactive OSC
+              isInteractive = true;
 
-            jshReady.resolve();
+              jshReady.resolve();
+            }
           }
-        }
 
-        terminal.write(data);
+          terminal.write(data);
 
-        // Capture terminal output for debugging
-        try {
-          import('~/utils/debugLogger')
-            .then(({ captureTerminalLog }) => {
-              // Clean the data by removing ANSI escape sequences for logging
-              const cleanData = data.replace(/\x1b\[[0-9;]*[mG]/g, '').trim();
+          // Capture terminal output for debugging
+          try {
+            import('~/utils/debugLogger')
+              .then(({ captureTerminalLog }) => {
+                // Clean the data by removing ANSI escape sequences for logging
+                const cleanData = data.replace(/\x1b\[[0-9;]*[mG]/g, '').trim();
 
-              if (cleanData) {
-                captureTerminalLog(cleanData, 'output');
-              }
-            })
-            .catch(() => {
-              // Ignore if debug logger is not available
-            });
-        } catch {
-          // Ignore errors in debug logging
-        }
-      },
-    }),
-  ).catch((error) => {
-    logger.error('Shell stream pipe error:', error);
-  });
+                if (cleanData) {
+                  captureTerminalLog(cleanData, 'output');
+                }
+              })
+              .catch(() => {
+                // Ignore if debug logger is not available
+              });
+          } catch {
+            // Ignore errors in debug logging
+          }
+        },
+      }),
+    )
+    .catch((error) => {
+      logger.error('Shell stream pipe error:', error);
+    });
 
   terminal.onData((data) => {
-
-
     if (isInteractive) {
       input.write(data);
 
@@ -162,24 +163,26 @@ export class AppShell {
 
     const jshReady = withResolvers<void>();
     let isInteractive = false;
-    streamA.pipeTo(
-      new WritableStream({
-        write(data) {
-          if (!isInteractive) {
-            const [, osc] = data.match(/\x1b\]654;([^\x07]+)\x07/) || [];
+    streamA
+      .pipeTo(
+        new WritableStream({
+          write(data) {
+            if (!isInteractive) {
+              const [, osc] = data.match(/\x1b\]654;([^\x07]+)\x07/) || [];
 
-            if (osc === 'interactive') {
-              isInteractive = true;
-              jshReady.resolve();
+              if (osc === 'interactive') {
+                isInteractive = true;
+                jshReady.resolve();
+              }
             }
-          }
 
-          terminal.write(data);
-        },
-      }),
-    ).catch((error) => {
-      logger.error('Shell stream pipe error:', error);
-    });
+            terminal.write(data);
+          },
+        }),
+      )
+      .catch((error) => {
+        logger.error('Shell stream pipe error:', error);
+      });
 
     terminal.onData((data) => {
       if (isInteractive) {

@@ -20,8 +20,10 @@ const ProfileTab = lazy(() => import('~/components/@settings/tabs/profile/Profil
 const SettingsTab = lazy(() => import('~/components/@settings/tabs/settings/SettingsTab'));
 const NotificationsTab = lazy(() => import('~/components/@settings/tabs/notifications/NotificationsTab'));
 const FeaturesTab = lazy(() => import('~/components/@settings/tabs/features/FeaturesTab'));
-const DataTab = lazy(() => import('~/components/@settings/tabs/data/DataTab').then(m => ({ default: m.DataTab })));
-const EventLogsTab = lazy(() => import('~/components/@settings/tabs/event-logs/EventLogsTab').then(m => ({ default: m.EventLogsTab })));
+const DataTab = lazy(() => import('~/components/@settings/tabs/data/DataTab').then((m) => ({ default: m.DataTab })));
+const EventLogsTab = lazy(() =>
+  import('~/components/@settings/tabs/event-logs/EventLogsTab').then((m) => ({ default: m.EventLogsTab })),
+);
 const GitHubTab = lazy(() => import('~/components/@settings/tabs/github/GitHubTab'));
 const GitLabTab = lazy(() => import('~/components/@settings/tabs/gitlab/GitLabTab'));
 const SupabaseTab = lazy(() => import('~/components/@settings/tabs/supabase/SupabaseTab'));
@@ -311,9 +313,7 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
                     )}
                   >
                     {activeTab ? (
-                      <Suspense fallback={<TabLoadingSpinner />}>
-                        {getTabComponent(activeTab)}
-                      </Suspense>
+                      <Suspense fallback={<TabLoadingSpinner />}>{getTabComponent(activeTab)}</Suspense>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
                         {visibleTabs.map((tab, index) => (

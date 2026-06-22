@@ -51,31 +51,34 @@ export async function initAuth(): Promise<() => void> {
       );
 
       // Set up periodic session refresh every 5 minutes
-      intervalId = setInterval(async () => {
-        try {
-          const refreshResponse = await fetch('/api/auth/user');
-          const refreshData = (await refreshResponse.json()) as { user: AuthUser | null };
+      intervalId = setInterval(
+        async () => {
+          try {
+            const refreshResponse = await fetch('/api/auth/user');
+            const refreshData = (await refreshResponse.json()) as { user: AuthUser | null };
 
-          if (!refreshData.user) {
-            authStore.set({ user: null, isLoading: false, error: null });
+            if (!refreshData.user) {
+              authStore.set({ user: null, isLoading: false, error: null });
 
-            // Show a toast notification if available in the browser
-            if (typeof window !== 'undefined') {
-              import('react-toastify').then(({ toast }) => {
-                toast.warning('Your session has expired. Please sign in again.');
-              });
+              // Show a toast notification if available in the browser
+              if (typeof window !== 'undefined') {
+                import('react-toastify').then(({ toast }) => {
+                  toast.warning('Your session has expired. Please sign in again.');
+                });
+              }
+
+              // Clear the interval since the user is no longer authenticated
+              if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+              }
             }
-
-            // Clear the interval since the user is no longer authenticated
-            if (intervalId) {
-              clearInterval(intervalId);
-              intervalId = null;
-            }
+          } catch {
+            logger.warn('Session refresh check failed');
           }
-        } catch {
-          logger.warn('Session refresh check failed');
-        }
-      }, 5 * 60 * 1000); // 5 minutes
+        },
+        5 * 60 * 1000,
+      ); // 5 minutes
     }
   } catch (_err) {
     logger.error('Failed to fetch auth state:', _err);

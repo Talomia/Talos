@@ -88,6 +88,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   };
   const encoder: TextEncoder = new TextEncoder();
   let progressCounter: number = 1;
+  const stepTimers: Record<string, number> = {};
 
   try {
     const mcpService = MCPService.getInstance();
@@ -96,8 +97,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
     let lastChunk: string | undefined = undefined;
 
-    // Fix 2: Create a 5-minute timeout signal for LLM API calls.
-    // This prevents indefinite hangs when the provider is unresponsive.
+    /*
+     * Fix 2: Create a 5-minute timeout signal for LLM API calls.
+     * This prevents indefinite hangs when the provider is unresponsive.
+     */
     const timeoutMs = 300000; // 5 minutes
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
@@ -135,7 +138,9 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
           const systemMessages = processedMessages.filter((m) => m.role === 'system');
           const contextMessages = processedMessages.filter(
-            (m) => m.role === 'data' || (m.role === 'assistant' && typeof m.content === 'string' && m.content.startsWith('{"type":"context')),
+            (m) =>
+              m.role === 'data' ||
+              (m.role === 'assistant' && typeof m.content === 'string' && m.content.startsWith('{"type":"context')),
           );
           const conversationMessages = processedMessages.filter(
             (m) => m.role === 'user' || (m.role === 'assistant' && !contextMessages.includes(m)),
@@ -152,12 +157,15 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
         if (filePaths.length > 0 && contextOptimization) {
           logger.debug('Generating Chat Summary');
+          stepTimers.summary = Date.now();
           dataStream.writeData({
             type: 'progress',
             label: 'summary',
             status: 'in-progress',
             order: progressCounter++,
-            message: 'Analysing Request',
+            message: 'Analyzing your request…',
+            icon: '\uD83D\uDD0D',
+            startedAt: stepTimers.summary,
           } satisfies ProgressAnnotation);
 
           // Create a summary of the chat
@@ -184,7 +192,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             label: 'summary',
             status: 'complete',
             order: progressCounter++,
-            message: 'Analysis Complete',
+            message: 'Analysis complete',
+            icon: '\uD83D\uDD0D',
+            completedAt: Date.now(),
+            duration: Date.now() - stepTimers.summary,
           } satisfies ProgressAnnotation);
 
           dataStream.writeMessageAnnotation({
@@ -195,12 +206,15 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
           // Update context buffer
           logger.debug('Updating Context Buffer');
+          stepTimers.context = Date.now();
           dataStream.writeData({
             type: 'progress',
             label: 'context',
             status: 'in-progress',
             order: progressCounter++,
-            message: 'Determining Files to Read',
+            message: 'Finding relevant files…',
+            icon: '\uD83D\uDCC1',
+            startedAt: stepTimers.context,
           } satisfies ProgressAnnotation);
 
           // Select context files
@@ -246,7 +260,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             label: 'context',
             status: 'complete',
             order: progressCounter++,
-            message: 'Code Files Selected',
+            message: "I've identified the relevant files",
+            icon: '\uD83D\uDCC1',
+            completedAt: Date.now(),
+            duration: Date.now() - stepTimers.context,
           } satisfies ProgressAnnotation);
 
           // logger.debug('Code Files Selected');
@@ -286,7 +303,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                 label: 'response',
                 status: 'complete',
                 order: progressCounter++,
-                message: 'Response Generated',
+                message: 'Done!',
+                icon: '\u270D\uFE0F',
+                completedAt: Date.now(),
+                duration: Date.now() - stepTimers.response,
               } satisfies ProgressAnnotation);
               await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -337,7 +357,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                     logger.error(`Continuation stream error: ${error}`);
                     dataStream.writeMessageAnnotation({
                       type: 'error',
-                      message: 'An error occurred during response continuation.',
+                      message: 'I ran into an error while continuing my response.',
                       provider: 'unknown',
                     });
 
@@ -348,7 +368,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                 logger.error('Continuation stream consumption error:', continuationError);
                 dataStream.writeMessageAnnotation({
                   type: 'error',
-                  message: 'An error occurred during response continuation.',
+                  message: 'I ran into an error while continuing my response.',
                   provider: 'unknown',
                 });
               }
@@ -358,12 +378,15 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           },
         };
 
+        stepTimers.response = Date.now();
         dataStream.writeData({
           type: 'progress',
           label: 'response',
           status: 'in-progress',
           order: progressCounter++,
-          message: 'Generating Response',
+          message: 'Working on it\u2026',
+          icon: '\u270D\uFE0F',
+          startedAt: stepTimers.response,
         } satisfies ProgressAnnotation);
 
         const result = await streamText({
@@ -399,9 +422,9 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                 dataStream.writeMessageAnnotation({
                   type: 'error',
                   message: errorMessage.includes('Invalid JSON response')
-                    ? 'The AI service returned an invalid response. Try a different model or check your API key.'
+                    ? 'I received an invalid response from the model. Try a different one or check your API key.'
                     : errorMessage.includes('token')
-                      ? 'Token limit exceeded. Try a model with a larger context window or start a new conversation.'
+                      ? 'I hit the token limit. Try a model with a larger context window or start a new conversation.'
                       : errorMessage,
                   provider: errorProvider,
                 });
@@ -418,14 +441,14 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               logger.error('LLM request timed out after 5 minutes');
               dataStream.writeMessageAnnotation({
                 type: 'error',
-                message: 'The AI request timed out after 5 minutes. The model may be overloaded — please try again.',
+                message: 'My request timed out after 5 minutes. The model may be overloaded — please try again.',
                 provider: 'timeout',
               });
             } else {
               logger.error('Unexpected stream consumption error:', streamError);
               dataStream.writeMessageAnnotation({
                 type: 'error',
-                message: streamError.message || 'An unexpected error occurred during streaming.',
+                message: streamError.message || 'I encountered an unexpected error during streaming.',
                 provider: 'unknown',
               });
             }
@@ -543,16 +566,19 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       );
     }
 
-    return new Response(JSON.stringify({
-      error: true,
-      message: 'An unexpected error occurred',
-      statusCode: 500,
-      isRetryable: true,
-      provider: 'unknown',
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-      statusText: 'Error',
-    });
+    return new Response(
+      JSON.stringify({
+        error: true,
+        message: 'An unexpected error occurred',
+        statusCode: 500,
+        isRetryable: true,
+        provider: 'unknown',
+      }),
+      {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+        statusText: 'Error',
+      },
+    );
   }
 }

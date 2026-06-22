@@ -13,8 +13,13 @@ import { useVercelDeploy } from '~/components/deploy/VercelDeploy.client';
 import { useNetlifyDeploy } from '~/components/deploy/NetlifyDeploy.client';
 import { useGitHubDeploy } from '~/components/deploy/GitHubDeploy.client';
 import { useGitLabDeploy } from '~/components/deploy/GitLabDeploy.client';
-const GitHubDeploymentDialog = lazy(() => import('~/components/deploy/GitHubDeploymentDialog').then(m => ({ default: m.GitHubDeploymentDialog })));
-const GitLabDeploymentDialog = lazy(() => import('~/components/deploy/GitLabDeploymentDialog').then(m => ({ default: m.GitLabDeploymentDialog })));
+
+const GitHubDeploymentDialog = lazy(() =>
+  import('~/components/deploy/GitHubDeploymentDialog').then((m) => ({ default: m.GitHubDeploymentDialog })),
+);
+const GitLabDeploymentDialog = lazy(() =>
+  import('~/components/deploy/GitLabDeploymentDialog').then((m) => ({ default: m.GitLabDeploymentDialog })),
+);
 import type { FileContent } from '~/utils/deployUtils';
 
 interface DeployButtonProps {
@@ -167,6 +172,7 @@ export const DeployButton = ({
                 alt="netlify"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
+
                   const fallback = e.currentTarget.nextElementSibling;
 
                   if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
@@ -174,7 +180,10 @@ export const DeployButton = ({
                   }
                 }}
               />
-              <div className="icon-fallback w-5 h-5 i-ph:globe-simple text-ui-textSecondary" style={{ display: 'none' }} />
+              <div
+                className="icon-fallback w-5 h-5 i-ph:globe-simple text-ui-textSecondary"
+                style={{ display: 'none' }}
+              />
               <span className="mx-auto">
                 {!netlifyConn.user ? 'No Netlify Account Connected' : 'Deploy to Netlify'}
               </span>
@@ -200,6 +209,7 @@ export const DeployButton = ({
                 alt="vercel"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
+
                   const fallback = e.currentTarget.nextElementSibling;
 
                   if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
@@ -231,6 +241,7 @@ export const DeployButton = ({
                 alt="github"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
+
                   const fallback = e.currentTarget.nextElementSibling;
 
                   if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
@@ -238,7 +249,10 @@ export const DeployButton = ({
                   }
                 }}
               />
-              <div className="icon-fallback w-5 h-5 i-ph:github-logo text-ui-textSecondary" style={{ display: 'none' }} />
+              <div
+                className="icon-fallback w-5 h-5 i-ph:github-logo text-ui-textSecondary"
+                style={{ display: 'none' }}
+              />
               <span className="mx-auto">Deploy to GitHub</span>
             </DropdownMenu.Item>
 
@@ -261,6 +275,7 @@ export const DeployButton = ({
                 alt="gitlab"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
+
                   const fallback = e.currentTarget.nextElementSibling;
 
                   if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
@@ -268,7 +283,10 @@ export const DeployButton = ({
                   }
                 }}
               />
-              <div className="icon-fallback w-5 h-5 i-ph:gitlab-logo text-ui-textSecondary" style={{ display: 'none' }} />
+              <div
+                className="icon-fallback w-5 h-5 i-ph:gitlab-logo text-ui-textSecondary"
+                style={{ display: 'none' }}
+              />
               <span className="mx-auto">{!gitlabIsConnected ? 'No GitLab Account Connected' : 'Deploy to GitLab'}</span>
             </DropdownMenu.Item>
 
@@ -285,6 +303,7 @@ export const DeployButton = ({
                 alt="cloudflare"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
+
                   const fallback = e.currentTarget.nextElementSibling;
 
                   if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {

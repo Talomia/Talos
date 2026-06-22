@@ -11,8 +11,12 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ClientOnly } from 'remix-utils/client-only';
 import { cssTransition, ToastContainer } from 'react-toastify';
+import { CommandPalette } from '~/components/ui/CommandPalette';
+import { KeyboardShortcuts } from '~/components/ui/KeyboardShortcuts';
+import { QuickFileOpen } from '~/components/ui/QuickFileOpen';
 
 import reactToastifyStyles from 'react-toastify/dist/ReactToastify.css?url';
+import toastStyles from '~/styles/toasts.css?url';
 import globalStyles from './styles/index.scss?url';
 import xtermStyles from '@xterm/xterm/css/xterm.css?url';
 
@@ -30,6 +34,7 @@ export const links: LinksFunction = () => [
     type: 'image/svg+xml',
   },
   { rel: 'stylesheet', href: reactToastifyStyles },
+  { rel: 'stylesheet', href: toastStyles },
   { rel: 'stylesheet', href: tailwindReset },
   { rel: 'stylesheet', href: globalStyles },
   { rel: 'stylesheet', href: xtermStyles },
@@ -102,6 +107,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <ClientOnly>{() => <DndProvider backend={HTML5Backend}>{children}</DndProvider>}</ClientOnly>
+      <ClientOnly>{() => <CommandPalette />}</ClientOnly>
+      <ClientOnly>{() => <KeyboardShortcuts />}</ClientOnly>
+      <ClientOnly>{() => <QuickFileOpen />}</ClientOnly>
       <ToastContainer
         closeButton={({ closeToast }) => {
           return (

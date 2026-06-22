@@ -205,8 +205,10 @@ class DockerProcess implements RuntimeProcess {
     this.#unregisterOutput = unregisterOutput;
     this.#registerExit = registerExit;
 
-    // WritableStream that sends binary frames for stdin
-    // Uses this.#processId so it picks up the real ID after _assignProcessId
+    /*
+     * WritableStream that sends binary frames for stdin
+     * Uses this.#processId so it picks up the real ID after _assignProcessId
+     */
     this.input = new WritableStream<string>({
       write: (chunk) => {
         const frame = encodeBinaryFrame(BINARY_OPCODE_STDIN, this.#processId, chunk);
@@ -390,8 +392,10 @@ export class DockerEngine implements RuntimeEngine {
       throw new Error('DockerEngine not booted');
     }
 
-    // Pre-create the process adapter so output controller is registered
-    // BEFORE the spawn RPC, preventing early-message loss.
+    /*
+     * Pre-create the process adapter so output controller is registered
+     * BEFORE the spawn RPC, preventing early-message loss.
+     */
     const process = new DockerProcess(
       null, // processId assigned after RPC
       this.#rpc.bind(this),
@@ -403,8 +407,10 @@ export class DockerEngine implements RuntimeEngine {
 
     const result = (await this.#rpc('spawn', { command, args, options })) as { processId: string };
 
-    // Now bind the real processId — this moves the controller registration
-    // from the temporary id to the real one.
+    /*
+     * Now bind the real processId — this moves the controller registration
+     * from the temporary id to the real one.
+     */
     process._assignProcessId(result.processId);
 
     return process;

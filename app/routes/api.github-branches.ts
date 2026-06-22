@@ -98,14 +98,17 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
     const defaultBranch = repoInfo.default_branch;
 
     // Fetch branches
-    const branchesResponse = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`, {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-        Authorization: `Bearer ${githubToken}`,
-        'User-Agent': 'app',
+    const branchesResponse = await fetchWithTimeout(
+      `https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`,
+      {
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${githubToken}`,
+          'User-Agent': 'app',
+        },
+        timeoutMs: 15000,
       },
-      timeoutMs: 15000,
-    });
+    );
 
     if (!branchesResponse.ok) {
       throw new Error(`Failed to fetch branches: ${branchesResponse.status}`);

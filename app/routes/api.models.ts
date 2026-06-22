@@ -39,58 +39,60 @@ function getProviderInfo(llmManager: LLMManager) {
   return { providers: cachedProviders, defaultProvider: cachedDefaultProvider };
 }
 
-export const loader = withSecurity(async ({
-  request,
-  params,
-  context,
-}: {
-  request: Request;
-  params: { provider?: string };
-  context: {
-    cloudflare?: {
-      env: Env;
+export const loader = withSecurity(
+  async ({
+    request,
+    params,
+    context,
+  }: {
+    request: Request;
+    params: { provider?: string };
+    context: {
+      cloudflare?: {
+        env: Env;
+      };
     };
-  };
-}) => {
-  try {
-    const llmManager = LLMManager.getInstance(context.cloudflare?.env);
+  }) => {
+    try {
+      const llmManager = LLMManager.getInstance(context.cloudflare?.env);
 
-    // Get API keys from encrypted vault and provider settings from cookies
-    const cookieHeader = request.headers.get('Cookie');
-    const env = context.cloudflare?.env || {};
-    const apiKeys = await getApiKeysFromVault(cookieHeader, env);
-    const providerSettings = getProviderSettingsFromCookie(cookieHeader);
+      // Get API keys from encrypted vault and provider settings from cookies
+      const cookieHeader = request.headers.get('Cookie');
+      const env = context.cloudflare?.env || {};
+      const apiKeys = await getApiKeysFromVault(cookieHeader, env);
+      const providerSettings = getProviderSettingsFromCookie(cookieHeader);
 
-    const { providers, defaultProvider } = getProviderInfo(llmManager);
+      const { providers, defaultProvider } = getProviderInfo(llmManager);
 
-    let modelList: ModelInfo[] = [];
+      let modelList: ModelInfo[] = [];
 
-    if (params.provider) {
-      // Only update models for the specific provider
-      const provider = llmManager.getProvider(params.provider);
+      if (params.provider) {
+        // Only update models for the specific provider
+        const provider = llmManager.getProvider(params.provider);
 
-      if (provider) {
-        modelList = await llmManager.getModelListFromProvider(provider, {
+        if (provider) {
+          modelList = await llmManager.getModelListFromProvider(provider, {
+            apiKeys,
+            providerSettings,
+            serverEnv: context.cloudflare?.env,
+          });
+        }
+      } else {
+        // Update all models
+        modelList = await llmManager.updateModelList({
           apiKeys,
           providerSettings,
           serverEnv: context.cloudflare?.env,
         });
       }
-    } else {
-      // Update all models
-      modelList = await llmManager.updateModelList({
-        apiKeys,
-        providerSettings,
-        serverEnv: context.cloudflare?.env,
-      });
-    }
 
-    return json<ModelsResponse>({
-      modelList,
-      providers,
-      defaultProvider,
-    });
-  } catch {
-    return json({ error: 'Failed to fetch models' }, { status: 500 });
-  }
-});
+      return json<ModelsResponse>({
+        modelList,
+        providers,
+        defaultProvider,
+      });
+    } catch {
+      return json({ error: 'Failed to fetch models' }, { status: 500 });
+    }
+  },
+);

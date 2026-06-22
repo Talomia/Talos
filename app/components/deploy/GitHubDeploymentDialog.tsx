@@ -124,6 +124,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
   function requestOverwriteConfirmation(message: string): Promise<boolean> {
     setOverwriteConfirmMessage(message);
     setShowOverwriteConfirm(true);
+
     return new Promise<boolean>((resolve) => {
       overwriteResolveRef.current = resolve;
     });
@@ -260,7 +261,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         return {
           path: filePath,
           size: fileData.isBinary
-            ? Math.ceil(fileData.content.length * 3 / 4) // approximate decoded base64 size
+            ? Math.ceil((fileData.content.length * 3) / 4) // approximate decoded base64 size
             : new TextEncoder().encode(fileData.content).length,
         };
       });

@@ -84,23 +84,26 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
 const ProgressItem = ({ progress }: { progress: ProgressAnnotation }) => {
   return (
     <motion.div
-      className={classNames('flex text-sm gap-3')}
+      className={classNames('flex items-center text-sm gap-3 py-0.5')}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.15 }}
     >
-      <div className="flex items-center gap-1.5 ">
-        <div>
-          {progress.status === 'in-progress' ? (
-            <div className="i-svg-spinners:90-ring-with-bg"></div>
-          ) : progress.status === 'complete' ? (
-            <div className="i-ph:check"></div>
-          ) : null}
-        </div>
-        {/* {x.label} */}
+      <div className="flex items-center gap-1.5">
+        {progress.status === 'in-progress' ? (
+          <div className="i-svg-spinners:90-ring-with-bg" />
+        ) : progress.status === 'complete' ? (
+          <div className="i-ph:check text-green-500" />
+        ) : null}
       </div>
-      {progress.message}
+      {progress.icon && <span className="text-xs">{progress.icon}</span>}
+      <span className="flex-1">{progress.message}</span>
+      {progress.duration != null && (
+        <span className="text-[10px] text-ui-textTertiary tabular-nums ml-auto">
+          {progress.duration < 1000 ? `${progress.duration}ms` : `${(progress.duration / 1000).toFixed(1)}s`}
+        </span>
+      )}
     </motion.div>
   );
 };

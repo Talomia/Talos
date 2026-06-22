@@ -19,6 +19,7 @@ import { renderLogger, createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Workbench');
 import { EditorPanel } from './EditorPanel';
+import { EditorStatusBar } from './EditorStatusBar';
 import { Preview } from './Preview';
 import useViewport from '~/lib/hooks';
 
@@ -297,6 +298,7 @@ export const Workbench = memo(
                     <Preview setSelectedElement={setSelectedElement} />
                   </View>
                 </div>
+                <EditorStatusBar />
               </div>
             </div>
           </div>

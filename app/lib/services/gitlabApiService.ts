@@ -28,6 +28,7 @@ class GitLabCache {
     if (this._cache.size >= MAX_CACHE_SIZE) {
       // Evict the oldest entry
       const firstKey = this._cache.keys().next().value;
+
       if (firstKey !== undefined) {
         this._cache.delete(firstKey);
       }

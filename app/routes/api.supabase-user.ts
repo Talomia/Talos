@@ -164,13 +164,16 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
       }
 
       // Fetch project API keys
-      const response = await fetchWithTimeout(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`, {
-        headers: {
-          Authorization: `Bearer ${supabaseToken}`,
-          'User-Agent': 'app',
+      const response = await fetchWithTimeout(
+        `https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`,
+        {
+          headers: {
+            Authorization: `Bearer ${supabaseToken}`,
+            'User-Agent': 'app',
+          },
+          timeoutMs: 15000,
         },
-        timeoutMs: 15000,
-      });
+      );
 
       if (!response.ok) {
         throw new Error(`Supabase API error: ${response.status}`);
@@ -181,8 +184,10 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
         api_key: string;
       }>;
 
-      // Filter out service_role keys — they grant full admin access and
-      // must never be exposed to the client.
+      /*
+       * Filter out service_role keys — they grant full admin access and
+       * must never be exposed to the client.
+       */
       const safeKeys = apiKeys.filter((key) => !key.name.toLowerCase().includes('service_role'));
 
       return json({

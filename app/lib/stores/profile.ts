@@ -16,9 +16,7 @@ const storedProfile = typeof window !== 'undefined' ? localStorage.getItem(STORA
 let initialProfile: Profile;
 
 try {
-  initialProfile = storedProfile
-    ? JSON.parse(storedProfile)
-    : { username: '', bio: '', avatar: '' };
+  initialProfile = storedProfile ? JSON.parse(storedProfile) : { username: '', bio: '', avatar: '' };
 } catch {
   logger.warn('Failed to parse stored profile, using defaults');
   initialProfile = { username: '', bio: '', avatar: '' };
@@ -87,8 +85,10 @@ export const updateProfile = (updates: Partial<Profile>) => {
       avatar_url: current.avatar,
     }),
   }).catch(() => {
-    // Revert local state to the pre-update snapshot so the UI doesn't
-    // show data that the server never received.
+    /*
+     * Revert local state to the pre-update snapshot so the UI doesn't
+     * show data that the server never received.
+     */
     logger.warn('Failed to sync profile to server — reverting local state');
     profileStore.set(previousProfile);
 

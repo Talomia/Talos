@@ -443,63 +443,75 @@ async function flushPendingSyncs(): Promise<void> {
 
     // Process deletes first
     for (const chatId of _pendingDeletes) {
-      await executeSyncOperation(async () => {
-        const response = await fetch('/api/projects', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: chatId }),
-        });
+      await executeSyncOperation(
+        async () => {
+          const response = await fetch('/api/projects', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: chatId }),
+          });
 
-        if (!response.ok) {
-          throw new Error(`Delete sync failed: ${response.status}`);
-        }
-      }, 'deletion', chatId);
+          if (!response.ok) {
+            throw new Error(`Delete sync failed: ${response.status}`);
+          }
+        },
+        'deletion',
+        chatId,
+      );
     }
     _pendingDeletes.clear();
 
     // Process description-only updates
     for (const [chatId, { description }] of _pendingDescriptions) {
-      await executeSyncOperation(async () => {
-        const response = await fetch('/api/projects', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: chatId, description }),
-        });
+      await executeSyncOperation(
+        async () => {
+          const response = await fetch('/api/projects', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: chatId, description }),
+          });
 
-        if (!response.ok) {
-          throw new Error(`Description sync failed: ${response.status}`);
-        }
-      }, 'description', chatId);
+          if (!response.ok) {
+            throw new Error(`Description sync failed: ${response.status}`);
+          }
+        },
+        'description',
+        chatId,
+      );
     }
     _pendingDescriptions.clear();
 
     // Process full chat syncs (already deduplicated by Map key)
     for (const [chatId, chat] of _pendingChatSyncs) {
-      await executeSyncOperation(async () => {
-        const response = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: chat.id,
-            urlId: chat.urlId,
-            description: chat.description,
-            messages: chat.messages,
-            updatedAt: chat.updatedAt ?? Date.now(),
-            metadata: chat.metadata,
-            snapshot: chat.snapshot,
-          }),
-        });
+      await executeSyncOperation(
+        async () => {
+          const response = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: chat.id,
+              urlId: chat.urlId,
+              description: chat.description,
+              messages: chat.messages,
+              updatedAt: chat.updatedAt ?? Date.now(),
+              metadata: chat.metadata,
+              snapshot: chat.snapshot,
+            }),
+          });
 
-        if (!response.ok) {
-          // Handle auth expiry
-          if (response.status === 401 || response.status === 403) {
-            _isAuthenticated = false;
-            logger.warn('Cloud sync auth expired — disabling cloud persistence');
+          if (!response.ok) {
+            // Handle auth expiry
+            if (response.status === 401 || response.status === 403) {
+              _isAuthenticated = false;
+              logger.warn('Cloud sync auth expired — disabling cloud persistence');
+            }
+
+            throw new Error(`Chat sync failed: ${response.status}`);
           }
-
-          throw new Error(`Chat sync failed: ${response.status}`);
-        }
-      }, 'chat', chatId);
+        },
+        'chat',
+        chatId,
+      );
     }
     _pendingChatSyncs.clear();
   } finally {
@@ -523,11 +535,7 @@ async function flushDeleteAll(): Promise<void> {
   }
 }
 
-async function executeSyncOperation(
-  operation: () => Promise<void>,
-  type: string,
-  id: string,
-): Promise<void> {
+async function executeSyncOperation(operation: () => Promise<void>, type: string, id: string): Promise<void> {
   try {
     await operation();
   } catch (error) {

@@ -34,6 +34,7 @@ export const action = withSecurity(async ({ request }: ActionFunctionArgs) => {
     }
 
     logger.error('Error updating MCP config:', error);
+
     return Response.json(
       { error: error instanceof Error ? error.message : 'Failed to update MCP config' },
       { status: 500 },

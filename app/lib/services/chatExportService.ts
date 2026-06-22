@@ -79,12 +79,15 @@ export async function deleteAllChats(db: IDBDatabase): Promise<void> {
     clearReq.onsuccess = () => {
       // resolve when the transaction completes, not just the request
     };
+
     clearReq.onerror = () => {
       reject(clearReq.error);
     };
+
     tx.oncomplete = () => {
       resolve();
     };
+
     tx.onerror = () => {
       reject(tx.error);
     };

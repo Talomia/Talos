@@ -30,9 +30,8 @@ export default function Index() {
 
       // Clear the error param from the URL without a page reload
       params.delete('error');
-      const newUrl = params.toString()
-        ? `${window.location.pathname}?${params.toString()}`
-        : window.location.pathname;
+
+      const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname;
       window.history.replaceState({}, '', newUrl);
     }
   }, []);

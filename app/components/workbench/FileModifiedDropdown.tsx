@@ -105,7 +105,9 @@ export const FileModifiedDropdown = memo(({ fileHistory, onSelectFile }: FileMod
               <div className="border-t border-ui-borderColor p-2">
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(filteredFiles.map(([filePath]) => filePath).join('\n')).catch(() => { /* clipboard permission denied */ });
+                    navigator.clipboard.writeText(filteredFiles.map(([filePath]) => filePath).join('\n')).catch(() => {
+                      /* clipboard permission denied */
+                    });
                     toast('File list copied to clipboard', {
                       icon: <div className="i-ph:check-circle text-accent-500" />,
                     });

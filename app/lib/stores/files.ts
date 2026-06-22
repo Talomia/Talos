@@ -587,11 +587,16 @@ export class FilesStore {
   async saveFile(filePath: string, content: string) {
     // Chain writes for the same path to serialize concurrent writes
     const pending = this.#writeQueue.get(filePath) || Promise.resolve();
-    const newWrite = pending.then(() => this.#doSaveFile(filePath, content)).catch((error) => {
-      logger.error(`Queued write failed for ${filePath}:`, error);
-      throw error;
-    });
-    this.#writeQueue.set(filePath, newWrite.catch(() => {})); // Prevent rejection from blocking future writes
+    const newWrite = pending
+      .then(() => this.#doSaveFile(filePath, content))
+      .catch((error) => {
+        logger.error(`Queued write failed for ${filePath}:`, error);
+        throw error;
+      });
+    this.#writeQueue.set(
+      filePath,
+      newWrite.catch(() => {}),
+    ); // Prevent rejection from blocking future writes
     await newWrite;
   }
 
@@ -771,6 +776,7 @@ export class FilesStore {
         case 'change': {
           if (type === 'add_file') {
             this.#size++;
+
             // For new files, apply immediately without debounce
             this.#applyFileUpdate(sanitizedPath, buffer);
           } else {

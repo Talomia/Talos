@@ -131,20 +131,25 @@ export class GitHubApiServiceClass {
    * Get repository branches
    */
   async getRepositoryBranches(owner: string, repo: string): Promise<GitHubBranch[]> {
-    return this._makeRequestInternal<GitHubBranch[]>(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`);
+    return this._makeRequestInternal<GitHubBranch[]>(
+      `/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches`,
+    );
   }
 
   /**
    * Get contributors count using Link header pagination info
    */
   private async _getRepositoryContributorsCount(owner: string, repo: string): Promise<number> {
-    const response = await fetch(`${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=1`, {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-        Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
-        'User-Agent': 'app',
+    const response = await fetch(
+      `${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/contributors?per_page=1`,
+      {
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
+          'User-Agent': 'app',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       return 0;
@@ -166,13 +171,16 @@ export class GitHubApiServiceClass {
    * Get issues count using Link header pagination info
    */
   private async _getRepositoryIssuesCount(owner: string, repo: string): Promise<number> {
-    const response = await fetch(`${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=all&per_page=1`, {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-        Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
-        'User-Agent': 'app',
+    const response = await fetch(
+      `${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/issues?state=all&per_page=1`,
+      {
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
+          'User-Agent': 'app',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       return 0;
@@ -194,13 +202,16 @@ export class GitHubApiServiceClass {
    * Get pull requests count using Link header pagination info
    */
   private async _getRepositoryPullRequestsCount(owner: string, repo: string): Promise<number> {
-    const response = await fetch(`${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=all&per_page=1`, {
-      headers: {
-        Accept: 'application/vnd.github.v3+json',
-        Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
-        'User-Agent': 'app',
+    const response = await fetch(
+      `${this._baseURL}/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=all&per_page=1`,
+      {
+        headers: {
+          Accept: 'application/vnd.github.v3+json',
+          Authorization: `${this._config.tokenType === 'classic' ? 'token' : 'Bearer'} ${this._config.token}`,
+          'User-Agent': 'app',
+        },
       },
-    });
+    );
 
     if (!response.ok) {
       return 0;

@@ -107,17 +107,19 @@ export class WorkbenchStore {
   }
 
   addToExecutionQueue(callback: () => Promise<void>) {
-    this.#globalExecutionQueue = this.#globalExecutionQueue.then(() => callback()).catch((error) => {
-      logger.error('Execution queue callback failed:', error);
+    this.#globalExecutionQueue = this.#globalExecutionQueue
+      .then(() => callback())
+      .catch((error) => {
+        logger.error('Execution queue callback failed:', error);
 
-      // Fix 3: Surface queue errors to the user via actionAlert instead of swallowing silently
-      this.actionAlert.set({
-        type: 'error',
-        title: 'Action Failed',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred in the execution queue',
-        content: error instanceof Error ? (error.stack ?? error.message) : String(error),
+        // Fix 3: Surface queue errors to the user via actionAlert instead of swallowing silently
+        this.actionAlert.set({
+          type: 'error',
+          title: 'Action Failed',
+          description: error instanceof Error ? error.message : 'An unexpected error occurred in the execution queue',
+          content: error instanceof Error ? (error.stack ?? error.message) : String(error),
+        });
       });
-    });
   }
 
   get previews() {
@@ -670,8 +672,10 @@ export class WorkbenchStore {
         // During streaming, update editor immediately for live preview
         this.#editorStore.updateFile(fullPath, data.action.content);
       } else {
-        // Fix 1: Run the action first, then save, then update editor on success.
-        // This prevents phantom content in the editor if the write fails.
+        /*
+         * Fix 1: Run the action first, then save, then update editor on success.
+         * This prevents phantom content in the editor if the write fails.
+         */
         await artifact.runner.runAction(data);
 
         if (data.action.content) {
@@ -680,8 +684,10 @@ export class WorkbenchStore {
 
         this.#editorStore.updateFile(fullPath, data.action.content);
 
-        // Fix 2: Reset only this file's modification tracking, not all files.
-        // Prevents wiping tracking for other pending files in a batch.
+        /*
+         * Fix 2: Reset only this file's modification tracking, not all files.
+         * Prevents wiping tracking for other pending files in a batch.
+         */
         this.resetFileModificationsForFile(fullPath);
       }
     } else {

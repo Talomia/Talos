@@ -18,6 +18,7 @@ import { ColorSchemeDialog } from '~/components/ui/ColorSchemeDialog';
 import { McpTools } from './MCPTools';
 import { WebSearch } from './WebSearch.client';
 import { useChatContext } from '~/lib/contexts/ChatContext';
+import { usePromptHistory } from '~/lib/hooks/usePromptHistory';
 
 /**
  * Props that are local to BaseChat and NOT available from ChatContext.
@@ -52,6 +53,15 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
     aiSdk: { onWebSearchResult },
     refs: { textareaRef },
   } = useChatContext();
+
+  // Shell-like prompt history (↑/↓)
+  const setInputValue = React.useCallback(
+    (value: string) => {
+      handleInputChange({ target: { value } } as React.ChangeEvent<HTMLTextAreaElement>);
+    },
+    [handleInputChange],
+  );
+  const { pushToHistory, handleHistoryKeyDown } = usePromptHistory(input, setInputValue);
 
   return (
     <div
@@ -192,6 +202,15 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
             });
           }}
           onKeyDown={(event) => {
+            // Prompt history with ↑/↓
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+              handleHistoryKeyDown(event);
+
+              if (event.defaultPrevented) {
+                return;
+              }
+            }
+
             if (event.key === 'Enter') {
               if (event.shiftKey) {
                 return;
@@ -210,6 +229,7 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
               }
 
               props.handleSendMessage(event);
+              pushToHistory(input);
             }
           }}
           value={input}
@@ -304,9 +324,14 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
             </IconButton>
           </div>
           {input.length > 3 ? (
-            <div className="text-xs text-ui-textTertiary">
-              Use <kbd className="kdb px-1.5 py-0.5 rounded bg-ui-background-depth-2">Shift</kbd> +{' '}
-              <kbd className="kdb px-1.5 py-0.5 rounded bg-ui-background-depth-2">Return</kbd> a new line
+            <div className="flex items-center gap-3 text-xs text-ui-textTertiary">
+              <span>
+                Use <kbd className="kdb px-1.5 py-0.5 rounded bg-ui-background-depth-2">Shift</kbd> +{' '}
+                <kbd className="kdb px-1.5 py-0.5 rounded bg-ui-background-depth-2">Return</kbd> a new line
+              </span>
+              <span className="text-ui-textTertiary/60">
+                {input.trim().split(/\s+/).filter(Boolean).length} words · {input.length} chars
+              </span>
             </div>
           ) : null}
           <SupabaseConnection />

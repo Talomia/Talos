@@ -4,11 +4,15 @@ import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
 import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
-const ControlPanel = lazy(() => import('~/components/@settings/core/ControlPanel').then(m => ({ default: m.ControlPanel })));
+
+const ControlPanel = lazy(() =>
+  import('~/components/@settings/core/ControlPanel').then((m) => ({ default: m.ControlPanel })),
+);
 import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 import { SettingsButton, HelpButton } from '~/components/ui/SettingsButton';
 import { Button } from '~/components/ui/Button';
 import { getDb, deleteById, getAll, chatId, type ChatHistoryItem, useChatHistory } from '~/lib/persistence';
+import { getBranchesByParent, getBranchById, getMessages } from '~/lib/persistence/db';
 import { cubicEasingFn } from '~/utils/easings';
 import { HistoryItem } from './HistoryItem';
 import { binDates } from './date-binning';
@@ -16,6 +20,7 @@ import { useSearchFilter } from '~/lib/hooks/useSearchFilter';
 import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
+import { STORAGE_KEYS } from '~/lib/app-config';
 
 const menuVariants = {
   closed: {
@@ -79,6 +84,39 @@ export const Menu = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [branchMeta, setBranchMeta] = useState<
+    Map<string, { isFork: boolean; parentDescription?: string; branchCount: number }>
+  >(new Map());
+
+  // Pinned chats state (localStorage-backed)
+  const [pinnedIds, setPinnedIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEYS.pinnedChats);
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const togglePin = useCallback((id: string) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev);
+
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+
+      try {
+        localStorage.setItem(STORAGE_KEYS.pinnedChats, JSON.stringify([...next]));
+      } catch {
+        // localStorage unavailable
+      }
+
+      return next;
+    });
+  }, []);
 
   const { filteredItems: filteredList, handleSearchChange } = useSearchFilter({
     items: list,
@@ -103,13 +141,64 @@ export const Menu = () => {
     };
   }, []);
 
+  // Listen for ⌘B sidebar toggle
+  useEffect(() => {
+    const handleToggle = () => setOpen((prev) => !prev);
+    window.addEventListener('talos:toggle-sidebar', handleToggle);
+
+    return () => window.removeEventListener('talos:toggle-sidebar', handleToggle);
+  }, []);
+
   const loadEntries = useCallback(() => {
     if (db) {
       setLoadError(null);
 
       getAll(db)
         .then((list) => list.filter((item) => item.urlId && item.description))
-        .then(setList)
+        .then((filteredList) => {
+          setList(filteredList);
+
+          // Batch-load branch metadata for all entries
+          const ids = filteredList.map((item) => item.id);
+          const metaPromises = ids.map(async (id) => {
+            const [branchData, children] = await Promise.all([
+              getBranchById(db, id).catch(() => undefined),
+              getBranchesByParent(db, id).catch(() => []),
+            ]);
+
+            let parentDescription: string | undefined;
+
+            if (branchData) {
+              try {
+                const parent = await getMessages(db, branchData.parentChatId);
+                parentDescription = parent?.description;
+              } catch {
+                // Parent may have been deleted
+              }
+            }
+
+            return {
+              id,
+              isFork: !!branchData,
+              parentDescription,
+              branchCount: children.length,
+            };
+          });
+
+          Promise.all(metaPromises)
+            .then((results) => {
+              const map = new Map<string, { isFork: boolean; parentDescription?: string; branchCount: number }>();
+
+              for (const r of results) {
+                map.set(r.id, { isFork: r.isFork, parentDescription: r.parentDescription, branchCount: r.branchCount });
+              }
+
+              setBranchMeta(map);
+            })
+            .catch(() => {
+              // Branch metadata is supplementary; don't block on errors
+            });
+        })
         .catch((error) => {
           const message = error instanceof Error ? error.message : 'Failed to load chats';
           logger.error('Failed to load chat entries:', error);
@@ -150,6 +239,24 @@ export const Menu = () => {
           toast.success('Chat deleted successfully', {
             position: 'bottom-right',
             autoClose: 3000,
+          });
+
+          // Clean up pinned state for deleted chat
+          setPinnedIds((prev) => {
+            if (!prev.has(item.id)) {
+              return prev;
+            }
+
+            const next = new Set(prev);
+            next.delete(item.id);
+
+            try {
+              localStorage.setItem(STORAGE_KEYS.pinnedChats, JSON.stringify([...next]));
+            } catch {
+              // localStorage unavailable
+            }
+
+            return next;
           });
 
           // Always refresh the list
@@ -193,6 +300,24 @@ export const Menu = () => {
         try {
           await deleteChat(id);
           deletedCount++;
+
+          // Clean up pinned state for deleted chat
+          setPinnedIds((prev) => {
+            if (!prev.has(id)) {
+              return prev;
+            }
+
+            const next = new Set(prev);
+            next.delete(id);
+
+            try {
+              localStorage.setItem(STORAGE_KEYS.pinnedChats, JSON.stringify([...next]));
+            } catch {
+              // localStorage unavailable
+            }
+
+            return next;
+          });
 
           if (id === currentChatId) {
             shouldNavigate = true;
@@ -436,12 +561,59 @@ export const Menu = () => {
                 </button>
               </div>
             ) : filteredList.length === 0 ? (
-              <div className="px-4 text-gray-500 dark:text-gray-400 text-sm">
-                {list.length === 0 ? 'No previous conversations' : 'No matches found'}
+              <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
+                <div className="i-ph:chat-circle-dots h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
+                  {list.length === 0 ? 'No conversations yet' : 'No matches found'}
+                </p>
+                {list.length === 0 && (
+                  <p className="text-xs text-gray-400 dark:text-gray-500">
+                    Start a new chat or press{' '}
+                    <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-mono text-[10px]">
+                      ⌘K
+                    </kbd>
+                  </p>
+                )}
               </div>
             ) : null}
             <DialogRoot open={dialogContent !== null}>
-              {binDates(filteredList).map(({ category, items }) => (
+              {/* Pinned chats section */}
+              {filteredList.filter((item) => pinnedIds.has(item.id)).length > 0 && (
+                <div className="mt-2 first:mt-0 space-y-1">
+                  <div className="text-xs font-medium text-purple-500 dark:text-purple-400 sticky top-0 z-1 bg-white dark:bg-gray-950 px-4 py-1 flex items-center gap-1">
+                    <span className="i-ph:push-pin-fill text-[10px]" />
+                    Pinned
+                  </div>
+                  <div className="space-y-0.5 pr-1">
+                    {filteredList
+                      .filter((item) => pinnedIds.has(item.id))
+                      .map((item) => (
+                        <HistoryItem
+                          key={item.id}
+                          item={item}
+                          exportChat={exportChat}
+                          onDelete={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setDialogContentWithLogging({ type: 'delete', item });
+                          }}
+                          onDuplicate={() => handleDuplicate(item.id)}
+                          selectionMode={selectionMode}
+                          isSelected={selectedItems.includes(item.id)}
+                          onToggleSelection={toggleItemSelection}
+                          isDeleting={deletingId === item.id}
+                          isPinned={true}
+                          onTogglePin={togglePin}
+                          isFork={branchMeta.get(item.id)?.isFork}
+                          parentDescription={branchMeta.get(item.id)?.parentDescription}
+                          branchCount={branchMeta.get(item.id)?.branchCount}
+                        />
+                      ))}
+                  </div>
+                </div>
+              )}
+              {/* Date-binned chats (excluding pinned) */}
+              {binDates(filteredList.filter((item) => !pinnedIds.has(item.id))).map(({ category, items }) => (
                 <div key={category} className="mt-2 first:mt-0 space-y-1">
                   <div className="text-xs font-medium text-gray-500 dark:text-gray-400 sticky top-0 z-1 bg-white dark:bg-gray-950 px-4 py-1">
                     {category}
@@ -462,6 +634,11 @@ export const Menu = () => {
                         isSelected={selectedItems.includes(item.id)}
                         onToggleSelection={toggleItemSelection}
                         isDeleting={deletingId === item.id}
+                        isPinned={false}
+                        onTogglePin={togglePin}
+                        isFork={branchMeta.get(item.id)?.isFork}
+                        parentDescription={branchMeta.get(item.id)?.parentDescription}
+                        branchCount={branchMeta.get(item.id)?.branchCount}
                       />
                     ))}
                   </div>

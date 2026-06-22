@@ -12,7 +12,10 @@ const logger = createScopedLogger('sampler');
  * @param sampleInterval How often to sample calls (in ms)
  * @returns The sampled function
  */
-export function createSampler<T extends (...args: any[]) => any>(fn: T, sampleInterval: number): T & { cancel: () => void } {
+export function createSampler<T extends (...args: any[]) => any>(
+  fn: T,
+  sampleInterval: number,
+): T & { cancel: () => void } {
   let lastArgs: Parameters<T> | null = null;
   let lastTime = 0;
   let timeout: NodeJS.Timeout | null = null;

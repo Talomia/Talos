@@ -137,7 +137,9 @@ export const FileTree = memo(
 
     const onCopyRelativePath = (fileOrFolder: FileNode | FolderNode) => {
       try {
-        navigator.clipboard.writeText(fileOrFolder.fullPath.substring((rootFolder || '').length)).catch((error) => logger.error(error));
+        navigator.clipboard
+          .writeText(fileOrFolder.fullPath.substring((rootFolder || '').length))
+          .catch((error) => logger.error(error));
       } catch (error) {
         logger.error(error);
       }

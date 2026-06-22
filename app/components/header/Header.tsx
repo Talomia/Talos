@@ -5,6 +5,26 @@ import { classNames } from '~/utils/classNames';
 import { HeaderActionButtons } from './HeaderActionButtons.client';
 import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
 import { AuthButton } from '~/components/auth/AuthDialog';
+import { isMac } from '~/utils/os';
+
+function ShortcutHint() {
+  const shortcutKey = isMac ? '⌘' : 'Ctrl+';
+
+  return (
+    <div className="flex-1 flex justify-center">
+      <button
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs text-ui-textTertiary hover:text-ui-textSecondary transition-colors cursor-pointer"
+        onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
+        aria-label="Open command palette"
+      >
+        <kbd className="font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px]">
+          {shortcutKey}K
+        </kbd>
+        <span className="hidden sm:inline">Search commands and chats</span>
+      </button>
+    </div>
+  );
+}
 
 export function Header() {
   const chat = useStore(chatStore);
@@ -38,7 +58,7 @@ export function Header() {
           </ClientOnly>
         </>
       )}
-      {!chat.started && <div className="flex-1" />}
+      {!chat.started && <ClientOnly fallback={<div className="flex-1" />}>{() => <ShortcutHint />}</ClientOnly>}
       <ClientOnly>
         {() => (
           <div className="ml-2">

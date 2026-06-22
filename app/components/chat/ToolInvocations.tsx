@@ -13,6 +13,7 @@ import { cubicEasingFn } from '~/utils/easings';
 import { logger } from '~/utils/logger';
 import { themeStore, type Theme } from '~/lib/stores/theme';
 import { useStore } from '@nanostores/react';
+import { isMac } from '~/utils/os';
 import type { ToolCallAnnotation } from '~/types/context';
 
 const highlighterOptions = {
@@ -302,9 +303,6 @@ interface ToolCallsListProps {
 
 const ToolCallsList = memo(({ toolInvocations, toolCallAnnotations, addToolResult }: ToolCallsListProps) => {
   const [expanded, setExpanded] = useState<{ [id: string]: boolean }>({});
-
-  // OS detection for shortcut display
-  const isMac = typeof navigator !== 'undefined' && /Mac|iPod|iPhone|iPad/.test(navigator.platform);
 
   useEffect(() => {
     const expandedState: { [id: string]: boolean } = {};

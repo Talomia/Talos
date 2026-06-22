@@ -52,6 +52,7 @@ export function usePromptEnhancer() {
     if (!response.ok) {
       setEnhancingPrompt(false);
       logger.error(`Enhancer API failed: ${response.status} ${response.statusText}`);
+
       return;
     }
 

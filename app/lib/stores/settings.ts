@@ -4,6 +4,7 @@ import type { IProviderConfig } from '~/types/model';
 import type { TabVisibilityConfig, TabWindowConfig, UserTabConfig } from '~/components/@settings/core/types';
 import { DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
 import { toggleTheme } from './theme';
+import { workbenchStore } from './workbench';
 import { createScopedLogger } from '~/utils/logger';
 import { STORAGE_KEYS } from '~/lib/app-config';
 import { safeSetItem } from '~/utils/safeStorage';
@@ -25,6 +26,9 @@ export interface Shortcut {
 export interface Shortcuts {
   toggleTheme: Shortcut;
   toggleTerminal: Shortcut;
+  toggleSidebar: Shortcut;
+  toggleWorkbench: Shortcut;
+  newChat: Shortcut;
 }
 
 export const URL_CONFIGURABLE_PROVIDERS = ['Ollama', 'LMStudio', 'OpenAILike'];
@@ -50,6 +54,33 @@ export const shortcutsStore = map<Shortcuts>({
       // This will be handled by the terminal component
     },
     description: 'Toggle terminal',
+    isPreventDefault: true,
+  },
+  toggleSidebar: {
+    key: 'b',
+    ctrlOrMetaKey: true,
+    action: () => {
+      window.dispatchEvent(new CustomEvent('talos:toggle-sidebar'));
+    },
+    description: 'Toggle sidebar',
+    isPreventDefault: true,
+  },
+  toggleWorkbench: {
+    key: '\\',
+    ctrlOrMetaKey: true,
+    action: () => {
+      workbenchStore.showWorkbench.set(!workbenchStore.showWorkbench.get());
+    },
+    description: 'Toggle workbench',
+    isPreventDefault: true,
+  },
+  newChat: {
+    key: 'n',
+    ctrlOrMetaKey: true,
+    action: () => {
+      window.location.href = '/';
+    },
+    description: 'New chat',
     isPreventDefault: true,
   },
 });
@@ -254,13 +285,17 @@ const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => 
   }
 };
 
-export const isDebugMode = atom(isBrowser ? (() => {
-  try {
-    return JSON.parse(localStorage.getItem('isDebugMode') || 'false');
-  } catch {
-    return false;
-  }
-})() : false);
+export const isDebugMode = atom(
+  isBrowser
+    ? (() => {
+        try {
+          return JSON.parse(localStorage.getItem('isDebugMode') || 'false');
+        } catch {
+          return false;
+        }
+      })()
+    : false,
+);
 
 // Define keys for localStorage
 const SETTINGS_KEYS = {
@@ -379,7 +414,6 @@ const getInitialTabConfiguration = (): TabWindowConfig => {
     return defaultConfig;
   }
 };
-
 
 export const tabConfigurationStore = map<TabWindowConfig>(getInitialTabConfiguration());
 

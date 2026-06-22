@@ -54,6 +54,7 @@ async function bootEngineWithRetry(): Promise<RuntimeEngine> {
       return engine;
     } catch (error) {
       lastError = error;
+
       const delay = BOOT_RETRY_BASE_DELAY_MS * Math.pow(2, attempt);
 
       logger.warn(`Boot attempt ${attempt + 1}/${MAX_BOOT_RETRIES} failed, retrying in ${delay}ms...`, error);
@@ -146,12 +147,14 @@ if (!import.meta.env.SSR) {
         throw error;
       });
 
-  // ─── Graceful Teardown on Page Unload ─────────────────────────────────────
-  //
-  // Ensures the runtime engine is properly shut down when the user navigates
-  // away or closes the tab. This releases WebContainer's underlying
-  // ServiceWorker and iframe resources, preventing memory leaks across
-  // page transitions.
+  /*
+   * ─── Graceful Teardown on Page Unload ─────────────────────────────────────
+   *
+   * Ensures the runtime engine is properly shut down when the user navigates
+   * away or closes the tab. This releases WebContainer's underlying
+   * ServiceWorker and iframe resources, preventing memory leaks across
+   * page transitions.
+   */
 
   const teardownRuntime = () => {
     runtime
@@ -166,8 +169,10 @@ if (!import.meta.env.SSR) {
 
   window.addEventListener('beforeunload', teardownRuntime);
 
-  // Also tear down on actual page unload for mobile browsers that may not fire
-  // beforeunload. Only triggers on real navigation away, NOT on tab switches.
+  /*
+   * Also tear down on actual page unload for mobile browsers that may not fire
+   * beforeunload. Only triggers on real navigation away, NOT on tab switches.
+   */
   const onPageHide = (event: PageTransitionEvent) => {
     if (!event.persisted) {
       teardownRuntime();
@@ -185,4 +190,3 @@ if (!import.meta.env.SSR) {
     });
   }
 }
-

@@ -46,6 +46,15 @@ export const STORAGE_KEYS = {
   currentProvider: 'app_current_provider',
   projectType: 'app_project_type',
   gitInfo: 'app_git_info',
+  pinnedChats: 'app_pinned_chats',
+  feedback: 'app_feedback',
+  githubConnection: 'github_connection',
+  gitlabConnection: 'gitlab_connection',
+  netlifyConnection: 'netlify_connection',
+  vercelConnection: 'vercel_connection',
+  isDebugMode: 'app_debug_mode',
+  errorLogs: 'app_error_logs',
+  lastAcknowledgedUpdate: 'app_last_acknowledged_update',
 } as const;
 
 /*

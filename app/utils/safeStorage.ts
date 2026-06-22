@@ -6,6 +6,7 @@ function isQuotaError(error: unknown): boolean {
   if (error instanceof DOMException) {
     return QUOTA_ERROR_NAMES.includes(error.name) || error.code === 22;
   }
+
   return false;
 }
 
@@ -19,10 +20,14 @@ export function safeSetItem(key: string, value: string): boolean {
     return true;
   } catch (error) {
     if (isQuotaError(error)) {
-      logger.warn(`Storage quota exceeded writing key '${key}' (${(value.length / 1024).toFixed(1)}KB). Data was NOT saved.`);
+      logger.warn(
+        `Storage quota exceeded writing key '${key}' (${(value.length / 1024).toFixed(1)}KB). Data was NOT saved.`,
+      );
       return false;
     }
+
     logger.error('localStorage.setItem failed:', error);
+
     return false;
   }
 }
@@ -35,5 +40,6 @@ export function handleIDBQuotaError(error: unknown, context: string): boolean {
     logger.warn(`IndexedDB quota exceeded during ${context}. Data was NOT saved.`);
     return true;
   }
+
   return false;
 }

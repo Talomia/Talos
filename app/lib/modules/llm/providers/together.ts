@@ -53,8 +53,6 @@ export default class TogetherProvider extends BaseProvider {
       return [];
     }
 
-
-
     const response = await fetch(`${baseUrl}/models`, {
       headers: {
         Authorization: `Bearer ${apiKey}`,

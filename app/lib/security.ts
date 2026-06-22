@@ -98,6 +98,7 @@ export function checkRateLimit(request: Request, endpoint: string): { allowed: b
   }
 
   const [, config] = rule;
+
   // Clean up expired entries (resetTime is in the past)
   const now = Date.now();
 
@@ -157,8 +158,10 @@ function getClientIP(request: Request): string {
     return cfConnectingIP;
   }
 
-  // 2. Non-Cloudflare: build a composite fingerprint from all available hints.
-  //    This resists spoofing any single header to bypass the rate limit.
+  /*
+   * 2. Non-Cloudflare: build a composite fingerprint from all available hints.
+   *    This resists spoofing any single header to bypass the rate limit.
+   */
   const forwardedFor = request.headers.get('x-forwarded-for') || '';
   const realIP = request.headers.get('x-real-ip') || '';
   const userAgent = request.headers.get('user-agent') || '';
@@ -178,8 +181,10 @@ function getClientIP(request: Request): string {
     return 'composite-' + (hash >>> 0).toString(36);
   }
 
-  // 3. No identifying headers at all — assign a unique key per request so
-  //    anonymous clients don't share (and exhaust) one global bucket.
+  /*
+   * 3. No identifying headers at all — assign a unique key per request so
+   *    anonymous clients don't share (and exhaust) one global bucket.
+   */
   return 'anonymous-' + Date.now();
 }
 
@@ -342,7 +347,7 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
       const cookieHeader = request.headers.get('Cookie') || '';
       const cookies = parseCookie(cookieHeader);
 
-      if (!cookies['rc_vault']) {
+      if (!cookies.rc_vault) {
         return new Response(JSON.stringify({ error: 'Authentication required' }), {
           status: 401,
           headers: {

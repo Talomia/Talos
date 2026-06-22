@@ -145,119 +145,188 @@ export function useSendMessage(deps: UseSendMessageDeps) {
     sendingRef.current = true;
 
     try {
+      let finalMessageContent = messageContent;
 
-    let finalMessageContent = messageContent;
+      if (selectedElement) {
+        logger.debug('Selected Element:', selectedElement);
 
-    if (selectedElement) {
-      logger.debug('Selected Element:', selectedElement);
+        const elementInfo = `<div class=\"__selectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
+        finalMessageContent = messageContent + elementInfo;
+      }
 
-      const elementInfo = `<div class=\"__selectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
-      finalMessageContent = messageContent + elementInfo;
-    }
+      runAnimation();
 
-    runAnimation();
+      if (!chatStarted) {
+        setFakeLoading(true);
 
-    if (!chatStarted) {
-      setFakeLoading(true);
-
-      if (autoSelectTemplate) {
-        try {
-          const { template, title } = await selectStarterTemplate({
-            message: finalMessageContent,
-            model,
-            provider,
-          });
-
-          if (template !== 'blank') {
-            const temResp = await getTemplates(template, title).catch((e: Error) => {
-              if (e.message.includes('rate limit')) {
-                toast.warning('Rate limit exceeded. Skipping starter template\n Continuing with blank template');
-              } else {
-                toast.warning('Failed to import starter template\n Continuing with blank template');
-              }
-
-              return null;
+        if (autoSelectTemplate) {
+          try {
+            const { template, title } = await selectStarterTemplate({
+              message: finalMessageContent,
+              model,
+              provider,
             });
 
-            if (temResp) {
-              const { assistantMessage, userMessage } = temResp;
-              const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
+            if (template !== 'blank') {
+              const temResp = await getTemplates(template, title).catch((e: Error) => {
+                if (e.message.includes('rate limit')) {
+                  toast.warning('Rate limit exceeded. Skipping starter template\n Continuing with blank template');
+                } else {
+                  toast.warning('Failed to import starter template\n Continuing with blank template');
+                }
 
-              setMessages([
-                {
-                  id: `1-${new Date().getTime()}`,
-                  role: 'user',
-                  content: userMessageText,
-                  parts: createMessageParts(userMessageText, imageDataList),
-                },
-                {
-                  id: `2-${new Date().getTime()}`,
-                  role: 'assistant',
-                  content: assistantMessage,
-                },
-                {
-                  id: `3-${new Date().getTime()}`,
-                  role: 'user',
-                  content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`,
-                  annotations: ['hidden'],
-                },
-              ]);
+                return null;
+              });
 
-              const reloadOptions =
-                uploadedFiles.length > 0
-                  ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
-                  : undefined;
+              if (temResp) {
+                const { assistantMessage, userMessage } = temResp;
+                const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
 
-              try {
-                await reload(reloadOptions);
-              } catch (reloadError) {
-                logger.error('Template reload failed:', reloadError);
-                toast.error('Failed to start chat. Please try again.');
+                setMessages([
+                  {
+                    id: `1-${new Date().getTime()}`,
+                    role: 'user',
+                    content: userMessageText,
+                    parts: createMessageParts(userMessageText, imageDataList),
+                  },
+                  {
+                    id: `2-${new Date().getTime()}`,
+                    role: 'assistant',
+                    content: assistantMessage,
+                  },
+                  {
+                    id: `3-${new Date().getTime()}`,
+                    role: 'user',
+                    content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`,
+                    annotations: ['hidden'],
+                  },
+                ]);
+
+                const reloadOptions =
+                  uploadedFiles.length > 0
+                    ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
+                    : undefined;
+
+                try {
+                  await reload(reloadOptions);
+                } catch (reloadError) {
+                  logger.error('Template reload failed:', reloadError);
+                  toast.error('Failed to start chat. Please try again.');
+                }
+
+                setInput('');
+                Cookies.remove(PROMPT_COOKIE_KEY);
+
+                setUploadedFiles([]);
+                setImageDataList([]);
+
+                resetEnhancer();
+
+                textareaRef.current?.blur();
+                setFakeLoading(false);
+
+                return;
               }
-
-              setInput('');
-              Cookies.remove(PROMPT_COOKIE_KEY);
-
-              setUploadedFiles([]);
-              setImageDataList([]);
-
-              resetEnhancer();
-
-              textareaRef.current?.blur();
-              setFakeLoading(false);
-
-              return;
             }
+          } catch (templateError) {
+            logger.error('Auto-select template failed:', templateError);
+            toast.warning('Failed to select starter template. Continuing with blank template.');
+            setFakeLoading(false);
           }
-        } catch (templateError) {
-          logger.error('Auto-select template failed:', templateError);
-          toast.warning('Failed to select starter template. Continuing with blank template.');
-          setFakeLoading(false);
+        }
+
+        // If autoSelectTemplate is disabled or template selection failed, proceed with normal message
+        const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
+        const attachments = uploadedFiles.length > 0 ? await filesToAttachments(uploadedFiles) : undefined;
+
+        setMessages([
+          {
+            id: `${new Date().getTime()}`,
+            role: 'user',
+            content: userMessageText,
+            parts: createMessageParts(userMessageText, imageDataList),
+            experimental_attachments: attachments,
+          },
+        ]);
+
+        try {
+          await reload(attachments ? { experimental_attachments: attachments } : undefined);
+        } catch (reloadError) {
+          logger.error('Chat reload failed:', reloadError);
+          toast.error('Failed to start chat. Please try again.');
+        }
+
+        setFakeLoading(false);
+        setInput('');
+        Cookies.remove(PROMPT_COOKIE_KEY);
+
+        setUploadedFiles([]);
+        setImageDataList([]);
+
+        resetEnhancer();
+
+        textareaRef.current?.blur();
+
+        return;
+      }
+
+      if (error != null) {
+        setMessages(messages.slice(0, -1));
+      }
+
+      const modifiedFiles = workbenchStore.getModifiedFiles();
+
+      chatStore.setKey('aborted', false);
+
+      if (modifiedFiles !== undefined) {
+        const userUpdateArtifact = filesToArtifacts(modifiedFiles, `${Date.now()}`);
+        const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userUpdateArtifact}${finalMessageContent}`;
+
+        const attachmentOptions =
+          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
+
+        try {
+          await append(
+            {
+              role: 'user',
+              content: messageText,
+              parts: createMessageParts(messageText, imageDataList),
+            },
+            attachmentOptions,
+          );
+
+          // Only clear modifications after successful append
+          workbenchStore.resetAllFileModifications();
+        } catch (appendError) {
+          logger.error('Append with modifications failed:', appendError);
+          toast.error('Failed to send message. Your file modifications have been preserved.');
+
+          return;
+        }
+      } else {
+        const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
+
+        const attachmentOptions =
+          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
+
+        try {
+          await append(
+            {
+              role: 'user',
+              content: messageText,
+              parts: createMessageParts(messageText, imageDataList),
+            },
+            attachmentOptions,
+          );
+        } catch (appendError) {
+          logger.error('Append failed:', appendError);
+          toast.error('Failed to send message. Please try again.');
+
+          return;
         }
       }
 
-      // If autoSelectTemplate is disabled or template selection failed, proceed with normal message
-      const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
-      const attachments = uploadedFiles.length > 0 ? await filesToAttachments(uploadedFiles) : undefined;
-
-      setMessages([
-        {
-          id: `${new Date().getTime()}`,
-          role: 'user',
-          content: userMessageText,
-          parts: createMessageParts(userMessageText, imageDataList),
-          experimental_attachments: attachments,
-        },
-      ]);
-
-      try {
-        await reload(attachments ? { experimental_attachments: attachments } : undefined);
-      } catch (reloadError) {
-        logger.error('Chat reload failed:', reloadError);
-        toast.error('Failed to start chat. Please try again.');
-      }
-
-      setFakeLoading(false);
+      // Only clear state after successful send
       setInput('');
       Cookies.remove(PROMPT_COOKIE_KEY);
 
@@ -267,76 +336,6 @@ export function useSendMessage(deps: UseSendMessageDeps) {
       resetEnhancer();
 
       textareaRef.current?.blur();
-
-      return;
-    }
-
-    if (error != null) {
-      setMessages(messages.slice(0, -1));
-    }
-
-    const modifiedFiles = workbenchStore.getModifiedFiles();
-
-    chatStore.setKey('aborted', false);
-
-    if (modifiedFiles !== undefined) {
-      const userUpdateArtifact = filesToArtifacts(modifiedFiles, `${Date.now()}`);
-      const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userUpdateArtifact}${finalMessageContent}`;
-
-      const attachmentOptions =
-        uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
-
-      try {
-        await append(
-          {
-            role: 'user',
-            content: messageText,
-            parts: createMessageParts(messageText, imageDataList),
-          },
-          attachmentOptions,
-        );
-
-        // Only clear modifications after successful append
-        workbenchStore.resetAllFileModifications();
-      } catch (appendError) {
-        logger.error('Append with modifications failed:', appendError);
-        toast.error('Failed to send message. Your file modifications have been preserved.');
-
-        return;
-      }
-    } else {
-      const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
-
-      const attachmentOptions =
-        uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
-
-      try {
-        await append(
-          {
-            role: 'user',
-            content: messageText,
-            parts: createMessageParts(messageText, imageDataList),
-          },
-          attachmentOptions,
-        );
-      } catch (appendError) {
-        logger.error('Append failed:', appendError);
-        toast.error('Failed to send message. Please try again.');
-
-        return;
-      }
-    }
-
-    // Only clear state after successful send
-    setInput('');
-    Cookies.remove(PROMPT_COOKIE_KEY);
-
-    setUploadedFiles([]);
-    setImageDataList([]);
-
-    resetEnhancer();
-
-    textareaRef.current?.blur();
     } finally {
       sendingRef.current = false;
     }

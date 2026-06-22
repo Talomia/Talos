@@ -149,11 +149,16 @@ export class ActionRunner {
    */
   #getAlertTitleForAction(actionType: string): string {
     switch (actionType) {
-      case 'shell': return 'Command Failed';
-      case 'file': return 'File Write Failed';
-      case 'build': return 'Build Failed';
-      case 'start': return 'Dev Server Failed';
-      default: return 'Action Failed';
+      case 'shell':
+        return 'Command Failed';
+      case 'file':
+        return 'File Write Failed';
+      case 'build':
+        return 'Build Failed';
+      case 'start':
+        return 'Dev Server Failed';
+      default:
+        return 'Action Failed';
     }
   }
 
@@ -236,9 +241,11 @@ export class ActionRunner {
               }
             });
 
-          // Wait for the start command to be submitted to the shell before proceeding
-          // to the next action. This prevents port-binding collisions between consecutive
-          // start actions by ensuring the shell has accepted and begun executing the command.
+          /*
+           * Wait for the start command to be submitted to the shell before proceeding
+           * to the next action. This prevents port-binding collisions between consecutive
+           * start actions by ensuring the shell has accepted and begun executing the command.
+           */
           await this.#waitForStartReady(action);
 
           return;
@@ -272,7 +279,7 @@ export class ActionRunner {
           type: 'error',
           title: alertTitle,
           description: errorMessage,
-          content: error instanceof Error ? (error.stack || errorMessage) : errorMessage,
+          content: error instanceof Error ? error.stack || errorMessage : errorMessage,
         });
       }
     }
@@ -361,14 +368,18 @@ export class ActionRunner {
     await new Promise((resolve) => setTimeout(resolve, 100));
     elapsed += 100;
 
-    // Wait until the shell's execution state shows the command is active,
-    // OR until we've waited long enough to be safe
+    /*
+     * Wait until the shell's execution state shows the command is active,
+     * OR until we've waited long enough to be safe
+     */
     while (elapsed < maxWaitMs) {
       const state = shell.executionState?.get?.();
 
       if (state?.active) {
-        // The shell has accepted and begun executing the start command.
-        // Give it a brief moment to acquire its port, then proceed.
+        /*
+         * The shell has accepted and begun executing the start command.
+         * Give it a brief moment to acquire its port, then proceed.
+         */
         await new Promise((resolve) => setTimeout(resolve, 100));
         return;
       }

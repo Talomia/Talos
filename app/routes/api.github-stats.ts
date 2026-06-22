@@ -87,14 +87,17 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
     const reposWithBranches = await Promise.allSettled(
       allRepos.slice(0, 50).map(async (repo) => {
         try {
-          const branchesResponse = await fetchWithTimeout(`https://api.github.com/repos/${repo.full_name}/branches?per_page=1`, {
-            headers: {
-              Accept: 'application/vnd.github.v3+json',
-              Authorization: `Bearer ${githubToken}`,
-              'User-Agent': 'app',
+          const branchesResponse = await fetchWithTimeout(
+            `https://api.github.com/repos/${repo.full_name}/branches?per_page=1`,
+            {
+              headers: {
+                Accept: 'application/vnd.github.v3+json',
+                Authorization: `Bearer ${githubToken}`,
+                'User-Agent': 'app',
+              },
+              timeoutMs: 15000,
             },
-            timeoutMs: 15000,
-          });
+          );
 
           if (branchesResponse.ok) {
             const linkHeader = branchesResponse.headers.get('Link');

@@ -89,58 +89,61 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
     }
   }, [connection]);
 
-  const refreshConnectionData = useCallback(async (conn: GitLabConnection) => {
-    if (!conn.token) {
-      return;
-    }
+  const refreshConnectionData = useCallback(
+    async (conn: GitLabConnection) => {
+      if (!conn.token) {
+        return;
+      }
 
-    try {
-      // Make direct API call instead of using hook
-      const baseUrl = conn.gitlabUrl || 'https://gitlab.com';
-      const response = await fetch(`${baseUrl}/api/v4/user`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'PRIVATE-TOKEN': conn.token,
-        },
-      });
+      try {
+        // Make direct API call instead of using hook
+        const baseUrl = conn.gitlabUrl || 'https://gitlab.com';
+        const response = await fetch(`${baseUrl}/api/v4/user`, {
+          headers: {
+            'Content-Type': 'application/json',
+            'PRIVATE-TOKEN': conn.token,
+          },
+        });
 
-      if (!response.ok) {
-        // Token expired or revoked — disconnect and prompt re-auth
-        if (response.status === 401 || response.status === 403) {
-          logger.warn('GitLab token expired or revoked (HTTP ' + response.status + ')');
+        if (!response.ok) {
+          // Token expired or revoked — disconnect and prompt re-auth
+          if (response.status === 401 || response.status === 403) {
+            logger.warn('GitLab token expired or revoked (HTTP ' + response.status + ')');
 
-          localStorage.removeItem(STORAGE_KEY);
-          gitlabConnectionStore.disconnect();
+            localStorage.removeItem(STORAGE_KEY);
+            gitlabConnectionStore.disconnect();
 
-          toast.warning('GitLab token expired. Please reconnect your GitLab account.', {
-            autoClose: 8000,
-          });
+            toast.warning('GitLab token expired. Please reconnect your GitLab account.', {
+              autoClose: 8000,
+            });
 
-          return;
+            return;
+          }
+
+          throw new Error(`API error: ${response.status}`);
         }
 
-        throw new Error(`API error: ${response.status}`);
+        const userData = (await response.json()) as GitLabUserResponse;
+
+        // Update connection store with refreshed user data
+        gitlabConnectionStore.setGitLabUrl(baseUrl);
+        gitlabConnectionStore.setToken(conn.token);
+
+        // Update the store with user data if the store supports it
+        if (userData && connection) {
+          const updatedConnection: GitLabConnection = {
+            ...conn,
+            user: userData,
+            gitlabUrl: baseUrl,
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConnection));
+        }
+      } catch (error) {
+        logger.error('Error refreshing connection data:', error);
       }
-
-      const userData = (await response.json()) as GitLabUserResponse;
-
-      // Update connection store with refreshed user data
-      gitlabConnectionStore.setGitLabUrl(baseUrl);
-      gitlabConnectionStore.setToken(conn.token);
-
-      // Update the store with user data if the store supports it
-      if (userData && connection) {
-        const updatedConnection: GitLabConnection = {
-          ...conn,
-          user: userData,
-          gitlabUrl: baseUrl,
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedConnection));
-      }
-    } catch (error) {
-      logger.error('Error refreshing connection data:', error);
-    }
-  }, [connection]);
+    },
+    [connection],
+  );
 
   const connect = useCallback(async (token: string, gitlabUrl = 'https://gitlab.com') => {
     if (!token.trim()) {

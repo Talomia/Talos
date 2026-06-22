@@ -185,8 +185,10 @@ export class WebContainerEngine implements RuntimeEngine {
     return new WebContainerProcessAdapter(process);
   }
 
-  // Track listeners so off() can effectively disable them
-  // (WebContainer API has no native off())
+  /*
+   * Track listeners so off() can effectively disable them
+   * (WebContainer API has no native off())
+   */
   #eventListeners = new Map<string, Set<AnyFunction>>();
 
   on<K extends keyof RuntimeEventMap>(event: K, callback: RuntimeEventMap[K]): void {

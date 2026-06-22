@@ -64,13 +64,7 @@ export default function ProfileTab() {
     // Update the store immediately for UI responsiveness (local only)
     profileStore.set({ ...profileStore.get(), [field]: value });
 
-    // Persist to localStorage immediately
-    if (typeof window !== 'undefined') {
-      const current = { ...profileStore.get() };
-      localStorage.setItem('bolt_profile', JSON.stringify(current));
-    }
-
-    // Debounce the server sync and toast notification
+    // Profile is persisted via the profileStore and debounced server sync
     debouncedUpdate(field, value);
   };
 

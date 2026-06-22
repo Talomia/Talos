@@ -92,10 +92,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
         type SupportedProvider = (typeof supportedOAuthProviders)[number];
 
         if (!supportedOAuthProviders.includes(body.provider as SupportedProvider)) {
-          return json(
-            { error: `Unsupported OAuth provider: ${body.provider}` },
-            { status: 400 },
-          );
+          return json({ error: `Unsupported OAuth provider: ${body.provider}` }, { status: 400 });
         }
 
         const { data, error } = await supabase.auth.signInWithOAuth({
@@ -124,7 +121,10 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Password reset error:', error.message);
-          return json({ error: 'If that email is registered, a reset link has been sent' }, { status: 200, headers: responseHeaders });
+          return json(
+            { error: 'If that email is registered, a reset link has been sent' },
+            { status: 200, headers: responseHeaders },
+          );
         }
 
         return json({ success: true }, { headers: responseHeaders });

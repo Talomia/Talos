@@ -123,7 +123,11 @@ export function useGitHubDeploy() {
             try {
               const binary = isBinaryFile(entry.name);
               const content = binary
-                ? btoa(Array.from(new Uint8Array(await container.fs.readFile(fullPath) as Uint8Array)).map((b) => String.fromCharCode(b)).join(''))
+                ? btoa(
+                    Array.from(new Uint8Array((await container.fs.readFile(fullPath)) as Uint8Array))
+                      .map((b) => String.fromCharCode(b))
+                      .join(''),
+                  )
                 : await container.fs.readFile(fullPath, 'utf-8');
 
               // Store the file with its relative path, not the full system path

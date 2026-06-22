@@ -3,7 +3,7 @@
  */
 export async function fetchWithTimeout(
   input: RequestInfo | URL,
-  init?: RequestInit & { timeoutMs?: number }
+  init?: RequestInit & { timeoutMs?: number },
 ): Promise<Response> {
   const { timeoutMs = 30000, ...fetchInit } = init ?? {};
   const controller = new AbortController();

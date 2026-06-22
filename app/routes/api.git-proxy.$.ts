@@ -106,10 +106,7 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     if (!isDomainAllowed) {
       logger.warn(`Blocked proxy request to disallowed domain: ${domain}`);
 
-      return json(
-        { error: 'Domain is not allowed. Only Git hosting providers are permitted.' },
-        { status: 403 },
-      );
+      return json({ error: 'Domain is not allowed. Only Git hosting providers are permitted.' }, { status: 403 });
     }
 
     // Reconstruct the target URL with query parameters

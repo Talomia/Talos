@@ -19,14 +19,17 @@ async function supabaseVariablesAction({ request }: ActionFunctionArgs) {
       return json({ error: 'Invalid project ID format' }, { status: 400 });
     }
 
-    const response = await fetchWithTimeout(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+    const response = await fetchWithTimeout(
+      `https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        timeoutMs: 15000,
       },
-      timeoutMs: 15000,
-    });
+    );
 
     if (!response.ok) {
       return json({ error: `Failed to fetch API keys: ${response.statusText}` }, { status: response.status });

@@ -27,7 +27,7 @@ export async function openDatabase(): Promise<IDBDatabase | undefined> {
   }
 
   return new Promise((resolve) => {
-    const request = indexedDB.open('appHistory', 2);
+    const request = indexedDB.open('appHistory', 3);
 
     request.onupgradeneeded = (event: IDBVersionChangeEvent) => {
       const db = (event.target as IDBOpenDBRequest).result;
@@ -44,6 +44,13 @@ export async function openDatabase(): Promise<IDBDatabase | undefined> {
       if (oldVersion < 2) {
         if (!db.objectStoreNames.contains('snapshots')) {
           db.createObjectStore('snapshots', { keyPath: 'chatId' });
+        }
+      }
+
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains('branches')) {
+          const branchStore = db.createObjectStore('branches', { keyPath: 'id' });
+          branchStore.createIndex('parentChatId', 'parentChatId', { unique: false });
         }
       }
     };
@@ -114,9 +121,12 @@ export async function setMessages(
       });
       resolve();
     };
+
     transaction.onerror = () => {
       if (handleIDBQuotaError(transaction.error, 'setMessages')) {
-        reject(new Error('Storage quota exceeded while saving chat messages. Please free up space by deleting old chats.'));
+        reject(
+          new Error('Storage quota exceeded while saving chat messages. Please free up space by deleting old chats.'),
+        );
       } else {
         reject(transaction.error);
       }
@@ -152,13 +162,14 @@ export async function getMessagesById(db: IDBDatabase, id: string): Promise<Chat
 }
 
 export async function deleteById(db: IDBDatabase, id: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['chats', 'snapshots'], 'readwrite'); // Add snapshots store to transaction
+  await new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction(['chats', 'snapshots', 'branches'], 'readwrite');
     const chatStore = transaction.objectStore('chats');
     const snapshotStore = transaction.objectStore('snapshots');
 
     chatStore.delete(id);
     snapshotStore.delete(id); // Also delete snapshot
+    transaction.objectStore('branches').delete(id); // Delete branch metadata for this chat
 
     transaction.oncomplete = () => {
       // Background sync deletion to cloud — only after transaction commits
@@ -167,11 +178,28 @@ export async function deleteById(db: IDBDatabase, id: string): Promise<void> {
     };
     transaction.onerror = () => reject(transaction.error);
   });
+
+  // Clean up child branch references (branches that were forked FROM this chat)
+  try {
+    const childBranches = await getBranchesByParent(db, id);
+
+    if (childBranches.length > 0) {
+      const cleanupTx = db.transaction('branches', 'readwrite');
+
+      for (const branch of childBranches) {
+        cleanupTx.objectStore('branches').delete(branch.id);
+      }
+    }
+  } catch {
+    // Branch cleanup is best-effort
+  }
 }
 
 export async function getNextId(_db: IDBDatabase): Promise<string> {
-  // Use a timestamp + random suffix to generate unique IDs without reading the store.
-  // This avoids a race condition where concurrent calls could produce duplicate IDs.
+  /*
+   * Use a timestamp + random suffix to generate unique IDs without reading the store.
+   * This avoids a race condition where concurrent calls could produce duplicate IDs.
+   */
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 
@@ -222,24 +250,52 @@ async function getUrlIds(db: IDBDatabase): Promise<string[]> {
   });
 }
 
-export async function forkChat(db: IDBDatabase, chatId: string, messageId: string): Promise<string> {
+export interface ContextBranch {
+  id: string;
+  parentChatId: string;
+  forkMessageId: string;
+  forkMessageIndex: number;
+  name: string;
+  createdAt: number;
+}
+
+export async function forkChat(
+  db: IDBDatabase,
+  chatId: string,
+  messageId: string,
+  branchName?: string,
+): Promise<string> {
   const chat = await getMessages(db, chatId);
 
   if (!chat) {
     throw new Error('Chat not found');
   }
 
-  // Find the index of the message to fork at
   const messageIndex = chat.messages.findIndex((msg) => msg.id === messageId);
 
   if (messageIndex === -1) {
     throw new Error('Message not found');
   }
 
-  // Get messages up to and including the selected message
   const messages = chat.messages.slice(0, messageIndex + 1);
+  const description = branchName || `${chat.description || 'Chat'} (fork)`;
+  const urlId = await createChatFromMessages(db, description, messages);
 
-  return createChatFromMessages(db, chat.description ? `${chat.description} (fork)` : 'Forked chat', messages);
+  // Save branch metadata for ContextGraph tracking
+  const newChat = await getMessagesByUrlId(db, urlId);
+
+  if (newChat) {
+    await saveBranch(db, {
+      id: newChat.id,
+      parentChatId: chatId,
+      forkMessageId: messageId,
+      forkMessageIndex: messageIndex,
+      name: description,
+      createdAt: Date.now(),
+    });
+  }
+
+  return urlId;
 }
 
 export async function duplicateChat(db: IDBDatabase, id: string): Promise<string> {
@@ -321,6 +377,7 @@ export async function setSnapshot(db: IDBDatabase, chatId: string, snapshot: Sna
     const request = store.put({ chatId, snapshot });
 
     request.onsuccess = () => resolve();
+
     request.onerror = () => {
       if (handleIDBQuotaError(request.error, 'setSnapshot')) {
         reject(new Error('Storage quota exceeded while saving snapshot. Please free up space by deleting old chats.'));
@@ -390,3 +447,40 @@ export async function deleteAllChats(db: IDBDatabase): Promise<void> {
  */
 export const getAllChats = getAll;
 export const deleteChat = deleteById;
+
+export async function saveBranch(db: IDBDatabase, branch: ContextBranch): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('branches', 'readwrite');
+    tx.objectStore('branches').put(branch);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+export async function getBranchesByParent(db: IDBDatabase, parentChatId: string): Promise<ContextBranch[]> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('branches', 'readonly');
+    const index = tx.objectStore('branches').index('parentChatId');
+    const request = index.getAll(parentChatId);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function getBranchById(db: IDBDatabase, chatId: string): Promise<ContextBranch | undefined> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('branches', 'readonly');
+    const request = tx.objectStore('branches').get(chatId);
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+export async function deleteBranch(db: IDBDatabase, id: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('branches', 'readwrite');
+    tx.objectStore('branches').delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}

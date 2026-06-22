@@ -25,6 +25,7 @@ import { workbenchStore } from '~/lib/stores/workbench';
 import { Search } from './Search'; // <-- Ensure Search is imported
 import { classNames } from '~/utils/classNames'; // <-- Import classNames if not already present
 import { LockManager } from './LockManager'; // <-- Import LockManager
+import { WorkbenchWelcome } from './WorkbenchWelcome';
 
 interface EditorPanelProps {
   files?: FileMap;
@@ -164,16 +165,20 @@ export const EditorPanel = memo(
                 )}
               </PanelHeader>
               <div className="h-full flex-1 overflow-hidden modern-scrollbar">
-                <CodeMirrorEditor
-                  theme={theme}
-                  editable={!isStreaming && editorDocument !== undefined}
-                  settings={editorSettings}
-                  doc={editorDocument}
-                  autoFocusOnDocumentChange={!isMobile()}
-                  onScroll={onEditorScroll}
-                  onChange={onEditorChange}
-                  onSave={onFileSave}
-                />
+                {selectedFile ? (
+                  <CodeMirrorEditor
+                    theme={theme}
+                    editable={!isStreaming && editorDocument !== undefined}
+                    settings={editorSettings}
+                    doc={editorDocument}
+                    autoFocusOnDocumentChange={!isMobile()}
+                    onScroll={onEditorScroll}
+                    onChange={onEditorChange}
+                    onSave={onFileSave}
+                  />
+                ) : (
+                  <WorkbenchWelcome />
+                )}
               </div>
             </Panel>
           </PanelGroup>

@@ -38,8 +38,10 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
         // Provider configurations from localStorage
         provider_settings: safeGetItem('provider_settings'),
 
-        // NOTE: API keys are NOT exported — they are stored in an encrypted vault
-        // and must be re-entered manually after import for security.
+        /*
+         * NOTE: API keys are NOT exported — they are stored in an encrypted vault
+         * and must be re-entered manually after import for security.
+         */
 
         // Selected provider and model
         selectedModel: allCookies.selectedModel,
@@ -422,18 +424,35 @@ async function importLegacyFormat(data: SettingsData): Promise<void> {
 
   // Allowlist of known localStorage keys
   const ALLOWED_STORAGE_KEYS = new Set([
-    'user_profile', 'app_settings', 'theme', 'provider_settings',
-    'viewed_features', 'developer_mode', 'contextOptimizationEnabled',
-    'autoSelectTemplate', 'isLatestBranch', 'isEventLogsEnabled',
-    'promptId', 'netlify_connection', 'acknowledged_debug_issues',
-    'acknowledged_connection_issue', 'error_logs', 'update_settings',
+    'user_profile',
+    'app_settings',
+    'theme',
+    'provider_settings',
+    'viewed_features',
+    'developer_mode',
+    'contextOptimizationEnabled',
+    'autoSelectTemplate',
+    'isLatestBranch',
+    'isEventLogsEnabled',
+    'promptId',
+    'netlify_connection',
+    'acknowledged_debug_issues',
+    'acknowledged_connection_issue',
+    'error_logs',
+    'update_settings',
     'last_acknowledged_update',
   ]);
 
   // Allowlist of known cookie names
   const ALLOWED_COOKIE_KEYS = new Set([
-    'apiKeys', 'selectedModel', 'selectedProvider', 'providers',
-    'tabConfiguration', 'cachedPrompt', 'isDebugEnabled', 'eventLogs',
+    'apiKeys',
+    'selectedModel',
+    'selectedProvider',
+    'providers',
+    'tabConfiguration',
+    'cachedPrompt',
+    'isDebugEnabled',
+    'eventLogs',
   ]);
 
   // Try to import settings directly

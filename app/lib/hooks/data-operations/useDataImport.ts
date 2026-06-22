@@ -140,6 +140,7 @@ export function useDataImport({
             position: 'bottom-right',
             autoClose: 5000,
           });
+
           return;
         }
 
@@ -150,6 +151,7 @@ export function useDataImport({
             position: 'bottom-right',
             autoClose: 5000,
           });
+
           return;
         }
 
@@ -164,6 +166,7 @@ export function useDataImport({
             position: 'bottom-right',
             autoClose: 5000,
           });
+
           return;
         }
 
@@ -179,6 +182,7 @@ export function useDataImport({
               position: 'bottom-right',
               autoClose: 5000,
             });
+
             return;
           }
 
@@ -188,6 +192,7 @@ export function useDataImport({
               position: 'bottom-right',
               autoClose: 5000,
             });
+
             return;
           }
 
@@ -197,6 +202,7 @@ export function useDataImport({
               position: 'bottom-right',
               autoClose: 5000,
             });
+
             return;
           }
         }
@@ -264,7 +270,11 @@ export function useDataImport({
         // Step 6: Import snapshots if present
         const importedSnapshots = (normalizedData as Record<string, unknown>).snapshots;
 
-        if (Array.isArray(importedSnapshots) && importedSnapshots.length > 0 && db.objectStoreNames.contains('snapshots')) {
+        if (
+          Array.isArray(importedSnapshots) &&
+          importedSnapshots.length > 0 &&
+          db.objectStoreNames.contains('snapshots')
+        ) {
           showProgress(`Importing ${importedSnapshots.length} snapshots`, 85);
 
           const snapshotTx = db.transaction(['snapshots'], 'readwrite');
@@ -278,6 +288,7 @@ export function useDataImport({
 
           await new Promise((resolve, reject) => {
             snapshotTx.oncomplete = resolve;
+
             snapshotTx.onerror = () => {
               logger.warn('Snapshot import failed, continuing:', snapshotTx.error);
               resolve(undefined);
@@ -350,8 +361,10 @@ export function useDataImport({
         // Step 3: Validate data
         showProgress('Validating API keys data', 60);
 
-        // Note: API keys are now stored in the server-side vault, not cookies.
-        // Undo is not reliably possible once keys are saved to the vault.
+        /*
+         * Note: API keys are now stored in the server-side vault, not cookies.
+         * Undo is not reliably possible once keys are saved to the vault.
+         */
         setLastOperation({ type: 'import-api-keys', data: { previous: null } });
 
         // Step 4: Import API keys to encrypted vault
@@ -369,8 +382,7 @@ export function useDataImport({
         const keyCount = Object.keys(newKeys).length;
 
         toast.success(
-          `${keyCount} API keys imported to encrypted vault successfully.\n` +
-            'Keys are securely stored server-side.',
+          `${keyCount} API keys imported to encrypted vault successfully.\n` + 'Keys are securely stored server-side.',
           { position: 'bottom-right', autoClose: 5000 },
         );
 
