@@ -3,12 +3,14 @@ import type { NetlifyConnection, NetlifySite, NetlifyUser } from '~/types/netlif
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
+import { safeSetItem } from '~/utils/safeStorage';
+import { getEnvVar } from '~/utils/env';
 
 const logger = createScopedLogger('NetlifyStore');
 
 // Initialize with stored connection or environment variable
 const storedConnection = typeof window !== 'undefined' ? localStorage.getItem('netlify_connection') : null;
-const envToken = import.meta.env.VITE_NETLIFY_ACCESS_TOKEN;
+const envToken = getEnvVar('VITE_NETLIFY_ACCESS_TOKEN', '');
 logger.trace('envToken loaded:', envToken ? '[TOKEN_EXISTS]' : '[NO_TOKEN]');
 
 // If we have an environment token but no stored connection, initialize with the env token
@@ -65,7 +67,7 @@ export async function initializeNetlifyConnection() {
     };
 
     // Store in localStorage for persistence
-    localStorage.setItem('netlify_connection', JSON.stringify(connectionData));
+    safeSetItem('netlify_connection', JSON.stringify(connectionData));
 
     // Update the store
     updateNetlifyConnection(connectionData);
@@ -87,7 +89,7 @@ export const updateNetlifyConnection = (updates: Partial<NetlifyConnection>) => 
 
   // Persist to localStorage
   if (typeof window !== 'undefined') {
-    localStorage.setItem('netlify_connection', JSON.stringify(newState));
+    safeSetItem('netlify_connection', JSON.stringify(newState));
   }
 };
 

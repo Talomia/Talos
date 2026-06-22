@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.vercel-user');
@@ -32,11 +33,12 @@ async function vercelUserLoader({ request, context }: { request: Request; contex
     }
 
     // Make server-side request to Vercel API
-    const response = await fetch('https://api.vercel.com/v2/user', {
+    const response = await fetchWithTimeout('https://api.vercel.com/v2/user', {
       headers: {
         Authorization: `Bearer ${vercelToken}`,
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!response.ok) {
@@ -112,11 +114,12 @@ async function vercelUserAction({ request, context }: { request: Request; contex
 
     if (action === 'get_projects') {
       // Fetch user projects
-      const response = await fetch('https://api.vercel.com/v13/projects', {
+      const response = await fetchWithTimeout('https://api.vercel.com/v13/projects', {
         headers: {
           Authorization: `Bearer ${vercelToken}`,
           'User-Agent': 'app',
         },
+        timeoutMs: 15000,
       });
 
       if (!response.ok) {

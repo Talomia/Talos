@@ -2,6 +2,7 @@ import { atom } from 'nanostores';
 import type { GitHubConnection, GitHubRepoInfo, GitHubUserResponse } from '~/types/GitHub';
 import { logStore } from './logs';
 import { createScopedLogger } from '~/utils/logger';
+import { safeSetItem } from '~/utils/safeStorage';
 
 const logger = createScopedLogger('GitHubStore');
 
@@ -63,7 +64,7 @@ export async function initializeGitHubConnection() {
 
     // Store in localStorage for persistence
     if (typeof window !== 'undefined') {
-      localStorage.setItem('github_connection', JSON.stringify(connectionData));
+      safeSetItem('github_connection', JSON.stringify(connectionData));
     }
 
     // Update the store
@@ -144,6 +145,6 @@ export const updateGitHubConnection = (updates: Partial<GitHubConnection>) => {
 
   // Persist to localStorage
   if (typeof window !== 'undefined') {
-    localStorage.setItem('github_connection', JSON.stringify(newState));
+    safeSetItem('github_connection', JSON.stringify(newState));
   }
 };

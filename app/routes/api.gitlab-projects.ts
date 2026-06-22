@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
 import type { GitLabProjectInfo } from '~/types/GitLab';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.gitlab-projects');
@@ -31,12 +32,13 @@ async function gitlabProjectsLoader({ request }: { request: Request }) {
     // Fetch user's projects from GitLab API
     const url = `${gitlabUrl}/api/v4/projects?membership=true&per_page=100&order_by=updated_at&sort=desc`;
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!response.ok) {

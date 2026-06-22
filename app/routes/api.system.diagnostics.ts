@@ -1,5 +1,6 @@
 import { json, type LoaderFunction, type LoaderFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 /**
  * Diagnostic API for troubleshooting connection issues
@@ -65,11 +66,12 @@ export const loader: LoaderFunction = withSecurity(
     let githubApiStatus;
 
     try {
-      const githubResponse = await fetch('https://api.github.com/zen', {
+      const githubResponse = await fetchWithTimeout('https://api.github.com/zen', {
         method: 'GET',
         headers: {
           Accept: 'application/vnd.github.v3+json',
         },
+        timeoutMs: 10000,
       });
 
       githubApiStatus = {
@@ -88,8 +90,9 @@ export const loader: LoaderFunction = withSecurity(
     let netlifyApiStatus;
 
     try {
-      const netlifyResponse = await fetch('https://api.netlify.com/api/v1/', {
+      const netlifyResponse = await fetchWithTimeout('https://api.netlify.com/api/v1/', {
         method: 'GET',
+        timeoutMs: 10000,
       });
 
       netlifyApiStatus = {

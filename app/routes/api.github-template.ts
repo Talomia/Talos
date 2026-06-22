@@ -1,5 +1,6 @@
 import { json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.github-template');
@@ -41,12 +42,13 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
   const baseUrl = 'https://api.github.com';
 
   // Get repository info to find default branch
-  const repoResponse = await fetch(`${baseUrl}/repos/${repo}`, {
+  const repoResponse = await fetchWithTimeout(`${baseUrl}/repos/${repo}`, {
     headers: {
       Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'app',
       ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
     },
+    timeoutMs: 15000,
   });
 
   if (!repoResponse.ok) {
@@ -57,12 +59,13 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
   const defaultBranch = repoData.default_branch;
 
   // Get the tree recursively
-  const treeResponse = await fetch(`${baseUrl}/repos/${repo}/git/trees/${defaultBranch}?recursive=1`, {
+  const treeResponse = await fetchWithTimeout(`${baseUrl}/repos/${repo}/git/trees/${defaultBranch}?recursive=1`, {
     headers: {
       Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'app',
       ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
     },
+    timeoutMs: 15000,
   });
 
   if (!treeResponse.ok) {
@@ -103,12 +106,13 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
     const batch = files.slice(i, i + batchSize);
     const batchPromises = batch.map(async (file: any) => {
       try {
-        const contentResponse = await fetch(`${baseUrl}/repos/${repo}/contents/${file.path}`, {
+        const contentResponse = await fetchWithTimeout(`${baseUrl}/repos/${repo}/contents/${file.path}`, {
           headers: {
             Accept: 'application/vnd.github.v3+json',
             'User-Agent': 'app',
             ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
           },
+          timeoutMs: 15000,
         });
 
         if (!contentResponse.ok) {
@@ -147,12 +151,13 @@ async function fetchRepoContentsZip(repo: string, githubToken?: string) {
   const baseUrl = 'https://api.github.com';
 
   // Get the latest release
-  const releaseResponse = await fetch(`${baseUrl}/repos/${repo}/releases/latest`, {
+  const releaseResponse = await fetchWithTimeout(`${baseUrl}/repos/${repo}/releases/latest`, {
     headers: {
       Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'app',
       ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
     },
+    timeoutMs: 15000,
   });
 
   if (!releaseResponse.ok) {
@@ -163,10 +168,11 @@ async function fetchRepoContentsZip(repo: string, githubToken?: string) {
   const zipballUrl = releaseData.zipball_url;
 
   // Fetch the zipball
-  const zipResponse = await fetch(zipballUrl, {
+  const zipResponse = await fetchWithTimeout(zipballUrl, {
     headers: {
       ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
     },
+    timeoutMs: 30000,
   });
 
   if (!zipResponse.ok) {

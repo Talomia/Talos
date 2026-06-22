@@ -3,11 +3,12 @@ import type { VercelConnection, VercelProject, VercelUser, VercelUserResponse } 
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
+import { getEnvVar } from '~/utils/env';
 
 const logger = createScopedLogger('VercelStore');
 
 // Auto-connect using environment variable
-const envToken = import.meta.env?.VITE_VERCEL_ACCESS_TOKEN;
+const envToken = getEnvVar('VITE_VERCEL_ACCESS_TOKEN', '');
 
 // Initialize with stored connection or defaults
 const storedConnection = typeof window !== 'undefined' ? localStorage.getItem('vercel_connection') : null;
@@ -126,7 +127,7 @@ export async function autoConnectVercel() {
 
 export function initializeVercelConnection() {
   // Auto-connect using environment variable if available
-  const configuredEnvToken = import.meta.env?.VITE_VERCEL_ACCESS_TOKEN;
+  const configuredEnvToken = getEnvVar('VITE_VERCEL_ACCESS_TOKEN', '');
 
   if (configuredEnvToken && !vercelConnection.get().token) {
     updateVercelConnection({ token: configuredEnvToken });

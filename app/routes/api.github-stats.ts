@@ -2,6 +2,7 @@ import { json } from '@remix-run/cloudflare';
 import { createScopedLogger } from '~/utils/logger';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import type { GitHubUserResponse, GitHubStats } from '~/types/GitHub';
 
 const logger = createScopedLogger('api.github-stats');
@@ -27,12 +28,13 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
     }
 
     // Get user info first
-    const userResponse = await fetch('https://api.github.com/user', {
+    const userResponse = await fetchWithTimeout('https://api.github.com/user', {
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!userResponse.ok) {
@@ -52,7 +54,7 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
     let hasMore = true;
 
     while (hasMore && allRepos.length < MAX_REPOS) {
-      const repoResponse = await fetch(
+      const repoResponse = await fetchWithTimeout(
         `https://api.github.com/user/repos?sort=updated&per_page=100&page=${page}&affiliation=owner,organization_member`,
         {
           headers: {
@@ -60,6 +62,7 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
             Authorization: `Bearer ${githubToken}`,
             'User-Agent': 'app',
           },
+          timeoutMs: 15000,
         },
       );
 
@@ -84,12 +87,13 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
     const reposWithBranches = await Promise.allSettled(
       allRepos.slice(0, 50).map(async (repo) => {
         try {
-          const branchesResponse = await fetch(`https://api.github.com/repos/${repo.full_name}/branches?per_page=1`, {
+          const branchesResponse = await fetchWithTimeout(`https://api.github.com/repos/${repo.full_name}/branches?per_page=1`, {
             headers: {
               Accept: 'application/vnd.github.v3+json',
               Authorization: `Bearer ${githubToken}`,
               'User-Agent': 'app',
             },
+            timeoutMs: 15000,
           });
 
           if (branchesResponse.ok) {

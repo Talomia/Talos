@@ -1,5 +1,6 @@
 import { json, type ActionFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.supabase');
@@ -9,11 +10,12 @@ const supabaseAction = async ({ request }: ActionFunctionArgs): Promise<Response
   try {
     const { token } = (await request.json()) as { token: string };
 
-    const projectsResponse = await fetch('https://api.supabase.com/v1/projects', {
+    const projectsResponse = await fetchWithTimeout('https://api.supabase.com/v1/projects', {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
+      timeoutMs: 15000,
     });
 
     if (!projectsResponse.ok) {

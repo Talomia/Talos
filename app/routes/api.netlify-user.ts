@@ -2,6 +2,7 @@ import { json } from '@remix-run/cloudflare';
 import { createScopedLogger } from '~/utils/logger';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('api.netlify-user');
 
@@ -23,11 +24,12 @@ async function netlifyUserLoader({ request, context }: { request: Request; conte
     }
 
     // Make server-side request to Netlify API
-    const response = await fetch('https://api.netlify.com/api/v1/user', {
+    const response = await fetchWithTimeout('https://api.netlify.com/api/v1/user', {
       headers: {
         Authorization: `Bearer ${netlifyToken}`,
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!response.ok) {
@@ -92,12 +94,13 @@ async function netlifyUserAction({ request, context }: { request: Request; conte
 
     if (action === 'get_sites') {
       // Fetch user sites
-      const response = await fetch('https://api.netlify.com/api/v1/sites', {
+      const response = await fetchWithTimeout('https://api.netlify.com/api/v1/sites', {
         headers: {
           Authorization: `Bearer ${netlifyToken}`,
           'Content-Type': 'application/json',
           'User-Agent': 'app',
         },
+        timeoutMs: 15000,
       });
 
       if (!response.ok) {

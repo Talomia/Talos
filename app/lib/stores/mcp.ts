@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { toast } from 'react-toastify';
 import type { MCPConfig, MCPServerTools } from '~/lib/services/mcpService';
 import { createScopedLogger } from '~/utils/logger';
+import { safeSetItem } from '~/utils/safeStorage';
 
 const logger = createScopedLogger('MCPStore');
 
@@ -60,7 +61,7 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
           }));
         }
       } else {
-        localStorage.setItem(MCP_SETTINGS_KEY, JSON.stringify(defaultSettings));
+        safeSetItem(MCP_SETTINGS_KEY, JSON.stringify(defaultSettings));
       }
     }
 
@@ -78,7 +79,7 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
       const serverTools = await updateServerConfig(newSettings.mcpConfig);
 
       if (isBrowser) {
-        localStorage.setItem(MCP_SETTINGS_KEY, JSON.stringify(newSettings));
+        safeSetItem(MCP_SETTINGS_KEY, JSON.stringify(newSettings));
       }
 
       set(() => ({ settings: newSettings, serverTools, error: null }));

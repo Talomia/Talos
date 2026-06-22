@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.github-branches');
@@ -72,12 +73,13 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
     }
 
     // First, get repository info to know the default branch
-    const repoResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+    const repoResponse = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}`, {
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!repoResponse.ok) {
@@ -96,12 +98,13 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
     const defaultBranch = repoInfo.default_branch;
 
     // Fetch branches
-    const branchesResponse = await fetch(`https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`, {
+    const branchesResponse = await fetchWithTimeout(`https://api.github.com/repos/${owner}/${repo}/branches?per_page=100`, {
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!branchesResponse.ok) {
