@@ -49,6 +49,14 @@ export class TerminalStore {
   }
 
   onTerminalResize(cols: number, rows: number) {
+    // Resize the app terminal (index 0) if it has an active process
+    const appProcess = this.#appTerminal.process;
+
+    if (appProcess) {
+      appProcess.resize({ cols, rows });
+    }
+
+    // Resize all extra terminals
     for (const { process } of this.#terminals) {
       process.resize({ cols, rows });
     }

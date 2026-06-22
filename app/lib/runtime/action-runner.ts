@@ -415,8 +415,13 @@ export class ActionRunner {
 
   #updateAction(id: string, newState: ActionStateUpdate) {
     const actions = this.actions.get();
+    const currentAction = actions[id];
 
-    this.actions.setKey(id, { ...actions[id], ...newState });
+    if (!currentAction) {
+      return;
+    }
+
+    this.actions.setKey(id, { ...currentAction, ...newState });
   }
 
   async getFileHistory(filePath: string): Promise<FileHistory | null> {

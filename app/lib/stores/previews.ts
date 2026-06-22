@@ -263,15 +263,25 @@ export class PreviewsStore {
     // Set a new timeout for this refresh
     const timeout = setTimeout(() => {
       const previews = this.previews.get();
-      const preview = previews.find((p) => this.getPreviewId(p.baseUrl) === previewId);
+      const previewIndex = previews.findIndex((p) => this.getPreviewId(p.baseUrl) === previewId);
 
-      if (preview) {
-        preview.ready = false;
-        this.previews.set([...previews]);
+      if (previewIndex !== -1) {
+        const preview = previews[previewIndex];
+
+        // Create new array with a new object reference (ready: false)
+        const updatedPreviews = previews.map((p, i) =>
+          i === previewIndex ? { ...p, ready: false } : p,
+        );
+        this.previews.set(updatedPreviews);
 
         requestAnimationFrame(() => {
-          preview.ready = true;
-          this.previews.set([...previews]);
+          // Create another new array with a new object reference (ready: true)
+          const currentPreviews = this.previews.get();
+          this.previews.set(
+            currentPreviews.map((p) =>
+              this.getPreviewId(p.baseUrl) === previewId ? { ...p, ready: true } : p,
+            ),
+          );
         });
       }
 

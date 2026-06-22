@@ -33,12 +33,18 @@ export const checkConnection = async (): Promise<ConnectionStatus> => {
 
     for (const endpoint of endpoints) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
         const start = performance.now();
         const response = await fetch(endpoint, {
           method: 'HEAD',
           cache: 'no-cache',
+          signal: controller.signal,
         });
         const end = performance.now();
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           latency = Math.round(end - start);

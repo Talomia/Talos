@@ -334,7 +334,7 @@ export const ChatImpl = memo(
 
           return {
             ...message,
-            content: parsedMessages[i] || '',
+            content: parsedMessages[i] !== undefined ? parsedMessages[i] : message.content,
           };
         }),
       [messages, parsedMessages],

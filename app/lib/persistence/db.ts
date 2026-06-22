@@ -181,10 +181,16 @@ export async function getUrlId(db: IDBDatabase, id: string): Promise<string> {
   if (!idList.includes(id)) {
     return id;
   } else {
+    const MAX_ITERATIONS = 100;
     let i = 2;
 
     while (idList.includes(`${id}-${i}`)) {
       i++;
+
+      if (i > MAX_ITERATIONS + 1) {
+        // Fallback to a UUID-style suffix to guarantee uniqueness
+        return `${id}-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`;
+      }
     }
 
     return `${id}-${i}`;

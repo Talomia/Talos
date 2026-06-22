@@ -760,6 +760,7 @@ export class FilesStore {
               }
 
               this.files.setKey(direntPath, undefined);
+              this.#modifiedFiles.delete(direntPath);
             }
           }
 
@@ -875,7 +876,7 @@ export class FilesStore {
 
         this.#modifiedFiles.set(filePath, base64Content);
       } else {
-        const contentToWrite = (content as string).length === 0 ? ' ' : content;
+        const contentToWrite = content as string;
         await engine.fs.writeFile(relativePath, contentToWrite);
 
         this.files.setKey(filePath, {

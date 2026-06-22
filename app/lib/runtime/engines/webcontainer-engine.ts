@@ -107,6 +107,7 @@ class WebContainerProcessAdapter implements RuntimeProcess {
 export class WebContainerEngine implements RuntimeEngine {
   #instance: WebContainer | null = null;
   #fs: WebContainerFileSystem | null = null;
+  #bootPromise: Promise<void> | null = null;
 
   get workdir(): string {
     if (!this.#instance) {
@@ -125,16 +126,33 @@ export class WebContainerEngine implements RuntimeEngine {
   }
 
   async boot(): Promise<void> {
-    logger.info('Booting WebContainer...');
+    if (this.#instance) {
+      return;
+    }
 
-    this.#instance = await WebContainer.boot({
-      coep: 'credentialless',
-      workdirName: WORK_DIR_NAME,
-      forwardPreviewErrors: true,
-    });
+    if (this.#bootPromise) {
+      return this.#bootPromise;
+    }
 
-    this.#fs = new WebContainerFileSystem(this.#instance);
-    logger.info('WebContainer booted successfully');
+    this.#bootPromise = (async () => {
+      logger.info('Booting WebContainer...');
+
+      this.#instance = await WebContainer.boot({
+        coep: 'credentialless',
+        workdirName: WORK_DIR_NAME,
+        forwardPreviewErrors: true,
+      });
+
+      this.#fs = new WebContainerFileSystem(this.#instance);
+      logger.info('WebContainer booted successfully');
+    })();
+
+    try {
+      await this.#bootPromise;
+    } catch (error) {
+      this.#bootPromise = null;
+      throw error;
+    }
   }
 
   async teardown(): Promise<void> {

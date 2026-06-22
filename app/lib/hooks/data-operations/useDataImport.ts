@@ -350,10 +350,9 @@ export function useDataImport({
         // Step 3: Validate data
         showProgress('Validating API keys data', 60);
 
-        // Get current API keys from cookies for potential undo
-        const apiKeysStr = document.cookie.split(';').find((row) => row.trim().startsWith('apiKeys='));
-        const currentApiKeys = apiKeysStr ? JSON.parse(decodeURIComponent(apiKeysStr.split('=')[1])) : {};
-        setLastOperation({ type: 'import-api-keys', data: { previous: currentApiKeys } });
+        // Note: API keys are now stored in the server-side vault, not cookies.
+        // Undo is not reliably possible once keys are saved to the vault.
+        setLastOperation({ type: 'import-api-keys', data: { previous: null } });
 
         // Step 4: Import API keys to encrypted vault
         showProgress('Applying API keys', 80);

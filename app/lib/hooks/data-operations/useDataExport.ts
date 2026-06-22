@@ -340,11 +340,12 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
         let snapshots: any[] = [];
 
         if (db.objectStoreNames.contains('snapshots')) {
+          const snapshotTx = db.transaction(['snapshots'], 'readonly');
+          const snapshotStore = snapshotTx.objectStore('snapshots');
+
           const snapshotPromises = chatIds.map((chatId) => {
             return new Promise<any>((resolve) => {
               try {
-                const snapshotTx = db.transaction(['snapshots'], 'readonly');
-                const snapshotStore = snapshotTx.objectStore('snapshots');
                 const request = snapshotStore.get(chatId);
                 request.onsuccess = () => resolve(request.result || null);
                 request.onerror = () => resolve(null);

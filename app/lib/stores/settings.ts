@@ -385,13 +385,19 @@ export const tabConfigurationStore = map<TabWindowConfig>(getInitialTabConfigura
 
 // Auto-persist tab configuration changes to localStorage
 if (isBrowser) {
-  tabConfigurationStore.subscribe((config) => {
+  const unsubscribeTabConfig = tabConfigurationStore.subscribe((config) => {
     try {
       safeSetItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(config));
     } catch (error) {
       logger.error('Failed to persist tab configuration:', error);
     }
   });
+
+  if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+      unsubscribeTabConfig();
+    });
+  }
 }
 
 // Helper function to reset tab configuration
