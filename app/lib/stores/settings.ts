@@ -6,6 +6,7 @@ import { DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
 import { toggleTheme } from './theme';
 import { createScopedLogger } from '~/utils/logger';
 import { STORAGE_KEYS } from '~/lib/app-config';
+import { safeSetItem } from '~/utils/safeStorage';
 
 const logger = createScopedLogger('SettingsStore');
 
@@ -173,11 +174,11 @@ const autoEnableConfiguredProviders = async () => {
       providersStore.set(currentSettings);
 
       // Save to localStorage
-      localStorage.setItem(PROVIDER_SETTINGS_KEY, JSON.stringify(currentSettings));
+      safeSetItem(PROVIDER_SETTINGS_KEY, JSON.stringify(currentSettings));
 
       // Update the auto-enabled providers list
       const allAutoEnabled = [...new Set([...previouslyAutoEnabled, ...newlyAutoEnabled])];
-      localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(allAutoEnabled));
+      safeSetItem(AUTO_ENABLED_KEY, JSON.stringify(allAutoEnabled));
 
       logger.info(`Auto-enabled providers: ${newlyAutoEnabled.join(', ')}`);
     }
@@ -218,7 +219,7 @@ export const updateProviderSettings = (provider: string, settings: ProviderSetti
   // Save to localStorage (SSR-safe)
   if (typeof window !== 'undefined') {
     const allSettings = providersStore.get();
-    localStorage.setItem(PROVIDER_SETTINGS_KEY, JSON.stringify(allSettings));
+    safeSetItem(PROVIDER_SETTINGS_KEY, JSON.stringify(allSettings));
   }
 
   // If this is a local provider, update the auto-enabled tracking
@@ -241,12 +242,12 @@ const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => 
       // If user enables provider, add to auto-enabled list (for future detection)
       if (!currentAutoEnabled.includes(providerName)) {
         currentAutoEnabled.push(providerName);
-        localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(currentAutoEnabled));
+        safeSetItem(AUTO_ENABLED_KEY, JSON.stringify(currentAutoEnabled));
       }
     } else {
       // If user disables provider, remove from auto-enabled list (respect user choice)
       const updatedAutoEnabled = currentAutoEnabled.filter((name: string) => name !== providerName);
-      localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(updatedAutoEnabled));
+      safeSetItem(AUTO_ENABLED_KEY, JSON.stringify(updatedAutoEnabled));
     }
   } catch (error) {
     logger.error('Error updating auto-enabled tracking:', error);
@@ -315,34 +316,34 @@ export const promptStore = atom<string>(initialSettings.promptId);
 // Helper functions to update settings with persistence
 export const updateLatestBranch = (enabled: boolean) => {
   latestBranchStore.set(enabled);
-  localStorage.setItem(SETTINGS_KEYS.LATEST_BRANCH, JSON.stringify(enabled));
+  safeSetItem(SETTINGS_KEYS.LATEST_BRANCH, JSON.stringify(enabled));
 };
 
 export const updateAutoSelectTemplate = (enabled: boolean) => {
   autoSelectStarterTemplate.set(enabled);
-  localStorage.setItem(SETTINGS_KEYS.AUTO_SELECT_TEMPLATE, JSON.stringify(enabled));
+  safeSetItem(SETTINGS_KEYS.AUTO_SELECT_TEMPLATE, JSON.stringify(enabled));
 };
 
 export const updateContextOptimization = (enabled: boolean) => {
   enableContextOptimizationStore.set(enabled);
-  localStorage.setItem(SETTINGS_KEYS.CONTEXT_OPTIMIZATION, JSON.stringify(enabled));
+  safeSetItem(SETTINGS_KEYS.CONTEXT_OPTIMIZATION, JSON.stringify(enabled));
 };
 
 export const updateEventLogs = (enabled: boolean) => {
   isEventLogsEnabled.set(enabled);
-  localStorage.setItem(SETTINGS_KEYS.EVENT_LOGS, JSON.stringify(enabled));
+  safeSetItem(SETTINGS_KEYS.EVENT_LOGS, JSON.stringify(enabled));
 };
 
 export const updatePromptId = (id: string) => {
   promptStore.set(id);
-  localStorage.setItem(SETTINGS_KEYS.PROMPT_ID, id);
+  safeSetItem(SETTINGS_KEYS.PROMPT_ID, id);
 };
 
 export const updateDebugMode = (enabled: boolean) => {
   isDebugMode.set(enabled);
 
   if (typeof window !== 'undefined') {
-    localStorage.setItem(SETTINGS_KEYS.DEBUG_MODE, JSON.stringify(enabled));
+    safeSetItem(SETTINGS_KEYS.DEBUG_MODE, JSON.stringify(enabled));
   }
 };
 
@@ -386,7 +387,7 @@ export const tabConfigurationStore = map<TabWindowConfig>(getInitialTabConfigura
 if (isBrowser) {
   tabConfigurationStore.subscribe((config) => {
     try {
-      localStorage.setItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(config));
+      safeSetItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(config));
     } catch (error) {
       logger.error('Failed to persist tab configuration:', error);
     }
@@ -402,6 +403,6 @@ export const resetTabConfiguration = () => {
   tabConfigurationStore.set(defaultConfig);
 
   if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(defaultConfig));
+    safeSetItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(defaultConfig));
   }
 };

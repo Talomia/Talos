@@ -3,6 +3,7 @@ import { createScopedLogger } from '~/utils/logger';
 import type { ChatHistoryItem } from './useChatHistory';
 import type { Snapshot } from './types'; // Import Snapshot type
 import { syncChatToCloud, syncDeleteToCloud, syncDeleteAllToCloud, syncDescriptionToCloud } from './cloudSync';
+import { handleIDBQuotaError } from '~/utils/safeStorage';
 
 export interface IChatMetadata {
   gitUrl: string;
@@ -109,7 +110,13 @@ export async function setMessages(
       });
       resolve();
     };
-    transaction.onerror = () => reject(transaction.error);
+    transaction.onerror = () => {
+      if (handleIDBQuotaError(transaction.error, 'setMessages')) {
+        reject(new Error('Storage quota exceeded while saving chat messages. Please free up space by deleting old chats.'));
+      } else {
+        reject(transaction.error);
+      }
+    };
   });
 }
 
@@ -304,7 +311,13 @@ export async function setSnapshot(db: IDBDatabase, chatId: string, snapshot: Sna
     const request = store.put({ chatId, snapshot });
 
     request.onsuccess = () => resolve();
-    request.onerror = () => reject(request.error);
+    request.onerror = () => {
+      if (handleIDBQuotaError(request.error, 'setSnapshot')) {
+        reject(new Error('Storage quota exceeded while saving snapshot. Please free up space by deleting old chats.'));
+      } else {
+        reject(request.error);
+      }
+    };
   });
 }
 

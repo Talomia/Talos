@@ -1,6 +1,7 @@
 import { atom, map } from 'nanostores';
 import { createScopedLogger } from '~/utils/logger';
 import { STORAGE_KEYS } from '~/lib/app-config';
+import { safeSetItem } from '~/utils/safeStorage';
 
 const logger = createScopedLogger('LogStore');
 
@@ -106,11 +107,22 @@ class LogStore {
       return;
     }
 
-    try {
-      const currentLogs = this._logs.get();
-      localStorage.setItem('eventLogs', JSON.stringify(currentLogs));
-    } catch (error) {
-      logger.error('Failed to save logs to localStorage:', error);
+    const currentLogs = this._logs.get();
+    const serialized = JSON.stringify(currentLogs);
+
+    if (!safeSetItem('eventLogs', serialized)) {
+      // Quota exceeded — trim to 500 and retry
+      const entries = Object.entries(currentLogs)
+        .sort(([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const trimmed500 = Object.fromEntries(entries.slice(0, 500));
+      this._logs.set(trimmed500);
+
+      if (!safeSetItem('eventLogs', JSON.stringify(trimmed500))) {
+        // Still failing — trim to 100
+        const trimmed100 = Object.fromEntries(entries.slice(0, 100));
+        this._logs.set(trimmed100);
+        safeSetItem('eventLogs', JSON.stringify(trimmed100));
+      }
     }
   }
 
@@ -119,11 +131,7 @@ class LogStore {
       return;
     }
 
-    try {
-      localStorage.setItem(STORAGE_KEYS.readLogs, JSON.stringify(Array.from(this._readLogs)));
-    } catch (error) {
-      logger.error('Failed to save read logs to localStorage:', error);
-    }
+    safeSetItem(STORAGE_KEYS.readLogs, JSON.stringify(Array.from(this._readLogs)));
   }
 
   private _generateId(): string {
