@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/react';
 import type { LinksFunction } from '@remix-run/cloudflare';
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from '@remix-run/react';
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, isRouteErrorResponse, useRouteError } from '@remix-run/react';
 import tailwindReset from '@unocss/reset/tailwind-compat.css?url';
 import { themeStore } from './lib/stores/theme';
 import { STORAGE_KEYS } from '~/lib/app-config';
@@ -169,5 +169,68 @@ export default function App() {
     <Layout>
       <Outlet />
     </Layout>
+  );
+}
+
+export function ErrorBoundary() {
+  const error = useRouteError();
+
+  let status = 500;
+  let title = 'Unexpected Error';
+  let message = 'An unexpected error occurred. Please try refreshing the page.';
+
+  if (isRouteErrorResponse(error)) {
+    status = error.status;
+    title = error.status === 404 ? 'Page Not Found' : `Error ${error.status}`;
+    message = error.data?.message || error.statusText || message;
+  } else if (error instanceof Error) {
+    message = error.message;
+  }
+
+  return (
+    <html lang="en" data-theme="dark">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>{title} | Talos</title>
+        <Meta />
+        <Links />
+      </head>
+      <body
+        style={{
+          margin: 0,
+          fontFamily: 'Inter, system-ui, sans-serif',
+          backgroundColor: '#0d1117',
+          color: '#c9d1d9',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100vh',
+        }}
+      >
+        <div style={{ textAlign: 'center', maxWidth: 480, padding: 24 }}>
+          <h1 style={{ fontSize: 48, margin: '0 0 8px', color: '#f85149' }}>{status}</h1>
+          <h2 style={{ fontSize: 20, margin: '0 0 16px', fontWeight: 500 }}>{title}</h2>
+          <p style={{ fontSize: 14, lineHeight: 1.6, color: '#8b949e' }}>{message}</p>
+          <a
+            href="/"
+            style={{
+              display: 'inline-block',
+              marginTop: 24,
+              padding: '10px 24px',
+              borderRadius: 8,
+              backgroundColor: '#238636',
+              color: '#fff',
+              textDecoration: 'none',
+              fontSize: 14,
+              fontWeight: 500,
+            }}
+          >
+            Back to Home
+          </a>
+        </div>
+        <Scripts />
+      </body>
+    </html>
   );
 }
