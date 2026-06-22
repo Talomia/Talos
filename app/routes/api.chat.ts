@@ -19,7 +19,9 @@ import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { parseCookies, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { CSS_CLASS_THOUGHT } from '~/lib/app-config';
 
-export const action = withSecurity(chatAction, { allowedMethods: ['POST'] });
+export async function action(args: ActionFunctionArgs) {
+  return withSecurity(chatAction, { allowedMethods: ['POST'] })(args);
+}
 
 const logger = createScopedLogger('api.chat');
 

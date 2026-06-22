@@ -1,5 +1,6 @@
 import { encrypt, decrypt, getVaultSecret } from './crypto';
 import { createScopedLogger } from '~/utils/logger';
+import { getApiKeysFromCookie } from '~/lib/api/cookies';
 
 const logger = createScopedLogger('api-key-vault');
 
@@ -75,4 +76,21 @@ function parseCookieHeader(header: string): Record<string, string> {
   }
 
   return cookies;
+}
+
+/**
+ * Reads API keys from the encrypted vault cookie, with fallback to legacy plaintext cookie.
+ * This is the preferred async method — use this in all new code.
+ */
+export async function getApiKeysFromVault(
+  cookieHeader: string | null,
+  env?: Record<string, string>,
+): Promise<Record<string, string>> {
+  try {
+    const vault = await readVault(cookieHeader, env);
+    return vault.apiKeys;
+  } catch {
+    // Fallback to legacy plaintext cookie
+    return getApiKeysFromCookie(cookieHeader);
+  }
 }

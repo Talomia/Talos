@@ -1,4 +1,4 @@
-import { readVault } from '~/lib/.server/api-key-vault';
+
 
 export function parseCookies(cookieHeader: string | null) {
   const cookies: Record<string, string> = {};
@@ -22,23 +22,6 @@ export function parseCookies(cookieHeader: string | null) {
   });
 
   return cookies;
-}
-
-/**
- * Reads API keys from the encrypted vault cookie, with fallback to legacy plaintext cookie.
- * This is the preferred async method — use this in all new code.
- */
-export async function getApiKeysFromVault(
-  cookieHeader: string | null,
-  env?: Record<string, string>,
-): Promise<Record<string, string>> {
-  try {
-    const vault = await readVault(cookieHeader, env);
-    return vault.apiKeys;
-  } catch {
-    // Fallback to legacy plaintext cookie
-    return getApiKeysFromCookie(cookieHeader);
-  }
 }
 
 /**

@@ -3,7 +3,8 @@ import { withSecurity } from '~/lib/security';
 import { streamText } from '~/lib/.server/llm/stream-text';
 import { stripIndents } from '~/utils/stripIndent';
 import type { ProviderInfo } from '~/types/model';
-import { getApiKeysFromVault, getProviderSettingsFromCookie } from '~/lib/api/cookies';
+import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
+import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 
 export const action = withSecurity(enhancerAction, { allowedMethods: ['POST'] });

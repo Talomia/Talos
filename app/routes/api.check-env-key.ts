@@ -1,6 +1,6 @@
 import { withSecurity } from '~/lib/security';
 import { LLMManager } from '~/lib/modules/llm/manager';
-import { getApiKeysFromVault } from '~/lib/api/cookies';
+import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 
 export const loader = withSecurity(async ({ context, request }) => {
   try {

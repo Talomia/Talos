@@ -1,6 +1,6 @@
 import { json } from '@remix-run/cloudflare';
 import { createScopedLogger } from '~/utils/logger';
-import { getApiKeysFromVault } from '~/lib/api/cookies';
+import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 

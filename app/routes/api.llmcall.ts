@@ -7,7 +7,8 @@ import { PROVIDER_LIST } from '~/utils/constants';
 import { MAX_TOKENS, PROVIDER_COMPLETION_LIMITS, isReasoningModel } from '~/lib/.server/llm/constants';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import type { ModelInfo } from '~/lib/modules/llm/types';
-import { getApiKeysFromVault, getProviderSettingsFromCookie } from '~/lib/api/cookies';
+import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
+import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 
 export const action = withSecurity(llmCallAction, { allowedMethods: ['POST'] });
