@@ -122,6 +122,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
         setIsListening(false);
       };
 
+      // M2 fix: Browser may stop recognition due to silence/timeout without
+      // firing onerror. onend fires whenever recognition stops for any reason,
+      // ensuring isListening is always reset.
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
       setRecognition(recognition);
 
       // Cleanup: stop recognition and release handlers on unmount
@@ -285,6 +292,12 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
           setUploadedFiles?.((prev: File[]) => [...prev, file]);
           setImageDataList?.((prev: string[]) => [...prev, base64Image]);
         };
+
+        reader.onerror = () => {
+          logger.error('Failed to read uploaded file:', file.name, reader.error);
+          toast.error(`Failed to read file "${file.name}". Please try again.`);
+        };
+
         reader.readAsDataURL(file);
       }
 
@@ -336,6 +349,12 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
             setUploadedFiles?.((prev: File[]) => [...prev, file]);
             setImageDataList?.((prev: string[]) => [...prev, base64Image]);
           };
+
+          reader.onerror = () => {
+            logger.error('Failed to read pasted image:', reader.error);
+            toast.error('Failed to read pasted image. Please try again.');
+          };
+
           reader.readAsDataURL(file);
         }
 

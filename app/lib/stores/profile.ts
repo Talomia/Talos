@@ -65,7 +65,9 @@ export async function initProfile(): Promise<void> {
  * Update the profile both locally and on the server.
  */
 export const updateProfile = (updates: Partial<Profile>) => {
-  profileStore.set({ ...profileStore.get(), ...updates });
+  const previousProfile = profileStore.get();
+
+  profileStore.set({ ...previousProfile, ...updates });
 
   const current = profileStore.get();
 
@@ -84,7 +86,13 @@ export const updateProfile = (updates: Partial<Profile>) => {
       avatar_url: current.avatar,
     }),
   }).catch(() => {
-    // Silently fail — localStorage is the fallback
-    logger.warn('Failed to sync profile to server');
+    // Revert local state to the pre-update snapshot so the UI doesn't
+    // show data that the server never received.
+    logger.warn('Failed to sync profile to server — reverting local state');
+    profileStore.set(previousProfile);
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(previousProfile));
+    }
   });
 };

@@ -41,7 +41,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Signup error:', error.message);
-          return json({ error: error.message }, { status: 400, headers: responseHeaders });
+          return json({ error: 'Registration failed' }, { status: 400, headers: responseHeaders });
         }
 
         return json(
@@ -66,7 +66,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Login error:', error.message);
-          return json({ error: error.message }, { status: 401, headers: responseHeaders });
+          return json({ error: 'Invalid credentials' }, { status: 401, headers: responseHeaders });
         }
 
         return json({ success: true, user: data.user }, { headers: responseHeaders });
@@ -124,7 +124,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Password reset error:', error.message);
-          return json({ error: error.message }, { status: 400, headers: responseHeaders });
+          return json({ error: 'If that email is registered, a reset link has been sent' }, { status: 200, headers: responseHeaders });
         }
 
         return json({ success: true }, { headers: responseHeaders });

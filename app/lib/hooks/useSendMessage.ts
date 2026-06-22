@@ -49,7 +49,7 @@ const filesToAttachments = async (files: File[]): Promise<Attachment[] | undefin
   const attachments = await Promise.all(
     files.map(
       (file) =>
-        new Promise<Attachment>((resolve) => {
+        new Promise<Attachment>((resolve, reject) => {
           const reader = new FileReader();
 
           reader.onloadend = () => {
@@ -59,6 +59,9 @@ const filesToAttachments = async (files: File[]): Promise<Attachment[] | undefin
               url: reader.result as string,
             });
           };
+
+          reader.onerror = () => reject(new Error(`Failed to read file: ${file.name}`));
+
           reader.readAsDataURL(file);
         }),
     ),
@@ -158,72 +161,78 @@ export function useSendMessage(deps: UseSendMessageDeps) {
       setFakeLoading(true);
 
       if (autoSelectTemplate) {
-        const { template, title } = await selectStarterTemplate({
-          message: finalMessageContent,
-          model,
-          provider,
-        });
-
-        if (template !== 'blank') {
-          const temResp = await getTemplates(template, title).catch((e: Error) => {
-            if (e.message.includes('rate limit')) {
-              toast.warning('Rate limit exceeded. Skipping starter template\n Continuing with blank template');
-            } else {
-              toast.warning('Failed to import starter template\n Continuing with blank template');
-            }
-
-            return null;
+        try {
+          const { template, title } = await selectStarterTemplate({
+            message: finalMessageContent,
+            model,
+            provider,
           });
 
-          if (temResp) {
-            const { assistantMessage, userMessage } = temResp;
-            const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
+          if (template !== 'blank') {
+            const temResp = await getTemplates(template, title).catch((e: Error) => {
+              if (e.message.includes('rate limit')) {
+                toast.warning('Rate limit exceeded. Skipping starter template\n Continuing with blank template');
+              } else {
+                toast.warning('Failed to import starter template\n Continuing with blank template');
+              }
 
-            setMessages([
-              {
-                id: `1-${new Date().getTime()}`,
-                role: 'user',
-                content: userMessageText,
-                parts: createMessageParts(userMessageText, imageDataList),
-              },
-              {
-                id: `2-${new Date().getTime()}`,
-                role: 'assistant',
-                content: assistantMessage,
-              },
-              {
-                id: `3-${new Date().getTime()}`,
-                role: 'user',
-                content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`,
-                annotations: ['hidden'],
-              },
-            ]);
+              return null;
+            });
 
-            const reloadOptions =
-              uploadedFiles.length > 0
-                ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
-                : undefined;
+            if (temResp) {
+              const { assistantMessage, userMessage } = temResp;
+              const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
 
-            try {
-              await reload(reloadOptions);
-            } catch (reloadError) {
-              logger.error('Template reload failed:', reloadError);
-              toast.error('Failed to start chat. Please try again.');
+              setMessages([
+                {
+                  id: `1-${new Date().getTime()}`,
+                  role: 'user',
+                  content: userMessageText,
+                  parts: createMessageParts(userMessageText, imageDataList),
+                },
+                {
+                  id: `2-${new Date().getTime()}`,
+                  role: 'assistant',
+                  content: assistantMessage,
+                },
+                {
+                  id: `3-${new Date().getTime()}`,
+                  role: 'user',
+                  content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`,
+                  annotations: ['hidden'],
+                },
+              ]);
+
+              const reloadOptions =
+                uploadedFiles.length > 0
+                  ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
+                  : undefined;
+
+              try {
+                await reload(reloadOptions);
+              } catch (reloadError) {
+                logger.error('Template reload failed:', reloadError);
+                toast.error('Failed to start chat. Please try again.');
+              }
+
+              setInput('');
+              Cookies.remove(PROMPT_COOKIE_KEY);
+
+              setUploadedFiles([]);
+              setImageDataList([]);
+
+              resetEnhancer();
+
+              textareaRef.current?.blur();
+              setFakeLoading(false);
+
+              return;
             }
-
-            setInput('');
-            Cookies.remove(PROMPT_COOKIE_KEY);
-
-            setUploadedFiles([]);
-            setImageDataList([]);
-
-            resetEnhancer();
-
-            textareaRef.current?.blur();
-            setFakeLoading(false);
-
-            return;
           }
+        } catch (templateError) {
+          logger.error('Auto-select template failed:', templateError);
+          toast.warning('Failed to select starter template. Continuing with blank template.');
+          setFakeLoading(false);
         }
       }
 

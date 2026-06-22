@@ -3,6 +3,8 @@ import { readVault, writeVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
+const FORBIDDEN_PROVIDER_NAMES = new Set(['__proto__', 'constructor', 'prototype', 'toString', 'valueOf', 'hasOwnProperty', '__defineGetter__', '__defineSetter__', '__lookupGetter__', '__lookupSetter__']);
+
 const logger = createScopedLogger('api.keys');
 
 /**
@@ -40,7 +42,7 @@ export const action = withSecurity(async ({ request, context }: ActionFunctionAr
     try {
       const body = await request.json<{ provider: string; apiKey: string }>();
 
-      if (!body.provider || typeof body.provider !== 'string') {
+      if (!body.provider || typeof body.provider !== 'string' || FORBIDDEN_PROVIDER_NAMES.has(body.provider)) {
         return json({ error: 'Invalid provider' }, { status: 400 });
       }
 
@@ -75,7 +77,7 @@ export const action = withSecurity(async ({ request, context }: ActionFunctionAr
     try {
       const body = await request.json<{ provider: string }>();
 
-      if (!body.provider || typeof body.provider !== 'string') {
+      if (!body.provider || typeof body.provider !== 'string' || FORBIDDEN_PROVIDER_NAMES.has(body.provider)) {
         return json({ error: 'Invalid provider' }, { status: 400 });
       }
 

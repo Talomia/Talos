@@ -54,6 +54,19 @@ export const action = withSecurity(async ({ request, context }: ActionFunctionAr
       return json({ error: 'Bio must be 500 characters or less' }, { status: 400, headers: responseHeaders });
     }
 
+    if (body.avatar_url !== undefined && body.avatar_url !== '') {
+      const url = body.avatar_url.trim().toLowerCase();
+
+      if (
+        url.startsWith('javascript:') ||
+        url.startsWith('data:') ||
+        url.startsWith('vbscript:') ||
+        !(url.startsWith('https://') || url.startsWith('http://'))
+      ) {
+        return json({ error: 'Invalid avatar URL' }, { status: 400, headers: responseHeaders });
+      }
+    }
+
     await updateProfile(supabase, user.id, body);
 
     return json({ success: true }, { headers: responseHeaders });

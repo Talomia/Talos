@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { toast } from 'react-toastify';
 import type { MCPConfig, MCPServerTools } from '~/lib/services/mcpService';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -67,6 +68,7 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
   },
   updateSettings: async (newSettings: MCPSettings) => {
     if (get().isUpdatingConfig) {
+      toast.warning('Settings are still being saved. Please wait and try again.');
       return;
     }
 

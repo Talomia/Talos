@@ -269,8 +269,9 @@ ${value.content}
         .catch((error) => {
           logger.error(error);
 
-          logStore.logError('Failed to load chat messages or snapshot', error); // Updated error message
-          toast.error('Failed to load chat: ' + error.message); // More specific error
+          logStore.logError('Failed to load chat messages or snapshot', error);
+          toast.error('Failed to load chat: ' + error.message);
+          setReady(true);
         });
     } else {
       // Handle case where there is no mixedId (e.g., new chat)
@@ -473,6 +474,12 @@ ${value.content}
       }
 
       const chat = await getMessages(db, id);
+
+      if (!chat) {
+        toast.error('Chat not found');
+        return;
+      }
+
       const chatData = {
         messages: chat.messages,
         description: chat.description,

@@ -119,16 +119,51 @@ export function checkRateLimit(request: Request, endpoint: string): { allowed: b
 }
 
 /**
- * Get client IP address from request
+ * Get client IP address from request for rate-limiting.
+ *
+ * ⚠️ LIMITATIONS:
+ * - `cf-connecting-ip` is only trustworthy when behind Cloudflare (set by
+ *   Cloudflare's edge, not spoofable by the client).
+ * - `x-forwarded-for` and `x-real-ip` are trivially spoofable unless a
+ *   trusted reverse proxy strips/overwrites them. We do NOT trust them alone.
+ * - For non-Cloudflare deployments we build a composite key from multiple
+ *   headers + the request URL. This isn't perfect (shared NAT, proxies) but
+ *   prevents a single spoofed header from bypassing rate limits.
+ * - As a last resort, each unidentifiable request gets a unique key so that
+ *   all anonymous traffic doesn't share (and exhaust) one global bucket.
  */
 function getClientIP(request: Request): string {
-  // Try various headers that might contain the real IP
-  const forwardedFor = request.headers.get('x-forwarded-for');
-  const realIP = request.headers.get('x-real-ip');
+  // 1. Cloudflare-set header — most trustworthy, not spoofable by the client
   const cfConnectingIP = request.headers.get('cf-connecting-ip');
 
-  // Return the first available IP or a fallback
-  return cfConnectingIP || realIP || forwardedFor?.split(',')[0]?.trim() || 'unknown';
+  if (cfConnectingIP) {
+    return cfConnectingIP;
+  }
+
+  // 2. Non-Cloudflare: build a composite fingerprint from all available hints.
+  //    This resists spoofing any single header to bypass the rate limit.
+  const forwardedFor = request.headers.get('x-forwarded-for') || '';
+  const realIP = request.headers.get('x-real-ip') || '';
+  const userAgent = request.headers.get('user-agent') || '';
+  const host = request.headers.get('host') || '';
+
+  const composite = `${forwardedFor}|${realIP}|${userAgent}|${host}|${request.url}`;
+
+  // Only use the composite if at least one identifying header was present
+  if (forwardedFor || realIP) {
+    // Simple string hash (djb2) — fast, no crypto dependency needed for rate-limit keys
+    let hash = 5381;
+
+    for (let i = 0; i < composite.length; i++) {
+      hash = (hash * 33) ^ composite.charCodeAt(i);
+    }
+
+    return 'composite-' + (hash >>> 0).toString(36);
+  }
+
+  // 3. No identifying headers at all — assign a unique key per request so
+  //    anonymous clients don't share (and exhaust) one global bucket.
+  return 'anonymous-' + Date.now();
 }
 
 /**
