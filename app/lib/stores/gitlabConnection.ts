@@ -5,11 +5,12 @@ import { GitLabApiService } from '~/lib/services/gitlabApiService';
 import { calculateStatsSummary } from '~/utils/gitlabStats';
 import type { GitLabConnection, GitLabStats } from '~/types/GitLab';
 import { createScopedLogger } from '~/utils/logger';
+import { getEnvVar } from '~/utils/env';
 
 const logger = createScopedLogger('GitLabConnectionStore');
 
 // Auto-connect using environment variable
-const envToken = import.meta.env?.VITE_GITLAB_ACCESS_TOKEN;
+const envToken = getEnvVar('VITE_GITLAB_ACCESS_TOKEN', '');
 
 const gitlabConnectionAtom = atom<GitLabConnection>({
   user: null,

@@ -1,6 +1,7 @@
 import { atom } from 'nanostores';
 import type { SupabaseUser, SupabaseStats, SupabaseApiKey, SupabaseCredentials } from '~/types/supabase';
 import { createScopedLogger } from '~/utils/logger';
+import { getEnvVar } from '~/utils/env';
 
 const logger = createScopedLogger('SupabaseStore');
 
@@ -161,7 +162,7 @@ export function updateSupabaseConnection(connection: Partial<SupabaseConnectionS
 
 export function initializeSupabaseConnection() {
   // Auto-connect using environment variable if available
-  const envToken = import.meta.env?.VITE_SUPABASE_ACCESS_TOKEN;
+  const envToken = getEnvVar('VITE_SUPABASE_ACCESS_TOKEN', '');
 
   if (envToken && !supabaseConnection.get().token) {
     updateSupabaseConnection({ token: envToken });
