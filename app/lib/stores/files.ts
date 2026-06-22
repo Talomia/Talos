@@ -9,6 +9,7 @@ import { computeFileModifications } from '~/utils/diff';
 import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
 import { STORAGE_KEYS } from '~/lib/app-config';
+import { safeSetItem } from '~/utils/safeStorage';
 import {
   addLockedFile,
   removeLockedFile,
@@ -1008,7 +1009,7 @@ export class FilesStore {
           this.#deletedPaths = new Set(entries.slice(entries.length - MAX_DELETED_PATHS));
         }
 
-        localStorage.setItem(STORAGE_KEYS.deletedPaths, JSON.stringify([...this.#deletedPaths]));
+        safeSetItem(STORAGE_KEYS.deletedPaths, JSON.stringify([...this.#deletedPaths]));
       }
     } catch (error) {
       logger.error('Failed to persist deleted paths to localStorage', error);

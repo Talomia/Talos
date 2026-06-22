@@ -1,4 +1,5 @@
 import { atom } from 'nanostores';
+import { safeSetItem } from '~/utils/safeStorage';
 import { createScopedLogger } from '~/utils/logger';
 import { STORAGE_KEYS } from '~/lib/app-config';
 
@@ -50,7 +51,7 @@ export async function initProfile(): Promise<void> {
 
       // Update localStorage cache
       if (typeof window !== 'undefined') {
-        localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(serverProfile));
+        safeSetItem(STORAGE_KEYS.profile, JSON.stringify(serverProfile));
       }
 
       logger.info('Profile loaded from server');
@@ -73,7 +74,7 @@ export const updateProfile = (updates: Partial<Profile>) => {
 
   // Persist to localStorage (immediate, always works)
   if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(current));
+    safeSetItem(STORAGE_KEYS.profile, JSON.stringify(current));
   }
 
   // Sync to server in background (non-blocking)
@@ -92,7 +93,7 @@ export const updateProfile = (updates: Partial<Profile>) => {
     profileStore.set(previousProfile);
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem(STORAGE_KEYS.profile, JSON.stringify(previousProfile));
+      safeSetItem(STORAGE_KEYS.profile, JSON.stringify(previousProfile));
     }
   });
 };

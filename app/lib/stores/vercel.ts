@@ -1,4 +1,5 @@
 import { atom } from 'nanostores';
+import { safeSetItem } from '~/utils/safeStorage';
 import type { VercelConnection, VercelProject, VercelUser, VercelUserResponse } from '~/types/vercel';
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
@@ -61,7 +62,7 @@ export const updateVercelConnection = (updates: Partial<VercelConnection>) => {
 
   // Persist to localStorage
   if (typeof window !== 'undefined') {
-    localStorage.setItem('vercel_connection', JSON.stringify(newState));
+    safeSetItem('vercel_connection', JSON.stringify(newState));
   }
 };
 

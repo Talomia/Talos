@@ -6,6 +6,7 @@ import { calculateStatsSummary } from '~/utils/gitlabStats';
 import type { GitLabConnection, GitLabStats } from '~/types/GitLab';
 import { createScopedLogger } from '~/utils/logger';
 import { getEnvVar } from '~/utils/env';
+import { safeSetItem } from '~/utils/safeStorage';
 
 const logger = createScopedLogger('GitLabConnectionStore');
 
@@ -87,7 +88,7 @@ class GitLabConnectionStore {
       setSecureCookie('gitlabUrl', gitlabUrl);
 
       // Store connection details in localStorage
-      localStorage.setItem(
+      safeSetItem(
         'gitlab_connection',
         JSON.stringify({
           user,
@@ -154,7 +155,7 @@ class GitLabConnectionStore {
 
       // Update localStorage
       const updatedConnection = { ...connection, stats };
-      localStorage.setItem('gitlab_connection', JSON.stringify(updatedConnection));
+      safeSetItem('gitlab_connection', JSON.stringify(updatedConnection));
 
       return { success: true, stats };
     } catch (error) {
@@ -252,7 +253,7 @@ class GitLabConnectionStore {
       setSecureCookie('gitlabUrl', 'https://gitlab.com');
 
       // Store connection details in localStorage
-      localStorage.setItem(
+      safeSetItem(
         'gitlab_connection',
         JSON.stringify({
           user,

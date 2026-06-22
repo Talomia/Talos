@@ -1,4 +1,5 @@
 import { atom } from 'nanostores';
+import { safeSetItem } from '~/utils/safeStorage';
 import { logStore } from './logs';
 import { createScopedLogger } from '~/utils/logger';
 import { STORAGE_KEYS } from '~/lib/app-config';
@@ -40,7 +41,7 @@ export function toggleTheme() {
   themeStore.set(newTheme);
 
   // Update localStorage
-  localStorage.setItem(kTheme, newTheme);
+  safeSetItem(kTheme, newTheme);
 
   // Update the HTML attribute
   document.querySelector('html')?.setAttribute('data-theme', newTheme);
@@ -52,7 +53,7 @@ export function toggleTheme() {
     if (userProfile) {
       const profile = JSON.parse(userProfile);
       profile.theme = newTheme;
-      localStorage.setItem(STORAGE_KEYS.userProfile, JSON.stringify(profile));
+      safeSetItem(STORAGE_KEYS.userProfile, JSON.stringify(profile));
     }
   } catch (error) {
     logger.error('Error updating user profile theme:', error);
