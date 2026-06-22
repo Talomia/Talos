@@ -29,22 +29,22 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
     });
   }
 
-  const { name: providerName } = provider;
-
   // validate 'model' and 'provider' fields
   if (!model || typeof model !== 'string') {
-    return new Response('Invalid or missing model', {
+    return new Response(JSON.stringify({ error: 'Invalid or missing model' }), {
       status: 400,
-      statusText: 'Bad Request',
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  if (!providerName || typeof providerName !== 'string') {
-    return new Response('Invalid or missing provider', {
+  if (!provider || typeof provider !== 'object' || !provider.name || typeof provider.name !== 'string') {
+    return new Response(JSON.stringify({ error: 'Invalid or missing provider' }), {
       status: 400,
-      statusText: 'Bad Request',
+      headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  const { name: providerName } = provider;
 
   const cookieHeader = request.headers.get('Cookie');
   const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
