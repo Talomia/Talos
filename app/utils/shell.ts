@@ -1,6 +1,16 @@
 import type { RuntimeEngine, RuntimeProcess } from '~/lib/runtime/runtime-engine';
 import type { ITerminal } from '~/types/terminal';
-import { withResolvers } from './promises';
+
+/** Polyfill for Promise.withResolvers (TC39 stage 4, not yet in all runtimes) */
+function withResolvers<T>(): { promise: Promise<T>; resolve: (value: T) => void; reject: (reason?: unknown) => void } {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 import { atom } from 'nanostores';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
 import { createScopedLogger } from '~/utils/logger';
