@@ -137,7 +137,7 @@ export class StreamingMessageParser {
 
           // Find all <quick-action ...>label</quick-action> inside
           const quickActionRegex = new RegExp(
-            `<${QUICK_ACTION_ELEMENT}([^>]*)>([\\s\\S]*?)<\\/${QUICK_ACTION_ELEMENT}>`,
+            `<${QUICK_ACTION_ELEMENT}([^>]*)>([\s\S]*?)<\/${QUICK_ACTION_ELEMENT}>`,
             'g',
           );
           let match;

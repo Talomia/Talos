@@ -66,7 +66,14 @@ export function useMessageParser() {
     }
 
     for (const [index, message] of messages.entries()) {
-      if (message.role === 'assistant' || message.role === 'user') {
+      if (message.role === 'user') {
+        // User messages should not be parsed for artifacts/actions
+        const textContent = extractTextContent(message);
+        setParsedMessages((prevParsed) => ({
+          ...prevParsed,
+          [index]: textContent,
+        }));
+      } else if (message.role === 'assistant') {
         const newParsedContent = messageParser.parse(message.id, extractTextContent(message));
         setParsedMessages((prevParsed) => ({
           ...prevParsed,

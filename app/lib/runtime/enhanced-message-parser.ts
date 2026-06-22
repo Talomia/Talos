@@ -4,6 +4,8 @@ import { ARTIFACT_TAG_OPEN, ARTIFACT_TAG_CLOSE, ACTION_TAG_OPEN, ACTION_TAG_CLOS
 
 const logger = createScopedLogger('EnhancedMessageParser');
 
+const MAX_PROCESSED_BLOCKS = 50;
+
 /**
  * Enhanced message parser that detects code blocks and file patterns
  * even when AI models don't wrap them in proper artifact tags.
@@ -11,7 +13,7 @@ const logger = createScopedLogger('EnhancedMessageParser');
  */
 export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   private _processedCodeBlocks = new Map<string, Set<string>>();
-  private _artifactCounter = 0;
+  private _artifactCounters = new Map<string, number>();
 
   // Optimized command pattern lookup
   private _commandPatternMap = new Map<string, RegExp>([
@@ -34,6 +36,20 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   }
 
   parse(messageId: string, input: string): string {
+    // Prune _processedCodeBlocks if it exceeds the limit
+    if (this._processedCodeBlocks.size > MAX_PROCESSED_BLOCKS) {
+      const keysIter = this._processedCodeBlocks.keys();
+
+      for (const key of keysIter) {
+        if (key === messageId) {
+          continue;
+        }
+
+        this._processedCodeBlocks.delete(key);
+        break;
+      }
+    }
+
     // If no artifacts were detected, check for code blocks that should be files
     let effectiveInput = input;
 
@@ -160,7 +176,9 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
         processed.add(blockHash);
 
         // Generate artifact wrapper
-        const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
+        const counter = this._artifactCounters.get(messageId) || 0;
+        this._artifactCounters.set(messageId, counter + 1);
+        const artifactId = `artifact-${messageId}-${counter}`;
         const wrapped = this._wrapInArtifact(artifactId, filePath, content);
 
         logger.debug(`Auto-wrapped code block as file: ${filePath}`);
@@ -188,7 +206,9 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
 
       processed.add(blockHash);
 
-      const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
+      const counter2 = this._artifactCounters.get(messageId) || 0;
+      this._artifactCounters.set(messageId, counter2 + 1);
+      const artifactId = `artifact-${messageId}-${counter2}`;
 
       // Clean content - remove leading/trailing whitespace but preserve indentation
       content = content.trim();
@@ -213,7 +233,9 @@ ${ARTIFACT_TAG_CLOSE}`;
   }
 
   private _wrapInShellAction(content: string, messageId: string): string {
-    const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
+    const shellCounter = this._artifactCounters.get(messageId) || 0;
+    this._artifactCounters.set(messageId, shellCounter + 1);
+    const artifactId = `artifact-${messageId}-${shellCounter}`;
 
     return `${ARTIFACT_TAG_OPEN} id="${artifactId}" title="Shell Command" type="shell">
 ${ACTION_TAG_OPEN} type="shell">
@@ -531,6 +553,6 @@ ${ARTIFACT_TAG_CLOSE}`;
   reset() {
     super.reset();
     this._processedCodeBlocks.clear();
-    this._artifactCounter = 0;
+    this._artifactCounters.clear();
   }
 }

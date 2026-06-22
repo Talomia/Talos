@@ -105,7 +105,7 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       // Update settings
       updates: {
         update_settings: safeGetItem('update_settings'),
-        last_acknowledged_update: safeGetItem('last_acknowledged_version'),
+        last_acknowledged_update: safeGetItem('last_acknowledged_update'),
       },
 
       // Chat snapshots (for chat history)
@@ -121,7 +121,7 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       _meta: {
         exportDate: new Date().toISOString(),
         version: '2.0',
-        appVersion: process.env.NEXT_PUBLIC_VERSION || 'unknown',
+        appVersion: import.meta.env.VITE_APP_VERSION || 'unknown',
       },
     };
   } catch (error) {
@@ -378,7 +378,7 @@ async function importComprehensiveFormat(data: SettingsData): Promise<void> {
 
     if (data.updates.last_acknowledged_update) {
       try {
-        safeSetItem('last_acknowledged_version', data.updates.last_acknowledged_update);
+        safeSetItem('last_acknowledged_update', data.updates.last_acknowledged_update);
       } catch (err) {
         logger.error('Error importing last acknowledged update:', err);
       }

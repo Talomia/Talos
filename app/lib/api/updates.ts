@@ -19,9 +19,9 @@ interface PackageJson {
 }
 
 function compareVersions(v1: string, v2: string): number {
-  // Remove 'v' prefix if present
-  const version1 = v1.replace(/^v/, '');
-  const version2 = v2.replace(/^v/, '');
+  // Remove 'v' prefix if present and strip pre-release suffixes (e.g., '1.0.0-beta.1' -> '1.0.0')
+  const version1 = v1.replace(/^v/, '').split('-')[0];
+  const version2 = v2.replace(/^v/, '').split('-')[0];
 
   const parts1 = version1.split('.').map(Number);
   const parts2 = version2.split('.').map(Number);
