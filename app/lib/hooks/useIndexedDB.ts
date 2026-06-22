@@ -1,59 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-
-/**
- * Hook to initialize and provide access to the IndexedDB database
- */
-export function useIndexedDB() {
-  const [db, setDb] = useState<IDBDatabase | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const dbRef = useRef<IDBDatabase | null>(null);
-
-  useEffect(() => {
-    const initDB = async () => {
-      try {
-        setIsLoading(true);
-
-        const request = indexedDB.open('appDB', 1);
-
-        request.onupgradeneeded = (event) => {
-          const db = (event.target as IDBOpenDBRequest).result;
-
-          // Create object stores if they don't exist
-          if (!db.objectStoreNames.contains('chats')) {
-            const chatStore = db.createObjectStore('chats', { keyPath: 'id' });
-            chatStore.createIndex('updatedAt', 'updatedAt', { unique: false });
-          }
-
-          if (!db.objectStoreNames.contains('settings')) {
-            db.createObjectStore('settings', { keyPath: 'key' });
-          }
-        };
-
-        request.onsuccess = (event) => {
-          const database = (event.target as IDBOpenDBRequest).result;
-          dbRef.current = database;
-          setDb(database);
-          setIsLoading(false);
-        };
-
-        request.onerror = (event) => {
-          setError(new Error(`Database error: ${(event.target as IDBOpenDBRequest).error?.message}`));
-          setIsLoading(false);
-        };
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error initializing database'));
-        setIsLoading(false);
-      }
-    };
-
-    initDB();
-
-    return () => {
-      dbRef.current?.close();
-      dbRef.current = null;
-    };
-  }, []);
-
-  return { db, isLoading, error };
-}
+// DEPRECATED: This file is dead code. The phantom 'appDB' database it opened
+// was never meaningfully used. All consumers now use useHistoryDB from
+// ~/lib/hooks/useHistoryDB which opens the correct 'appHistory' database.
+//
+// This file should be deleted. It only remains because the deletion command
+// was not approved during the automated fix.
+//
+// Re-export useHistoryDB as useIndexedDB for any straggling imports:
+export { useHistoryDB as useIndexedDB } from '~/lib/hooks/useHistoryDB';

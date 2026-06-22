@@ -1,34 +1,6 @@
-import { useState, useEffect } from 'react';
-import { openDatabase } from '~/lib/persistence/db';
-
-// Create a custom hook to connect to the history database
-export function useHistoryDB() {
-  const [db, setDb] = useState<IDBDatabase | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    const initDB = async () => {
-      try {
-        setIsLoading(true);
-
-        const database = await openDatabase();
-        setDb(database || null);
-        setIsLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error('Unknown error initializing database'));
-        setIsLoading(false);
-      }
-    };
-
-    initDB();
-
-    return () => {
-      if (db) {
-        db.close();
-      }
-    };
-  }, []);
-
-  return { db, isLoading, error };
-}
+// DEPRECATED: This file has been moved to ~/lib/hooks/useHistoryDB.ts
+// This file should be deleted. It only remains because the deletion command
+// was not approved during the automated fix.
+//
+// Re-export from the new shared location:
+export { useHistoryDB } from '~/lib/hooks/useHistoryDB';

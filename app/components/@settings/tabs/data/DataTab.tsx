@@ -5,7 +5,7 @@ import { getAllChats } from '~/lib/persistence/db';
 import { DataVisualization } from '~/components/@settings/tabs/data/DataVisualization';
 import { DataActionCard } from '~/components/@settings/tabs/data/DataActionCard';
 import { DataTabDialogs } from '~/components/@settings/tabs/data/DataTabDialogs';
-import { useHistoryDB } from '~/components/@settings/tabs/data/useHistoryDB';
+import { useHistoryDB } from '~/lib/hooks/useHistoryDB';
 import { createChatItem, SETTINGS_CATEGORIES } from '~/components/@settings/tabs/data/dataTabTypes';
 import type { ExtendedChat, ChatItem } from '~/components/@settings/tabs/data/dataTabTypes';
 import { toast } from 'react-toastify';

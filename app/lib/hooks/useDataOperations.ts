@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { ImportExportService } from '~/lib/services/importExportService';
-import { useIndexedDB } from '~/lib/hooks/useIndexedDB';
+import { useHistoryDB } from '~/lib/hooks/useHistoryDB';
 import { createScopedLogger } from '~/utils/logger';
 import { useDataExport } from './data-operations/useDataExport';
 import { useDataImport } from './data-operations/useDataImport';
@@ -47,7 +47,7 @@ export function useDataOperations({
   onResetChats,
   customDb,
 }: UseDataOperationsProps = {}) {
-  const { db: defaultDb } = useIndexedDB();
+  const { db: defaultDb } = useHistoryDB();
 
   // Use the custom database if provided, otherwise use the default
   const db = customDb || defaultDb;
