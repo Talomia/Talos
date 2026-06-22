@@ -17,6 +17,7 @@ import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { parseCookies, getProviderSettingsFromCookie } from '~/lib/api/cookies';
+import { CSS_CLASS_THOUGHT } from '~/lib/app-config';
 
 export const action = withSecurity(chatAction, { allowedMethods: ['POST'] });
 
@@ -501,11 +502,11 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
           if (typeof chunk === 'string') {
             if (chunk.startsWith('g') && !lastChunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "<div class=\\"__thought__\\">"\n`));
+              controller.enqueue(encoder.encode(`0: "<div class=\"${CSS_CLASS_THOUGHT}\">"\n`));
             }
 
             if (lastChunk.startsWith('g') && !chunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "</div>\\n"\n`));
+              controller.enqueue(encoder.encode(`0: "</div>\n"\n`));
             }
           }
 

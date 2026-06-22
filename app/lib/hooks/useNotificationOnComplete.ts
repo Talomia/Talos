@@ -6,7 +6,7 @@ import { streamingState } from '~/lib/stores/streaming';
  * Sends a browser notification when the AI finishes responding
  * and the user has tabbed away (document is hidden).
  *
- * Pairs with useDocumentTitle which shows "● Thinking..." in the tab.
+ * Pairs with useDocumentTitle which shows "● Working…" in the tab.
  */
 export function useNotificationOnComplete() {
   const isStreaming = useStore(streamingState);

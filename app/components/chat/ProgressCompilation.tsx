@@ -6,7 +6,7 @@ import { cubicEasingFn } from '~/utils/easings';
 
 export default function ProgressCompilation({ data }: { data?: ProgressAnnotation[] }) {
   const [progressList, setProgressList] = React.useState<ProgressAnnotation[]>([]);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   React.useEffect(() => {
     if (!data || data.length === 0) {
       setProgressList([]);
