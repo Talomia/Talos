@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import type { VercelProjectInfo } from '~/types/vercel';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -221,10 +222,11 @@ async function vercelDeployLoader({ request }: LoaderFunctionArgs) {
 
   try {
     // Get project info
-    const projectResponse = await fetch(`https://api.vercel.com/v9/projects/${encodeURIComponent(projectId)}`, {
+    const projectResponse = await fetchWithTimeout(`https://api.vercel.com/v9/projects/${encodeURIComponent(projectId)}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      timeoutMs: 30000,
     });
 
     if (!projectResponse.ok) {
@@ -234,10 +236,11 @@ async function vercelDeployLoader({ request }: LoaderFunctionArgs) {
     const projectData = (await projectResponse.json()) as VercelProjectResponse;
 
     // Get latest deployment
-    const deploymentsResponse = await fetch(`https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=1`, {
+    const deploymentsResponse = await fetchWithTimeout(`https://api.vercel.com/v6/deployments?projectId=${encodeURIComponent(projectId)}&limit=1`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
+      timeoutMs: 30000,
     });
 
     if (!deploymentsResponse.ok) {
@@ -304,7 +307,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
     // If no projectId provided, create a new project
     if (!targetProjectId) {
       const projectName = `app-${safeChatId}-${Date.now()}`;
-      const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
+      const createProjectResponse = await fetchWithTimeout('https://api.vercel.com/v9/projects', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -314,6 +317,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
           name: projectName,
           framework: detectedFramework || null,
         }),
+        timeoutMs: 30000,
       });
 
       if (!createProjectResponse.ok) {
@@ -334,10 +338,11 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
       };
     } else {
       // Get existing project info
-      const projectResponse = await fetch(`https://api.vercel.com/v9/projects/${targetProjectId}`, {
+      const projectResponse = await fetchWithTimeout(`https://api.vercel.com/v9/projects/${targetProjectId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeoutMs: 30000,
       });
 
       if (projectResponse.ok) {
@@ -351,7 +356,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
       } else {
         // If project doesn't exist, create a new one
         const projectName = `app-${safeChatId}-${Date.now()}`;
-        const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
+        const createProjectResponse = await fetchWithTimeout('https://api.vercel.com/v9/projects', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -361,6 +366,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
             name: projectName,
             framework: detectedFramework || null,
           }),
+          timeoutMs: 30000,
         });
 
         if (!createProjectResponse.ok) {
@@ -454,13 +460,14 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
     }
 
     // Create a new deployment
-    const deployResponse = await fetch(`https://api.vercel.com/v13/deployments`, {
+    const deployResponse = await fetchWithTimeout(`https://api.vercel.com/v13/deployments`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(deploymentConfig),
+      timeoutMs: 30000,
     });
 
     if (!deployResponse.ok) {
@@ -480,10 +487,11 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
     let deploymentState = '';
 
     while (retryCount < maxRetries) {
-      const statusResponse = await fetch(`https://api.vercel.com/v13/deployments/${deployData.id}`, {
+      const statusResponse = await fetchWithTimeout(`https://api.vercel.com/v13/deployments/${deployData.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeoutMs: 30000,
       });
 
       if (statusResponse.ok) {

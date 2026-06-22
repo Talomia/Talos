@@ -2,6 +2,7 @@ import { json } from '@remix-run/cloudflare';
 import { createScopedLogger } from '~/utils/logger';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('api.github-user');
 
@@ -26,12 +27,13 @@ async function githubUserLoader({ request, context }: { request: Request; contex
     }
 
     // Make server-side request to GitHub API
-    const response = await fetch('https://api.github.com/user', {
+    const response = await fetchWithTimeout('https://api.github.com/user', {
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!response.ok) {
@@ -118,12 +120,13 @@ async function githubUserAction({ request, context }: { request: Request; contex
 
     if (action === 'get_repos') {
       // Fetch user repositories
-      const response = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
+      const response = await fetchWithTimeout('https://api.github.com/user/repos?sort=updated&per_page=100', {
         headers: {
           Accept: 'application/vnd.github.v3+json',
           Authorization: `Bearer ${githubToken}`,
           'User-Agent': 'app',
         },
+        timeoutMs: 15000,
       });
 
       if (!response.ok) {
@@ -172,12 +175,13 @@ async function githubUserAction({ request, context }: { request: Request; contex
       }
 
       // Fetch repository branches
-      const response = await fetch(`https://api.github.com/repos/${repoFullName}/branches`, {
+      const response = await fetchWithTimeout(`https://api.github.com/repos/${repoFullName}/branches`, {
         headers: {
           Accept: 'application/vnd.github.v3+json',
           Authorization: `Bearer ${githubToken}`,
           'User-Agent': 'app',
         },
+        timeoutMs: 15000,
       });
 
       if (!response.ok) {
@@ -219,7 +223,7 @@ async function githubUserAction({ request, context }: { request: Request; contex
       }
 
       // Search repositories using GitHub API
-      const response = await fetch(
+      const response = await fetchWithTimeout(
         `https://api.github.com/search/repositories?q=${encodeURIComponent(searchQuery)}&per_page=${perPage}&sort=updated`,
         {
           headers: {
@@ -227,6 +231,7 @@ async function githubUserAction({ request, context }: { request: Request; contex
             Authorization: `Bearer ${githubToken}`,
             'User-Agent': 'app',
           },
+          timeoutMs: 15000,
         },
       );
 

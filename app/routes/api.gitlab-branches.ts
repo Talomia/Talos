@@ -1,5 +1,6 @@
 import { json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.gitlab-branches');
@@ -85,12 +86,13 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
     // Fetch branches from GitLab API
     const branchesUrl = `${gitlabUrl}/api/v4/projects/${encodeURIComponent(String(projectId))}/repository/branches?per_page=100`;
 
-    const response = await fetch(branchesUrl, {
+    const response = await fetchWithTimeout(branchesUrl, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!response.ok) {
@@ -117,12 +119,13 @@ async function gitlabBranchesLoader({ request }: { request: Request }) {
 
     // Also fetch project info to get default branch name
     const projectUrl = `${gitlabUrl}/api/v4/projects/${encodeURIComponent(String(projectId))}`;
-    const projectResponse = await fetch(projectUrl, {
+    const projectResponse = await fetchWithTimeout(projectUrl, {
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/json',
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     let defaultBranchName = 'main'; // fallback

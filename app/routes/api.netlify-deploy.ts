@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs, json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.netlify-deploy');
@@ -66,7 +67,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     // If no siteId provided, create a new site
     if (!targetSiteId) {
       const siteName = `app-${safeChatId}-${Date.now()}`;
-      const createSiteResponse = await fetch('https://api.netlify.com/api/v1/sites', {
+      const createSiteResponse = await fetchWithTimeout('https://api.netlify.com/api/v1/sites', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -76,6 +77,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
           name: siteName,
           custom_domain: null,
         }),
+        timeoutMs: 30000,
       });
 
       if (!createSiteResponse.ok) {
@@ -97,10 +99,11 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     } else {
       // Get existing site info
       if (targetSiteId) {
-        const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}`, {
+        const siteResponse = await fetchWithTimeout(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          timeoutMs: 30000,
         });
 
         if (siteResponse.ok) {
@@ -119,7 +122,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
       // If no siteId provided or site doesn't exist, create a new site
       if (!targetSiteId) {
         const siteName = `app-${safeChatId}-${Date.now()}`;
-        const createSiteResponse = await fetch('https://api.netlify.com/api/v1/sites', {
+        const createSiteResponse = await fetchWithTimeout('https://api.netlify.com/api/v1/sites', {
           method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -129,6 +132,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
             name: siteName,
             custom_domain: null,
           }),
+          timeoutMs: 30000,
         });
 
         if (!createSiteResponse.ok) {
@@ -161,7 +165,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     }
 
     // Create a new deploy with digests
-    const deployResponse = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys`, {
+    const deployResponse = await fetchWithTimeout(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -175,6 +179,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
         function_schedules: [],
         framework: null,
       }),
+      timeoutMs: 30000,
     });
 
     if (!deployResponse.ok) {
@@ -192,10 +197,11 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
 
     // Poll until deploy is ready for file uploads
     while (retryCount < maxRetries) {
-      const statusResponse = await fetch(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys/${encodeURIComponent(deploy.id)}`, {
+      const statusResponse = await fetchWithTimeout(`https://api.netlify.com/api/v1/sites/${encodeURIComponent(targetSiteId)}/deploys/${encodeURIComponent(deploy.id)}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        timeoutMs: 30000,
       });
 
       if (!statusResponse.ok) {
@@ -222,7 +228,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
 
           while (!uploadSuccess && uploadRetries < 3) {
             try {
-              const uploadResponse = await fetch(
+              const uploadResponse = await fetchWithTimeout(
                 `https://api.netlify.com/api/v1/deploys/${encodeURIComponent(deploy.id)}/files${encodedPath}`,
                 {
                   method: 'PUT',
@@ -231,6 +237,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
                     'Content-Type': 'application/octet-stream',
                   },
                   body: content,
+                  timeoutMs: 30000,
                 },
               );
 

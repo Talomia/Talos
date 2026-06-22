@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('git-proxy');
@@ -156,7 +157,7 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     }
 
     // Forward the request to the target URL
-    const response = await fetch(targetURL, fetchOptions);
+    const response = await fetchWithTimeout(targetURL, { ...fetchOptions, timeoutMs: 15000 });
 
     logger.debug('Response status:', response.status);
 

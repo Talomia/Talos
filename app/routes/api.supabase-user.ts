@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.supabase-user');
@@ -23,11 +24,12 @@ async function supabaseUserLoader({ request, context }: { request: Request; cont
     }
 
     // Make server-side request to Supabase API
-    const response = await fetch('https://api.supabase.com/v1/projects', {
+    const response = await fetchWithTimeout('https://api.supabase.com/v1/projects', {
       headers: {
         Authorization: `Bearer ${supabaseToken}`,
         'User-Agent': 'app',
       },
+      timeoutMs: 15000,
     });
 
     if (!response.ok) {
@@ -107,11 +109,12 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
 
     if (action === 'get_projects') {
       // Fetch user projects
-      const response = await fetch('https://api.supabase.com/v1/projects', {
+      const response = await fetchWithTimeout('https://api.supabase.com/v1/projects', {
         headers: {
           Authorization: `Bearer ${supabaseToken}`,
           'User-Agent': 'app',
         },
+        timeoutMs: 15000,
       });
 
       if (!response.ok) {
@@ -161,11 +164,12 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
       }
 
       // Fetch project API keys
-      const response = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`, {
+      const response = await fetchWithTimeout(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/api-keys`, {
         headers: {
           Authorization: `Bearer ${supabaseToken}`,
           'User-Agent': 'app',
         },
+        timeoutMs: 15000,
       });
 
       if (!response.ok) {

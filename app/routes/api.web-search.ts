@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import type { ActionFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { isAllowedUrl } from '~/utils/url';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -63,9 +64,9 @@ async function webSearchAction({ request }: ActionFunctionArgs) {
       return json({ error: 'URL is not allowed. Only public HTTP/HTTPS URLs are accepted.' }, { status: 400 });
     }
 
-    const response = await fetch(url, {
+    const response = await fetchWithTimeout(url, {
       headers: FETCH_HEADERS,
-      signal: AbortSignal.timeout(10_000),
+      timeoutMs: 10000,
     });
 
     if (!response.ok) {

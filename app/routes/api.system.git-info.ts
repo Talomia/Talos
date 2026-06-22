@@ -1,5 +1,6 @@
 import { json, type LoaderFunction, type LoaderFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('git-info');
@@ -108,11 +109,12 @@ export const loader: LoaderFunction = withSecurity(
 
       try {
         if (action === 'getUser') {
-          const response = await fetch('https://api.github.com/user', {
+          const response = await fetchWithTimeout('https://api.github.com/user', {
             headers: {
               Accept: 'application/vnd.github.v3+json',
               Authorization: `Bearer ${token}`,
             },
+            timeoutMs: 10000,
           });
 
           if (!response.ok) {
@@ -126,11 +128,12 @@ export const loader: LoaderFunction = withSecurity(
         }
 
         if (action === 'getRepos') {
-          const reposResponse = await fetch('https://api.github.com/user/repos?per_page=100&sort=updated', {
+          const reposResponse = await fetchWithTimeout('https://api.github.com/user/repos?per_page=100&sort=updated', {
             headers: {
               Accept: 'application/vnd.github.v3+json',
               Authorization: `Bearer ${token}`,
             },
+            timeoutMs: 10000,
           });
 
           if (!reposResponse.ok) {
@@ -141,11 +144,12 @@ export const loader: LoaderFunction = withSecurity(
           const repos = (await reposResponse.json()) as GitHubRepo[];
 
           // Get user's gists
-          const gistsResponse = await fetch('https://api.github.com/gists', {
+          const gistsResponse = await fetchWithTimeout('https://api.github.com/gists', {
             headers: {
               Accept: 'application/vnd.github.v3+json',
               Authorization: `Bearer ${token}`,
             },
+            timeoutMs: 10000,
           });
 
           const gists = gistsResponse.ok ? ((await gistsResponse.json()) as GitHubGist[]) : [];
@@ -201,11 +205,12 @@ export const loader: LoaderFunction = withSecurity(
         }
 
         if (action === 'getOrgs') {
-          const response = await fetch('https://api.github.com/user/orgs', {
+          const response = await fetchWithTimeout('https://api.github.com/user/orgs', {
             headers: {
               Accept: 'application/vnd.github.v3+json',
               Authorization: `Bearer ${token}`,
             },
+            timeoutMs: 10000,
           });
 
           if (!response.ok) {
@@ -237,11 +242,12 @@ export const loader: LoaderFunction = withSecurity(
             return json({ error: 'Invalid GitHub username format' }, { status: 400 });
           }
 
-          const response = await fetch(`https://api.github.com/users/${username}/events?per_page=30`, {
+          const response = await fetchWithTimeout(`https://api.github.com/users/${username}/events?per_page=30`, {
             headers: {
               Accept: 'application/vnd.github.v3+json',
               Authorization: `Bearer ${token}`,
             },
+            timeoutMs: 10000,
           });
 
           if (!response.ok) {

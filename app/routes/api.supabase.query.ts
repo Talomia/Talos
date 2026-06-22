@@ -1,5 +1,6 @@
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.supabase.query');
@@ -82,13 +83,14 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
 
     logger.debug('Executing query:', { projectId, query });
 
-    const response = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/database/query`, {
+    const response = await fetchWithTimeout(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/database/query`, {
       method: 'POST',
       headers: {
         Authorization: authHeader,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ query }),
+      timeoutMs: 30000,
     });
 
     if (!response.ok) {
