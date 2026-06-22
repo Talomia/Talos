@@ -613,7 +613,7 @@ export class FilesStore {
       await engine.fs.writeFile(relativePath, content);
 
       if (!this.#modifiedFiles.has(filePath)) {
-        this.#modifiedFiles.set(filePath, oldContent);
+        this.#modifiedFiles.set(filePath, oldContent ?? '');
       }
 
       // Get the current lock state before updating

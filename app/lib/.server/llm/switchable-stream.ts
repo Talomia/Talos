@@ -63,7 +63,7 @@ export default class SwitchableStream extends TransformStream {
     }
 
     if (this._controller) {
-      this._controller.close();
+      this._controller.terminate();
       this._controller = null;
     }
   }

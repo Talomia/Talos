@@ -1,5 +1,22 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
-import { parse as parseCookie } from 'cookie';
+
+/** Parse cookies from a Cookie header string into a key-value record. */
+function parseCookie(cookieHeader: string): Record<string, string> {
+  const cookies: Record<string, string> = {};
+
+  for (const pair of cookieHeader.split(';')) {
+    const eqIdx = pair.indexOf('=');
+
+    if (eqIdx > 0) {
+      const key = pair.slice(0, eqIdx).trim();
+      const value = pair.slice(eqIdx + 1).trim();
+      cookies[key] = decodeURIComponent(value);
+    }
+  }
+
+  return cookies;
+}
+
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Security');
