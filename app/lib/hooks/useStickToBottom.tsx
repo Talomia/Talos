@@ -130,17 +130,29 @@ const RETAIN_ANIMATION_DURATION_MS = 350;
 
 let mouseDown = false;
 
-globalThis.document?.addEventListener('mousedown', () => {
+const handleMouseDown = () => {
   mouseDown = true;
-});
+};
 
-globalThis.document?.addEventListener('mouseup', () => {
+const handleMouseUp = () => {
   mouseDown = false;
-});
+};
 
-globalThis.document?.addEventListener('click', () => {
+const handleClick = () => {
   mouseDown = false;
-});
+};
+
+globalThis.document?.addEventListener('mousedown', handleMouseDown);
+globalThis.document?.addEventListener('mouseup', handleMouseUp);
+globalThis.document?.addEventListener('click', handleClick);
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    globalThis.document?.removeEventListener('mousedown', handleMouseDown);
+    globalThis.document?.removeEventListener('mouseup', handleMouseUp);
+    globalThis.document?.removeEventListener('click', handleClick);
+  });
+}
 
 export const useStickToBottom = (options: StickToBottomOptions = {}) => {
   const [escapedFromLock, updateEscapedFromLock] = useState(false);

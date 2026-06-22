@@ -453,11 +453,21 @@ export function batchUnlockItems(chatId: string, paths: string[]): void {
  * Add event listener for storage events to sync cache across tabs
  * This ensures that if locks are modified in another tab, the changes are reflected here
  */
+const handleStorageEvent = (event: StorageEvent) => {
+  if (event.key === LOCKED_FILES_KEY) {
+    logger.info('Detected localStorage change for locked items, refreshing cache');
+    clearCache();
+  }
+};
+
 if (typeof window !== 'undefined') {
-  window.addEventListener('storage', (event) => {
-    if (event.key === LOCKED_FILES_KEY) {
-      logger.info('Detected localStorage change for locked items, refreshing cache');
-      clearCache();
+  window.addEventListener('storage', handleStorageEvent);
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('storage', handleStorageEvent);
     }
   });
 }

@@ -63,11 +63,30 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
       });
     }
 
-    // Reject DDL statements anywhere in the query
-    const DDL_PATTERN = /\b(DROP|ALTER|CREATE|TRUNCATE)\b/i;
+    // Reject DDL and dangerous statements anywhere in the query
+    const DDL_PATTERN =
+      /\b(DROP|ALTER|CREATE|TRUNCATE|COPY|GRANT|REVOKE|EXECUTE|VACUUM|ANALYZE|CLUSTER|REINDEX)\b/i;
+    const DANGEROUS_PATTERN = /\bCOMMENT\s+ON\b/i;
+    const ANON_BLOCK_PATTERN = /\bDO\b\s*\$/i; // PL/pgSQL anonymous blocks: DO $$...$$
+    const SET_PATTERN = /^\s*SET\b/i; // Block SET as statement start (allow inside expressions)
+    const CTE_MUTATE_PATTERN = /\bWITH\b[\s\S]+\b(DELETE|UPDATE)\b/i;
 
     if (DDL_PATTERN.test(query)) {
       return new Response(JSON.stringify({ error: 'DDL statements are not allowed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (DANGEROUS_PATTERN.test(query) || ANON_BLOCK_PATTERN.test(query) || SET_PATTERN.test(query)) {
+      return new Response(JSON.stringify({ error: 'This statement type is not allowed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (CTE_MUTATE_PATTERN.test(query)) {
+      return new Response(JSON.stringify({ error: 'WITH ... DELETE/UPDATE patterns are not allowed' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -81,7 +100,7 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
       });
     }
 
-    logger.debug('Executing query:', { projectId, query });
+    logger.debug('Executing query:', { projectId, queryLength: query.length, preview: query.slice(0, 80) });
 
     const response = await fetchWithTimeout(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/database/query`, {
       method: 'POST',
