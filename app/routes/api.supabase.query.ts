@@ -31,6 +31,55 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
       });
     }
 
+    // SQL injection guards
+    const MAX_QUERY_LENGTH = 10000;
+
+    if (query.length > MAX_QUERY_LENGTH) {
+      return new Response(JSON.stringify({ error: 'Query too long' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Reject multi-statement attacks (semicolons)
+    if (query.includes(';')) {
+      return new Response(JSON.stringify({ error: 'Multi-statement queries are not allowed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const normalizedQuery = query.trim().toUpperCase();
+
+    // Statement type allowlist: only SELECT, INSERT, UPDATE
+    const ALLOWED_STATEMENTS = ['SELECT', 'INSERT', 'UPDATE'];
+    const startsWithAllowed = ALLOWED_STATEMENTS.some((stmt) => normalizedQuery.startsWith(stmt));
+
+    if (!startsWithAllowed) {
+      return new Response(JSON.stringify({ error: 'Only SELECT, INSERT, and UPDATE queries are allowed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Reject DDL statements anywhere in the query
+    const DDL_PATTERN = /\b(DROP|ALTER|CREATE|TRUNCATE)\b/i;
+
+    if (DDL_PATTERN.test(query)) {
+      return new Response(JSON.stringify({ error: 'DDL statements are not allowed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Reject DELETE without WHERE
+    if (/\bDELETE\b/i.test(query)) {
+      return new Response(JSON.stringify({ error: 'DELETE statements are not allowed' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     logger.debug('Executing query:', { projectId, query });
 
     const response = await fetch(`https://api.supabase.com/v1/projects/${encodeURIComponent(projectId)}/database/query`, {
@@ -105,4 +154,4 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
   }
 }
 
-export const action = withSecurity(supabaseQueryAction, { allowedMethods: ['POST'] });
+export const action = withSecurity(supabaseQueryAction, { allowedMethods: ['POST'], requireAuth: true });

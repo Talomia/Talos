@@ -529,8 +529,14 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       );
     }
 
-    return new Response(JSON.stringify(errorResponse), {
-      status: errorResponse.statusCode,
+    return new Response(JSON.stringify({
+      error: true,
+      message: 'An unexpected error occurred',
+      statusCode: 500,
+      isRetryable: true,
+      provider: 'unknown',
+    }), {
+      status: 500,
       headers: { 'Content-Type': 'application/json' },
       statusText: 'Error',
     });

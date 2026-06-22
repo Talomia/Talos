@@ -118,7 +118,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
 
       // If no siteId provided or site doesn't exist, create a new site
       if (!targetSiteId) {
-        const siteName = `app-${chatId}-${Date.now()}`;
+        const siteName = `app-${safeChatId}-${Date.now()}`;
         const createSiteResponse = await fetch('https://api.netlify.com/api/v1/sites', {
           method: 'POST',
           headers: {

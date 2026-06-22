@@ -3,6 +3,28 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('cloud-persistence');
 
 /**
+ * Conflict resolution strategy for cloud sync.
+ *
+ * - 'newer-wins': Accept whichever version has a later `updatedAt` timestamp (default).
+ * - 'remote-wins': Always accept the cloud version.
+ * - 'local-wins': Always keep the local version.
+ */
+export type ConflictResolution = 'remote-wins' | 'local-wins' | 'newer-wins';
+
+let _conflictResolution: ConflictResolution = 'newer-wins';
+
+/** Change the conflict resolution strategy at runtime. */
+export function setConflictResolution(strategy: ConflictResolution): void {
+  _conflictResolution = strategy;
+  logger.info(`Conflict resolution strategy set to: ${strategy}`);
+}
+
+/** Return the current conflict resolution strategy. */
+export function getConflictResolution(): ConflictResolution {
+  return _conflictResolution;
+}
+
+/**
  * Cloud persistence adapter that syncs local IndexedDB data with the
  * server-side Supabase database. This provides:
  *
@@ -20,6 +42,7 @@ interface SyncableChat {
   urlId: string;
   description: string;
   messages: any[];
+  updatedAt?: number;
   metadata?: Record<string, any>;
   snapshot?: {
     chatIndex: string;
@@ -95,58 +118,128 @@ export async function pullFromCloud(): Promise<number> {
     return 0;
   }
 
-  // Get all local chat IDs
-  const localIds = await new Promise<Set<string>>((resolve, reject) => {
+  // Load all local chats keyed by ID for conflict resolution
+  const localChats = await new Promise<Map<string, any>>((resolve, reject) => {
     const transaction = db.transaction('chats', 'readonly');
     const store = transaction.objectStore('chats');
-    const request = store.getAllKeys();
+    const request = store.getAll();
 
-    request.onsuccess = () => resolve(new Set(request.result.map(String)));
+    request.onsuccess = () => {
+      const map = new Map<string, any>();
+
+      for (const chat of request.result) {
+        map.set(chat.id, chat);
+      }
+
+      resolve(map);
+    };
     request.onerror = () => reject(request.error);
   });
 
-  // Find cloud projects that don't exist locally
-  const missingProjects = cloudProjects.filter((project) => !localIds.has(project.id));
-
-  if (missingProjects.length === 0) {
-    logger.debug('Cloud pull: all cloud projects already exist locally');
-    return 0;
-  }
-
-  // Import missing projects directly into IDB (no circular sync)
   let imported = 0;
 
-  for (const project of missingProjects) {
-    try {
-      await new Promise<void>((resolve, reject) => {
-        const transaction = db.transaction('chats', 'readwrite');
-        const store = transaction.objectStore('chats');
+  for (const project of cloudProjects) {
+    const localChat = localChats.get(project.id);
 
-        const request = store.put({
-          id: project.id,
-          urlId: project.urlId || project.id,
-          description: project.description || '',
-          messages: project.messages || [],
-          timestamp: new Date().toISOString(),
-          metadata: project.metadata,
-        });
+    if (!localChat) {
+      // Project only exists in cloud — import it
+      try {
+        await importCloudProject(db, project);
+        imported++;
+      } catch (error) {
+        logger.error(`Cloud pull: failed to import project ${project.id}:`, error);
+      }
 
-        request.onsuccess = () => {
-          imported++;
-          resolve();
-        };
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      logger.error(`Cloud pull: failed to import project ${project.id}:`, error);
+      continue;
+    }
+
+    // Both versions exist — resolve the conflict
+    const resolution = resolveConflict(localChat, project);
+
+    if (resolution === 'remote') {
+      try {
+        await importCloudProject(db, project);
+        imported++;
+        logger.info(
+          `Cloud pull: conflict resolved for ${project.id} — accepted remote version ` +
+            `(strategy=${_conflictResolution}, local.updatedAt=${localChat.updatedAt ?? 'none'}, ` +
+            `remote.updatedAt=${project.updatedAt ?? 'none'})`,
+        );
+      } catch (error) {
+        logger.error(`Cloud pull: failed to overwrite project ${project.id}:`, error);
+      }
+    } else {
+      logger.debug(
+        `Cloud pull: conflict resolved for ${project.id} — kept local version ` +
+          `(strategy=${_conflictResolution}, local.updatedAt=${localChat.updatedAt ?? 'none'}, ` +
+          `remote.updatedAt=${project.updatedAt ?? 'none'})`,
+      );
     }
   }
 
   if (imported > 0) {
-    logger.info(`Cloud pull: imported ${imported} project(s) from cloud`);
+    logger.info(`Cloud pull: imported/updated ${imported} project(s) from cloud`);
   }
 
   return imported;
+}
+
+/**
+ * Resolve a conflict between a local and remote version of the same chat.
+ * Returns 'local' to keep the local version, or 'remote' to accept the cloud version.
+ */
+function resolveConflict(localChat: any, remoteChat: SyncableChat): 'local' | 'remote' {
+  if (_conflictResolution === 'remote-wins') {
+    return 'remote';
+  }
+
+  if (_conflictResolution === 'local-wins') {
+    return 'local';
+  }
+
+  // 'newer-wins' (default): compare updatedAt timestamps
+  const localUpdatedAt: number = localChat.updatedAt ?? 0;
+  const remoteUpdatedAt: number = remoteChat.updatedAt ?? 0;
+
+  const CLOSE_THRESHOLD_MS = 5_000;
+
+  if (Math.abs(remoteUpdatedAt - localUpdatedAt) <= CLOSE_THRESHOLD_MS) {
+    // Timestamps are equal or very close — prefer the version with more messages
+    const localMsgCount = Array.isArray(localChat.messages) ? localChat.messages.length : 0;
+    const remoteMsgCount = Array.isArray(remoteChat.messages) ? remoteChat.messages.length : 0;
+
+    logger.debug(
+      `Cloud pull: timestamps within ${CLOSE_THRESHOLD_MS}ms threshold for ${remoteChat.id} ` +
+        `— comparing message counts (local=${localMsgCount}, remote=${remoteMsgCount})`,
+    );
+
+    return remoteMsgCount > localMsgCount ? 'remote' : 'local';
+  }
+
+  return remoteUpdatedAt > localUpdatedAt ? 'remote' : 'local';
+}
+
+/**
+ * Write a cloud project into local IDB directly (bypasses setMessages to avoid circular sync).
+ */
+async function importCloudProject(db: IDBDatabase, project: SyncableChat): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const transaction = db.transaction('chats', 'readwrite');
+    const store = transaction.objectStore('chats');
+
+    const request = store.put({
+      id: project.id,
+      urlId: project.urlId || project.id,
+      description: project.description || '',
+      messages: project.messages || [],
+      timestamp: new Date().toISOString(),
+      updatedAt: project.updatedAt ?? Date.now(),
+      metadata: project.metadata,
+    });
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
 }
 
 /**
@@ -391,6 +484,7 @@ async function flushPendingSyncs(): Promise<void> {
             urlId: chat.urlId,
             description: chat.description,
             messages: chat.messages,
+            updatedAt: chat.updatedAt ?? Date.now(),
             metadata: chat.metadata,
             snapshot: chat.snapshot,
           }),

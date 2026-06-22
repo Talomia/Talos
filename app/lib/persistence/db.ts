@@ -88,12 +88,15 @@ export async function setMessages(
       return;
     }
 
+    const now = Date.now();
+
     const request = store.put({
       id,
       messages,
       urlId,
       description,
       timestamp: timestamp ?? new Date().toISOString(),
+      updatedAt: now,
       metadata,
     });
 
@@ -106,6 +109,7 @@ export async function setMessages(
         urlId: urlId || id,
         description: description || '',
         messages,
+        updatedAt: now,
         metadata,
       });
       resolve();

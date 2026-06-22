@@ -261,7 +261,6 @@ export const loader = withSecurity(async ({ request, context }: { request: Reque
     return json(
       {
         error: 'Failed to fetch template files',
-        details: error instanceof Error ? error.message : String(error),
       },
       { status: 500 },
     );
