@@ -26,13 +26,12 @@ export default defineConfig((config) => {
       rollupOptions: {
         output: {
           // Fixes the 100% CPU spikes / OOM crashes by splitting the massive bundle apart
+          // NOTE: @ai-sdk packages have circular deps with zod — they MUST stay
+          // in the same chunk as vendor-packages or you get TDZ errors at runtime
           manualChunks(id) {
             if (id.includes('node_modules')) {
               if (id.includes('@codemirror') || id.includes('shiki') || id.includes('@xterm')) {
                 return 'vendor-editor-ui';
-              }
-              if (id.includes('@ai-sdk') || id.includes('openai') || id.includes('anthropic')) {
-                return 'vendor-ai-core';
               }
               if (id.includes('framer-motion')) return 'vendor-animation';
               return 'vendor-packages';
