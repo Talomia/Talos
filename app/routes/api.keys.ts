@@ -115,4 +115,4 @@ export const action = withSecurity(async ({ request, context }: ActionFunctionAr
   }
 
   return json({ error: 'Method not allowed' }, { status: 405 });
-});
+}, { allowedMethods: ['POST', 'DELETE'] });

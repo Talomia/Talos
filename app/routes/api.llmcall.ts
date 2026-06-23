@@ -196,9 +196,9 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
 
       logger.info(`Generating response Provider: ${provider.name}, Model: ${modelDetails.name}`);
 
-      // DEBUG: Log reasoning model detection
+      // Log reasoning model detection
       const isReasoning = isReasoningModel(modelDetails.name);
-      logger.info(`DEBUG: Model "${modelDetails.name}" detected as reasoning model: ${isReasoning}`);
+      logger.debug(`Model "${modelDetails.name}" detected as reasoning model: ${isReasoning}`);
 
       // Use maxCompletionTokens for reasoning models (o1, GPT-5), maxTokens for traditional models
       const tokenParams = isReasoning ? { maxCompletionTokens: dynamicMaxTokens } : { maxTokens: dynamicMaxTokens };
@@ -227,9 +227,9 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         ? { ...baseParams, temperature: 1 } // Set to 1 for reasoning models (only supported value)
         : { ...baseParams, temperature: 0 };
 
-      // DEBUG: Log final parameters
-      logger.info(
-        `DEBUG: Final params for model "${modelDetails.name}":`,
+      // Log reasoning model parameters
+      logger.debug(
+        `Final params for model "${modelDetails.name}":`,
         JSON.stringify(
           {
             isReasoning,

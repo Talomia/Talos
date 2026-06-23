@@ -15,10 +15,18 @@ interface AppContext {
 
 export const loader: LoaderFunction = withSecurity(
   async ({ request, context }: LoaderFunctionArgs & { context: AppContext }) => {
+    if (process.env.NODE_ENV === 'production') {
+      // In production, require authentication
+      const authCookie = request.headers.get('Cookie');
+      if (!authCookie || !authCookie.includes('sb-')) {
+        return json({ error: 'Authentication required' }, { status: 401 });
+      }
+    }
+
     // Get environment variables
     const envVars = {
-      hasGithubToken: Boolean(process.env.GITHUB_ACCESS_TOKEN || context.env?.GITHUB_ACCESS_TOKEN),
-      hasNetlifyToken: Boolean(process.env.NETLIFY_TOKEN || context.env?.NETLIFY_TOKEN),
+      hasGithubToken: Boolean(process.env.GITHUB_ACCESS_TOKEN || context?.cloudflare?.env?.GITHUB_ACCESS_TOKEN),
+      hasNetlifyToken: Boolean(process.env.NETLIFY_TOKEN || context?.cloudflare?.env?.NETLIFY_TOKEN),
       nodeEnv: process.env.NODE_ENV,
     };
 

@@ -100,7 +100,12 @@ async function webSearchAction({ request }: ActionFunctionArgs) {
 
     logger.error('Web search error:', error);
 
-    return json({ error: error instanceof Error ? error.message : 'Failed to fetch URL' }, { status: 500 });
+    // Network/fetch failures are upstream errors (Bad Gateway), not internal server errors
+    if (error instanceof TypeError || (error instanceof Error && error.message.includes('fetch'))) {
+      return json({ error: error instanceof Error ? error.message : 'Failed to fetch URL' }, { status: 502 });
+    }
+
+    return json({ error: error instanceof Error ? error.message : 'Internal server error' }, { status: 500 });
   }
 }
 

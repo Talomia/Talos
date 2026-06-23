@@ -58,35 +58,35 @@ const detectFramework = (files: Record<string, string>): string => {
         return 'vite';
       }
 
-      if (dependencies.react && dependencies['@nuxt/react']) {
+      if (dependencies['@nuxt/react']) {
         return 'nuxt';
       }
 
-      if (dependencies.react && dependencies['@qwik-city/qwik']) {
+      if (dependencies['@qwik-city/qwik']) {
         return 'qwik';
       }
 
-      if (dependencies.react && dependencies['@sveltejs/kit']) {
+      if (dependencies['@sveltejs/kit']) {
         return 'sveltekit';
       }
 
-      if (dependencies.react && dependencies.astro) {
+      if (dependencies.astro) {
         return 'astro';
       }
 
-      if (dependencies.react && dependencies['@angular/core']) {
+      if (dependencies['@angular/core']) {
         return 'angular';
       }
 
-      if (dependencies.react && dependencies.vue) {
+      if (dependencies.vue) {
         return 'vue';
       }
 
-      if (dependencies.react && dependencies['@expo/react-native']) {
+      if (dependencies['@expo/react-native']) {
         return 'expo';
       }
 
-      if (dependencies.react && dependencies['react-native']) {
+      if (dependencies['react-native']) {
         return 'react-native';
       }
 

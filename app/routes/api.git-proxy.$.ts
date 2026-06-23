@@ -56,23 +56,55 @@ export const loader = withSecurity(async ({ request, params }: LoaderFunctionArg
   return handleProxyRequest(request, params['*']);
 });
 
+/**
+ * Returns the request Origin if it matches the app's own host, otherwise undefined.
+ * This prevents arbitrary third-party sites from using the proxy.
+ */
+function getAllowedOrigin(request: Request): string | undefined {
+  const origin = request.headers.get('Origin');
+
+  if (!origin) {
+    return undefined;
+  }
+
+  try {
+    const requestHost = new URL(request.url).host;
+    const originHost = new URL(origin).host;
+
+    if (originHost === requestHost) {
+      return origin;
+    }
+  } catch {
+    // Invalid URL — reject
+  }
+
+  return undefined;
+}
+
 async function handleProxyRequest(request: Request, path: string | undefined) {
   try {
     if (!path) {
       return json({ error: 'Invalid proxy URL format' }, { status: 400 });
     }
 
+    const allowedOrigin = getAllowedOrigin(request);
+
     // Handle CORS preflight request
     if (request.method === 'OPTIONS') {
+      const preflightHeaders: Record<string, string> = {
+        'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+        'Access-Control-Allow-Headers': ALLOW_HEADERS.join(', '),
+        'Access-Control-Expose-Headers': EXPOSE_HEADERS.join(', '),
+        'Access-Control-Max-Age': '86400',
+      };
+
+      if (allowedOrigin) {
+        preflightHeaders['Access-Control-Allow-Origin'] = allowedOrigin;
+      }
+
       return new Response(null, {
         status: 200,
-        headers: {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-          'Access-Control-Allow-Headers': ALLOW_HEADERS.join(', '),
-          'Access-Control-Expose-Headers': EXPOSE_HEADERS.join(', '),
-          'Access-Control-Max-Age': '86400',
-        },
+        headers: preflightHeaders,
       });
     }
 
@@ -161,8 +193,11 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     // Create response headers
     const responseHeaders = new Headers();
 
-    // Add CORS headers
-    responseHeaders.set('Access-Control-Allow-Origin', '*');
+    // Add CORS headers — only reflect the Origin if it matches the app's domain
+    if (allowedOrigin) {
+      responseHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+    }
+
     responseHeaders.set('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
     responseHeaders.set('Access-Control-Allow-Headers', ALLOW_HEADERS.join(', '));
     responseHeaders.set('Access-Control-Expose-Headers', EXPOSE_HEADERS.join(', '));

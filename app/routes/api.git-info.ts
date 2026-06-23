@@ -3,7 +3,7 @@ import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.git-info');
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { existsSync } from 'fs';
 
 export const loader = withSecurity(async () => {
@@ -18,20 +18,20 @@ export const loader = withSecurity(async () => {
     }
 
     // Get current branch
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+    const branch = execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8' }).trim();
 
     // Get current commit hash
-    const commit = execSync('git rev-parse HEAD', { encoding: 'utf8' }).trim();
+    const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 
     // Check if working directory is dirty
-    const statusOutput = execSync('git status --porcelain', { encoding: 'utf8' });
+    const statusOutput = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' });
     const isDirty = statusOutput.trim().length > 0;
 
     // Get remote URL
     let remoteUrl: string | undefined;
 
     try {
-      remoteUrl = execSync('git remote get-url origin', { encoding: 'utf8' }).trim();
+      remoteUrl = execFileSync('git', ['remote', 'get-url', 'origin'], { encoding: 'utf8' }).trim();
     } catch {
       // No remote origin, leave as undefined
     }
@@ -40,7 +40,7 @@ export const loader = withSecurity(async () => {
     let lastCommit: { message: string; date: string; author: string } | undefined;
 
     try {
-      const commitInfo = execSync('git log -1 --pretty=format:"%s|%ci|%an"', { encoding: 'utf8' }).trim();
+      const commitInfo = execFileSync('git', ['log', '-1', '--pretty=format:%s|%ci|%an'], { encoding: 'utf8' }).trim();
       const [message, date, author] = commitInfo.split('|');
       lastCommit = {
         message: message || 'unknown',

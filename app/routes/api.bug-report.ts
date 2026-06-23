@@ -218,8 +218,8 @@ export const action = withSecurity(
       if (!githubToken) {
         logger.error('GitHub bug report token not configured');
         return json(
-          { error: 'Bug reporting is not properly configured. Please contact the administrators.' },
-          { status: 500 },
+          { error: 'Bug reporting is not configured. Set GITHUB_BUG_REPORT_TOKEN in environment.' },
+          { status: 503 },
         );
       }
 

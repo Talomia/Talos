@@ -6,7 +6,15 @@ import { type LoaderFunctionArgs, json } from '@remix-run/cloudflare';
  * Diagnostic endpoint reporting which env vars are set (without exposing values).
  * Useful for verifying Docker/EasyPanel bindings are correctly passed through.
  */
-export async function loader({ context }: LoaderFunctionArgs) {
+export async function loader({ request, context }: LoaderFunctionArgs) {
+  if (process.env.NODE_ENV === 'production') {
+    // In production, require authentication
+    const authCookie = request.headers.get('Cookie');
+    if (!authCookie || !authCookie.includes('sb-')) {
+      return json({ error: 'Authentication required' }, { status: 401 });
+    }
+  }
+
   const env = (context?.cloudflare?.env || {}) as Record<string, string | undefined>;
 
   const check = (key: string) => {

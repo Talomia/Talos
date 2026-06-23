@@ -6,6 +6,45 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.gitlab-projects');
 
+/**
+ * Validate that a URL is safe for server-side fetching (SSRF prevention).
+ * Must use https:// and must not target private/loopback IP ranges.
+ */
+function validateGitlabUrl(urlString: string): { valid: boolean; error?: string } {
+  let parsed: URL;
+
+  try {
+    parsed = new URL(urlString);
+  } catch {
+    return { valid: false, error: 'Invalid URL format' };
+  }
+
+  if (parsed.protocol !== 'https:') {
+    return { valid: false, error: 'Only https:// URLs are allowed' };
+  }
+
+  const hostname = parsed.hostname;
+
+  // Block private/loopback IP ranges
+  const privatePatterns = [
+    /^127\.\d+\.\d+\.\d+$/, // loopback
+    /^10\.\d+\.\d+\.\d+$/, // 10.0.0.0/8
+    /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/, // 172.16.0.0/12
+    /^192\.168\.\d+\.\d+$/, // 192.168.0.0/16
+    /^169\.254\.\d+\.\d+$/, // link-local
+    /^0\.0\.0\.0$/, // unspecified
+    /^::1$/, // IPv6 loopback
+    /^\[::1\]$/, // IPv6 loopback bracketed
+    /^localhost$/i, // localhost
+  ];
+
+  if (privatePatterns.some((pattern) => pattern.test(hostname))) {
+    return { valid: false, error: 'URLs targeting private/internal networks are not allowed' };
+  }
+
+  return { valid: true };
+}
+
 interface GitLabProject {
   id: number;
   name: string;
@@ -27,6 +66,13 @@ async function gitlabProjectsLoader({ request }: { request: Request }) {
 
     if (!token) {
       return json({ error: 'GitLab token is required' }, { status: 400 });
+    }
+
+    // Validate gitlabUrl to prevent SSRF
+    const urlValidation = validateGitlabUrl(gitlabUrl);
+
+    if (!urlValidation.valid) {
+      return json({ error: `Invalid GitLab URL: ${urlValidation.error}` }, { status: 400 });
     }
 
     // Fetch user's projects from GitLab API

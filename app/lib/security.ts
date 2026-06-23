@@ -22,9 +22,8 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('Security');
 
 /*
- * ⚠️ LIMITATION: In-memory rate limiting resets on every Cloudflare Worker cold start.
- * For production-grade rate limiting, migrate to Cloudflare KV or Durable Objects.
- * See: https://developers.cloudflare.com/workers/runtime-apis/kv/
+ * ⚠️ LIMITATION: In-memory rate limiting resets on every Node.js process restart.
+ * For production-grade rate limiting, consider using Redis or a persistent store.
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
@@ -182,10 +181,15 @@ function getClientIP(request: Request): string {
   }
 
   /*
-   * 3. No identifying headers at all — assign a unique key per request so
-   *    anonymous clients don't share (and exhaust) one global bucket.
+   * 3. No identifying headers at all — fall back to a shared anonymous bucket.
+   *    Use the client IP from x-forwarded-for or x-real-ip if available,
+   *    otherwise use a constant key so all anonymous traffic shares one bucket.
    */
-  return 'anonymous-' + Date.now();
+  const forwardedIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  const realIPHeader = request.headers.get('x-real-ip')?.trim();
+  const anonymousKey = forwardedIP || realIPHeader || 'anonymous-shared';
+
+  return 'anonymous-' + anonymousKey;
 }
 
 /**
