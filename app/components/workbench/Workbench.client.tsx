@@ -25,6 +25,7 @@ import useViewport from '~/lib/hooks';
 
 import { usePreviewStore } from '~/lib/stores/previews';
 import { chatStore } from '~/lib/stores/chat';
+import { detectedErrors } from '~/lib/stores/errors';
 import type { ElementInfo } from './Inspector';
 import { ExportChatButton } from '~/components/chat/chatExportAndImport/ExportChatButton';
 import { useChatHistory } from '~/lib/persistence';
@@ -99,6 +100,7 @@ export const Workbench = memo(
 
     const isSmallViewport = useViewport(1024);
     const streaming = useStore(streamingState);
+    const errors = useStore(detectedErrors);
     const { exportChat } = useChatHistory();
     const [isSyncing, setIsSyncing] = useState(false);
 
@@ -196,7 +198,14 @@ export const Workbench = memo(
                       }
                     }}
                   />
-                  <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
+                  <div className="relative">
+                    <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
+                    {errors.length > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[16px] h-4 flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold">
+                        {errors.length > 9 ? '9+' : errors.length}
+                      </span>
+                    )}
+                  </div>
                   <div className="ml-auto" />
                   {selectedView === 'code' && (
                     <div className="flex overflow-y-auto">

@@ -30,6 +30,15 @@ import { useChatModel } from '~/lib/hooks/useChatModel';
 import { usePromptCache } from '~/lib/hooks/usePromptCache';
 import { useChatErrors } from '~/lib/hooks/useChatErrors';
 import { useSendMessage } from '~/lib/hooks/useSendMessage';
+import {
+  detectedErrors,
+  autoFixEnabled,
+  autoFixInProgress,
+  autoFixAttempts,
+  MAX_AUTO_FIX_ATTEMPTS,
+  resetAutoFix,
+} from '~/lib/stores/errors';
+import { formatErrorsForAI } from '~/lib/runtime/error-detector';
 
 const logger = createScopedLogger('Chat');
 
@@ -144,6 +153,7 @@ export const ChatImpl = memo(
           },
         },
         maxLLMSteps: mcpSettings.maxLLMSteps,
+        customInstructions: typeof window !== 'undefined' ? localStorage.getItem('customInstructions') || '' : '',
       },
       sendExtraMessageFields: true,
       onError: (e) => {
@@ -211,6 +221,7 @@ export const ChatImpl = memo(
           });
         });
 
+        autoFixInProgress.set(false);
         logger.debug('Finished streaming');
       },
       initialMessages,
@@ -428,6 +439,78 @@ export const ChatImpl = memo(
       runAnimation,
     });
 
+    // Auto-fix: reset attempts when user sends a new (non-auto-fix) message
+    const wrappedSendMessage = useCallback(
+      async (event: React.UIEvent, messageInput?: string) => {
+        resetAutoFix();
+        return sendMessage(event, messageInput);
+      },
+      [sendMessage],
+    );
+
+    // Auto-fix loop: subscribe to detected errors and auto-send fix requests
+    useEffect(() => {
+      let debounceTimer: ReturnType<typeof setTimeout> | undefined;
+
+      const unsub = detectedErrors.subscribe((errors) => {
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+          debounceTimer = undefined;
+        }
+
+        const fixable = errors.filter((e) => e.autoFixable && e.severity !== 'warning');
+
+        if (fixable.length === 0) {
+          return;
+        }
+
+        if (!autoFixEnabled.get()) {
+          return;
+        }
+
+        if (autoFixInProgress.get()) {
+          return;
+        }
+
+        const attempts = autoFixAttempts.get();
+
+        if (attempts >= MAX_AUTO_FIX_ATTEMPTS) {
+          return;
+        }
+
+        // Debounce — wait 2 seconds for errors to settle
+        debounceTimer = setTimeout(() => {
+          debounceTimer = undefined;
+
+          if (!autoFixEnabled.get() || autoFixInProgress.get()) {
+            return;
+          }
+
+          if (autoFixAttempts.get() >= MAX_AUTO_FIX_ATTEMPTS) {
+            return;
+          }
+
+          autoFixInProgress.set(true);
+          autoFixAttempts.set(autoFixAttempts.get() + 1);
+
+          const errorSummary = formatErrorsForAI(fixable);
+
+          append({
+            role: 'user',
+            content: `[AUTO-FIX] The application encountered errors:\n\n${errorSummary}\n\nPlease fix these errors. Only modify the files that need changes.`,
+          });
+        }, 2000);
+      });
+
+      return () => {
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        unsub();
+      };
+    }, [append]);
+
     /**
      * Handles the change event for the textarea and updates the input state.
      * @param event - The change event from the textarea.
@@ -528,7 +611,7 @@ export const ChatImpl = memo(
         setImageDataList,
       },
       actions: {
-        sendMessage,
+        sendMessage: wrappedSendMessage,
         handleStop: abort,
         handleInputChange: combinedHandleInputChange,
         enhancePrompt: handleEnhancePrompt,

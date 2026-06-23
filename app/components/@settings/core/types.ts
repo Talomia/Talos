@@ -17,6 +17,7 @@ export type TabType =
   | 'supabase'
   | 'event-logs'
   | 'mcp'
+  | 'instructions'
   | 'usage';
 
 export type WindowType = 'user' | 'developer';

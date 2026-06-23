@@ -72,6 +72,8 @@ export async function streamText(props: {
   messageSliceId?: number;
   chatMode?: 'discuss' | 'build';
   designScheme?: DesignScheme;
+  customInstructions?: string;
+  projectRules?: string;
 }) {
   const {
     messages,
@@ -86,6 +88,8 @@ export async function streamText(props: {
     summary,
     chatMode,
     designScheme,
+    customInstructions,
+    projectRules,
   } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
@@ -224,6 +228,20 @@ export async function streamText(props: {
     `;
   } else {
     logger.debug('No locked files found from any source for prompt.');
+  }
+
+  if (customInstructions?.trim()) {
+    systemPrompt += `\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${customInstructions}\n</custom_instructions>`;
+  }
+
+  // Inject project-level rules (.rules file)
+  if (projectRules?.trim()) {
+    systemPrompt = `${systemPrompt}\n\n<project_rules>\nThe following project-level rules MUST be followed for this project:\n${projectRules.trim()}\n</project_rules>`;
+  }
+
+  // Inject user custom instructions
+  if (customInstructions?.trim()) {
+    systemPrompt = `${systemPrompt}\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${customInstructions.trim()}\n</custom_instructions>`;
   }
 
   logger.info(`Sending llm call to ${provider.name} with model ${modelDetails.name}`);

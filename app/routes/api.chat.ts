@@ -60,26 +60,37 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   let chatMode: 'discuss' | 'build';
   let designScheme: DesignScheme | undefined;
   let maxLLMSteps: number;
+  let customInstructions: string | undefined;
 
   try {
-    ({ messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps } =
-      await request.json<{
-        messages: Messages;
-        files: FileMap | undefined;
-        promptId?: string;
-        contextOptimization: boolean;
-        chatMode: 'discuss' | 'build';
-        designScheme?: DesignScheme;
-        supabase?: {
-          isConnected: boolean;
-          hasSelectedProject: boolean;
-          credentials?: {
-            anonKey?: string;
-            supabaseUrl?: string;
-          };
+    ({
+      messages,
+      files,
+      promptId,
+      contextOptimization,
+      supabase,
+      chatMode,
+      designScheme,
+      maxLLMSteps,
+      customInstructions,
+    } = await request.json<{
+      messages: Messages;
+      files: FileMap | undefined;
+      promptId?: string;
+      contextOptimization: boolean;
+      chatMode: 'discuss' | 'build';
+      designScheme?: DesignScheme;
+      supabase?: {
+        isConnected: boolean;
+        hasSelectedProject: boolean;
+        credentials?: {
+          anonKey?: string;
+          supabaseUrl?: string;
         };
-        maxLLMSteps: number;
-      }>());
+      };
+      maxLLMSteps: number;
+      customInstructions?: string;
+    }>());
   } catch {
     return json({ error: true, message: 'Invalid or malformed JSON in request body' }, { status: 400 });
   }
@@ -108,6 +119,23 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
   if (maxLLMSteps > 20) {
     return json({ error: true, message: 'maxLLMSteps must be ≤ 20' }, { status: 400 });
+  }
+
+  // Extract project-level rules from .rules file in the project
+  const RULES_FILE_NAMES = ['.rules', '.projectrules'];
+  let projectRules: string | undefined;
+
+  if (files) {
+    for (const rulesFile of RULES_FILE_NAMES) {
+      const rulesPath = `/home/project/${rulesFile}`;
+      const fileEntry = files[rulesPath];
+
+      if (fileEntry && 'content' in fileEntry && typeof fileEntry.content === 'string' && fileEntry.content.trim()) {
+        projectRules = fileEntry.content.trim().slice(0, 4000); // Cap at 4KB
+
+        break;
+      }
+    }
   }
 
   const cookieHeader = request.headers.get('Cookie');
@@ -385,6 +413,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               designScheme,
               summary,
               messageSliceId,
+              customInstructions,
+              projectRules,
             });
 
             result.mergeIntoDataStream(dataStream);
@@ -443,6 +473,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           designScheme,
           summary,
           messageSliceId,
+          customInstructions,
+          projectRules,
         });
 
         (async () => {

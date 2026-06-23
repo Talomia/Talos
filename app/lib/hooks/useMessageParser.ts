@@ -2,6 +2,7 @@ import type { Message } from 'ai';
 import { useCallback, useState } from 'react';
 import { EnhancedStreamingMessageParser } from '~/lib/runtime/enhanced-message-parser';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { clearErrors } from '~/lib/stores/errors';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('useMessageParser');
@@ -11,6 +12,7 @@ const messageParser = new EnhancedStreamingMessageParser({
     onArtifactOpen: (data) => {
       logger.trace('onArtifactOpen', data);
 
+      clearErrors();
       workbenchStore.showWorkbench.set(true);
       workbenchStore.addArtifact(data);
     },

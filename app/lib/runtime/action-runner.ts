@@ -6,6 +6,8 @@ import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
 import type { ActionCallbackData } from './message-parser';
 import type { AppShell } from '~/utils/shell';
+import { parseTerminalOutput } from '~/lib/runtime/error-detector';
+import { addErrors } from '~/lib/stores/errors';
 
 const logger = createScopedLogger('ActionRunner');
 
@@ -313,6 +315,14 @@ export class ActionRunner {
     logger.debug(`${action.type} Shell Response: [exit code:${resp?.exitCode}]`);
 
     if (resp?.exitCode !== undefined && resp.exitCode !== 0) {
+      if (resp?.output) {
+        const detected = parseTerminalOutput(resp.output);
+
+        if (detected.length > 0) {
+          addErrors(detected);
+        }
+      }
+
       const enhancedError = this.#createEnhancedShellError(action.content, resp?.exitCode, resp?.output);
       throw new ActionCommandError(enhancedError.title, enhancedError.details);
     }
@@ -341,6 +351,14 @@ export class ActionRunner {
     logger.debug(`${action.type} Shell Response: [exit code:${resp?.exitCode}]`);
 
     if (resp?.exitCode !== undefined && resp.exitCode !== 0) {
+      if (resp?.output) {
+        const detected = parseTerminalOutput(resp.output);
+
+        if (detected.length > 0) {
+          addErrors(detected);
+        }
+      }
+
       throw new ActionCommandError('Failed To Start Application', resp?.output || 'No Output Available');
     }
 
@@ -499,6 +517,14 @@ export class ActionRunner {
     let buildDir = '';
 
     if (exitCode !== 0) {
+      if (output) {
+        const detected = parseTerminalOutput(output);
+
+        if (detected.length > 0) {
+          addErrors(detected.map((e) => ({ ...e, source: 'build' as const })));
+        }
+      }
+
       const buildResult = {
         path: buildDir,
         exitCode,

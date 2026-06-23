@@ -1,4 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { parseConsoleError } from '~/lib/runtime/error-detector';
+import { addError } from '~/lib/stores/errors';
 import { useStore } from '@nanostores/react';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { ScreenshotSelector } from '~/components/workbench/ScreenshotSelector';
@@ -15,6 +17,7 @@ import { usePreviewResize } from '~/components/workbench/usePreviewResize';
 import { PreviewToolbar } from '~/components/workbench/PreviewToolbar';
 import { DeviceFramePreview } from '~/components/workbench/DeviceFramePreview';
 import { ResizeHandle } from '~/components/workbench/ResizeHandle';
+import { ErrorOverlay } from '~/components/workbench/ErrorOverlay';
 
 interface PreviewProps {
   setSelectedElement?: (element: ElementInfo | null) => void;
@@ -222,6 +225,21 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             // Clipboard write may fail without permissions — still update selection
             setSelectedElement?.(element);
           });
+      } else if (
+        event.data.type === 'preview-error' ||
+        event.data.type === 'preview-console-error' ||
+        event.data.type === 'PREVIEW_UNCAUGHT_EXCEPTION' ||
+        event.data.type === 'PREVIEW_UNHANDLED_REJECTION'
+      ) {
+        const errorData = event.data;
+        const detected = parseConsoleError({
+          message: errorData.message || 'Unknown preview error',
+          filename: errorData.filename,
+          lineno: errorData.lineno,
+          colno: errorData.colno,
+          stack: errorData.stack,
+        });
+        addError(detected);
       }
     };
 
@@ -360,6 +378,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                 setIsSelectionMode={setIsSelectionMode}
                 containerRef={iframeRef}
               />
+              <ErrorOverlay />
             </>
           ) : (
             <div className="flex w-full h-full justify-center items-center bg-ui-background-depth-1 text-ui-textPrimary">
