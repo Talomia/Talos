@@ -184,6 +184,7 @@ CREATE POLICY "snapshots_delete_own" ON public.snapshots
 CREATE OR REPLACE FUNCTION public.update_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
+SET search_path = ''
 AS $$
 BEGIN
   NEW.updated_at = now();
@@ -211,3 +212,21 @@ DROP TRIGGER IF EXISTS set_updated_at ON public.snapshots;
 CREATE TRIGGER set_updated_at
   BEFORE UPDATE ON public.snapshots
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+-- ==========================================
+-- 6. SECURITY HARDENING
+-- ==========================================
+-- Revoke anon access on all tables (only authenticated users should access via RLS)
+-- This prevents GraphQL schema exposure to unauthenticated users.
+
+REVOKE ALL ON public.profiles FROM anon;
+REVOKE ALL ON public.projects FROM anon;
+REVOKE ALL ON public.messages FROM anon;
+REVOKE ALL ON public.snapshots FROM anon;
+
+-- Revoke direct EXECUTE on internal functions from all API roles.
+-- handle_new_user: only called by auth.users trigger (SECURITY DEFINER)
+-- update_updated_at: only called by BEFORE UPDATE triggers
+
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM anon, authenticated, public;
+REVOKE EXECUTE ON FUNCTION public.update_updated_at() FROM anon, authenticated, public;
