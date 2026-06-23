@@ -165,7 +165,42 @@ export const ChatImpl = memo(
             usage,
             messageLength: message.content.length,
           });
+
+          // Record usage for token cost tracking and budget alerts
+          import('~/lib/stores/tokenCost').then(({ recordUsage }) => {
+            recordUsage({
+              provider: provider.name,
+              model,
+              inputTokens: usage.promptTokens ?? 0,
+              outputTokens: usage.completionTokens ?? 0,
+            });
+          });
         }
+
+        // Auto-commit context to ContextGraph (non-blocking)
+        import('~/lib/stores/cortex').then(({ commitContext, cortexInitialized }) => {
+          if (!cortexInitialized.get()) {
+            return;
+          }
+
+          const currentFiles = workbenchStore.files.get();
+          const fileMap: Record<string, string> = {};
+
+          for (const [path, file] of Object.entries(currentFiles)) {
+            if (file?.type === 'file') {
+              fileMap[path] = file.content ?? '';
+            }
+          }
+
+          commitContext({
+            messages: messages.map((m) => ({ role: m.role, content: typeof m.content === 'string' ? m.content : '' })),
+            files: fileMap,
+            summary: `AI response: ${model} via ${provider.name}`,
+            metadata: { model, provider: provider.name, usage },
+          }).catch(() => {
+            // ContextGraph commit is optional — don't break the chat flow
+          });
+        });
 
         logger.debug('Finished streaming');
       },
@@ -203,6 +238,23 @@ export const ChatImpl = memo(
 
     useEffect(() => {
       chatStore.setKey('started', initialMessages.length > 0);
+    }, []);
+
+    // Initialize ContextGraph when chat starts with existing messages
+    useEffect(() => {
+      if (initialMessages.length > 0) {
+        import('~/lib/persistence').then(({ chatId: chatIdAtom }) => {
+          const id = chatIdAtom.get();
+
+          if (id) {
+            import('~/lib/stores/cortex').then(({ initCortex }) => {
+              initCortex(id).catch(() => {
+                // ContextGraph initialization is optional
+              });
+            });
+          }
+        });
+      }
     }, []);
 
     useEffect(() => {

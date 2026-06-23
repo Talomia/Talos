@@ -6,9 +6,6 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.bug-report');
 
-// Rate limiting store (in production, use Redis or similar)
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
 // Input validation schema
 const bugReportSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100, 'Title must be 100 characters or less'),
@@ -41,54 +38,6 @@ function sanitizeInput(input: string): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#x27;')
     .replace(/\//g, '&#x2F;');
-}
-
-// Maximum number of entries to keep in the rate limit store to prevent unbounded growth
-const MAX_RATE_LIMIT_STORE_SIZE = 10000;
-
-// Rate limiting check
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const key = ip;
-
-  // Cleanup expired entries to prevent memory leak
-  for (const [storedKey, data] of rateLimitStore.entries()) {
-    if (now > data.resetTime) {
-      rateLimitStore.delete(storedKey);
-    }
-  }
-
-  // Safety cap: if store is still too large after cleanup, clear it entirely
-  if (rateLimitStore.size > MAX_RATE_LIMIT_STORE_SIZE) {
-    rateLimitStore.clear();
-  }
-
-  const limit = rateLimitStore.get(key);
-
-  if (!limit || now > limit.resetTime) {
-    // Reset window (1 hour)
-    rateLimitStore.set(key, { count: 1, resetTime: now + 60 * 60 * 1000 });
-    return true;
-  }
-
-  if (limit.count >= 5) {
-    // Max 5 reports per hour per IP
-    return false;
-  }
-
-  limit.count += 1;
-  rateLimitStore.set(key, limit);
-
-  return true;
-}
-
-// Get client IP address
-function getClientIP(request: Request): string {
-  const cfConnectingIP = request.headers.get('cf-connecting-ip');
-  const xForwardedFor = request.headers.get('x-forwarded-for');
-  const xRealIP = request.headers.get('x-real-ip');
-
-  return cfConnectingIP || xForwardedFor?.split(',')[0] || xRealIP || 'unknown';
 }
 
 // Basic spam detection
@@ -169,13 +118,6 @@ export const action = withSecurity(
     }
 
     try {
-      // Rate limiting
-      const clientIP = getClientIP(request);
-
-      if (!checkRateLimit(clientIP)) {
-        return json({ error: 'Rate limit exceeded. Please wait before submitting another report.' }, { status: 429 });
-      }
-
       // Parse and validate request body
       const formData = await request.formData();
       const rawData: any = Object.fromEntries(formData.entries());

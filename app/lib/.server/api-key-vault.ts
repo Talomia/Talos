@@ -1,6 +1,6 @@
 import { encrypt, decrypt, getVaultSecret } from './crypto';
 import { createScopedLogger } from '~/utils/logger';
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
+import { getApiKeysFromCookie, parseCookies } from '~/lib/api/cookies';
 
 const logger = createScopedLogger('api-key-vault');
 
@@ -22,7 +22,7 @@ export async function readVault(cookieHeader: string | null, env?: Record<string
     return empty;
   }
 
-  const cookies = parseCookieHeader(cookieHeader);
+  const cookies = parseCookies(cookieHeader);
   const vaultCookie = cookies[COOKIE_NAME];
 
   if (!vaultCookie) {
@@ -62,20 +62,6 @@ export async function writeVault(data: VaultData, env?: Record<string, string>):
   }
 
   return parts.join('; ');
-}
-
-function parseCookieHeader(header: string): Record<string, string> {
-  const cookies: Record<string, string> = {};
-
-  for (const pair of header.split(';')) {
-    const [key, ...rest] = pair.trim().split('=');
-
-    if (key) {
-      cookies[key.trim()] = rest.join('=').trim();
-    }
-  }
-
-  return cookies;
 }
 
 /**

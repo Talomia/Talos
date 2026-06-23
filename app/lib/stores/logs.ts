@@ -10,7 +10,7 @@ export interface LogEntry {
   timestamp: string;
   level: 'info' | 'warning' | 'error' | 'debug';
   message: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   category:
     | 'system'
     | 'provider'
@@ -35,12 +35,12 @@ export interface LogEntry {
     action?: string;
     userId?: string;
     sessionId?: string;
-    previousValue?: any;
-    newValue?: any;
+    previousValue?: unknown;
+    newValue?: unknown;
   };
 }
 
-interface LogDetails extends Record<string, any> {
+interface LogDetails extends Record<string, unknown> {
   type: string;
   message: string;
 }
@@ -168,7 +168,7 @@ class LogStore {
     message: string,
     level: LogEntry['level'],
     category: LogEntry['category'],
-    details?: Record<string, any>,
+    details?: Record<string, unknown>,
     metadata?: LogEntry['metadata'],
   ) {
     const id = this._generateId();
@@ -214,8 +214,8 @@ class LogStore {
       url: string;
       statusCode: number;
       duration: number;
-      request: any;
-      response: any;
+      request: unknown;
+      response: unknown;
     },
   ) {
     const statusCode = details.statusCode;
@@ -226,22 +226,28 @@ class LogStore {
   }
 
   // System events
-  logSystem(message: string, details?: Record<string, any>) {
+  logSystem(message: string, details?: Record<string, unknown>) {
     return this._addLog(message, 'info', 'system', details);
   }
 
   // Provider events
-  logProvider(message: string, details?: Record<string, any>) {
+  logProvider(message: string, details?: Record<string, unknown>) {
     return this._addLog(message, 'info', 'provider', details);
   }
 
   // User actions
-  logUserAction(message: string, details?: Record<string, any>) {
+  logUserAction(message: string, details?: Record<string, unknown>) {
     return this._addLog(message, 'info', 'user', details);
   }
 
   // API Connection Logging
-  logAPIRequest(endpoint: string, method: string, duration: number, statusCode: number, details?: Record<string, any>) {
+  logAPIRequest(
+    endpoint: string,
+    method: string,
+    duration: number,
+    statusCode: number,
+    details?: Record<string, unknown>,
+  ) {
     const message = `${method} ${endpoint} - ${statusCode} (${duration}ms)`;
     const level = statusCode >= 400 ? 'error' : statusCode >= 300 ? 'warning' : 'info';
 
@@ -259,7 +265,7 @@ class LogStore {
   logAuth(
     action: 'login' | 'logout' | 'token_refresh' | 'key_validation',
     success: boolean,
-    details?: Record<string, any>,
+    details?: Record<string, unknown>,
   ) {
     const message = `Auth ${action} - ${success ? 'Success' : 'Failed'}`;
     const level = success ? 'info' : 'error';
@@ -273,7 +279,7 @@ class LogStore {
   }
 
   // Network Status Logging
-  logNetworkStatus(status: 'online' | 'offline' | 'reconnecting' | 'connected', details?: Record<string, any>) {
+  logNetworkStatus(status: 'online' | 'offline' | 'reconnecting' | 'connected', details?: Record<string, unknown>) {
     const message = `Network ${status}`;
     const level = status === 'offline' ? 'error' : status === 'reconnecting' ? 'warning' : 'info';
 
@@ -285,7 +291,7 @@ class LogStore {
   }
 
   // Database Operations Logging
-  logDatabase(operation: string, success: boolean, duration: number, details?: Record<string, any>) {
+  logDatabase(operation: string, success: boolean, duration: number, details?: Record<string, unknown>) {
     const message = `DB ${operation} - ${success ? 'Success' : 'Failed'} (${duration}ms)`;
     const level = success ? 'info' : 'error';
 
@@ -299,7 +305,7 @@ class LogStore {
   }
 
   // Error events
-  logError(message: string, error?: Error | unknown, details?: Record<string, any>) {
+  logError(message: string, error?: Error | unknown, details?: Record<string, unknown>) {
     const errorDetails =
       error instanceof Error
         ? {
@@ -314,12 +320,12 @@ class LogStore {
   }
 
   // Warning events
-  logWarning(message: string, details?: Record<string, any>) {
+  logWarning(message: string, details?: Record<string, unknown>) {
     return this._addLog(message, 'warning', 'system', details);
   }
 
   // Debug events
-  logDebug(message: string, details?: Record<string, any>) {
+  logDebug(message: string, details?: Record<string, unknown>) {
     return this._addLog(message, 'debug', 'system', details);
   }
 
@@ -367,8 +373,8 @@ class LogStore {
     endpoint: string,
     statusCode: number,
     duration: number,
-    requestData?: any,
-    responseData?: any,
+    requestData?: unknown,
+    responseData?: unknown,
   ) {
     return this._addLog(
       `API ${method} ${endpoint}`,
@@ -395,8 +401,8 @@ class LogStore {
     url: string,
     statusCode: number,
     duration: number,
-    requestData?: any,
-    responseData?: any,
+    requestData?: unknown,
+    responseData?: unknown,
   ) {
     return this._addLog(
       `${method} ${url}`,
@@ -418,7 +424,7 @@ class LogStore {
   }
 
   // Authentication events
-  logAuthEvent(event: string, success: boolean, details?: Record<string, any>) {
+  logAuthEvent(event: string, success: boolean, details?: Record<string, unknown>) {
     return this._addLog(
       `Auth ${event} ${success ? 'succeeded' : 'failed'}`,
       success ? 'info' : 'error',
@@ -432,7 +438,7 @@ class LogStore {
   }
 
   // Performance tracking
-  logPerformance(operation: string, duration: number, details?: Record<string, any>) {
+  logPerformance(operation: string, duration: number, details?: Record<string, unknown>) {
     return this._addLog(
       `Performance: ${operation}`,
       duration > 1000 ? 'warning' : 'info',
@@ -450,7 +456,7 @@ class LogStore {
   }
 
   // Error handling
-  logErrorWithStack(error: Error, category: LogEntry['category'] = 'error', details?: Record<string, any>) {
+  logErrorWithStack(error: Error, category: LogEntry['category'] = 'error', details?: Record<string, unknown>) {
     return this._addLog(
       error.message,
       'error',
@@ -490,14 +496,14 @@ class LogStore {
       url: string;
       statusCode: number;
       duration: number;
-      request: any;
-      response: any;
+      request: unknown;
+      response: unknown;
     },
   ) {
     return this._addApiLog(`API ${method} ${url}`, method, url, details);
   }
 
-  logSettingsChange(component: string, setting: string, oldValue: any, newValue: any) {
+  logSettingsChange(component: string, setting: string, oldValue: unknown, newValue: unknown) {
     return this._addLog(
       `Settings changed in ${component}: ${setting}`,
       'info',
@@ -529,7 +535,7 @@ class LogStore {
     );
   }
 
-  logTaskOperation(taskId: string, operation: string, status: string, details?: any) {
+  logTaskOperation(taskId: string, operation: string, status: string, details?: Record<string, unknown>) {
     return this._addLog(
       `Task ${taskId}: ${operation} - ${status}`,
       'info',
@@ -542,7 +548,7 @@ class LogStore {
     );
   }
 
-  logProviderAction(provider: string, action: string, success: boolean, details?: any) {
+  logProviderAction(provider: string, action: string, success: boolean, details?: Record<string, unknown>) {
     return this._addLog(
       `Provider ${provider}: ${action} - ${success ? 'Success' : 'Failed'}`,
       success ? 'info' : 'error',
@@ -555,7 +561,7 @@ class LogStore {
     );
   }
 
-  logPerformanceMetric(component: string, operation: string, duration: number, details?: any) {
+  logPerformanceMetric(component: string, operation: string, duration: number, details?: Record<string, unknown>) {
     return this._addLog(
       `Performance: ${component} - ${operation} took ${duration}ms`,
       duration > 1000 ? 'warning' : 'info',

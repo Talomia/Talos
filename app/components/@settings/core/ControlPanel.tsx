@@ -32,6 +32,9 @@ const NetlifyTab = lazy(() => import('~/components/@settings/tabs/netlify/Netlif
 const CloudProvidersTab = lazy(() => import('~/components/@settings/tabs/providers/cloud/CloudProvidersTab'));
 const LocalProvidersTab = lazy(() => import('~/components/@settings/tabs/providers/local/LocalProvidersTab'));
 const McpTab = lazy(() => import('~/components/@settings/tabs/mcp/McpTab'));
+const UsageTab = lazy(() =>
+  import('~/components/@settings/tabs/usage/UsageTab').then((m) => ({ default: m.UsageTab })),
+);
 
 const TabLoadingSpinner = () => (
   <div className="flex items-center justify-center p-8">
@@ -162,6 +165,8 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
         return <EventLogsTab />;
       case 'mcp':
         return <McpTab />;
+      case 'usage':
+        return <UsageTab />;
 
       default:
         return null;

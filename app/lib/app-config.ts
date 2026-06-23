@@ -55,6 +55,7 @@ export const STORAGE_KEYS = {
   isDebugMode: 'app_debug_mode',
   errorLogs: 'app_error_logs',
   lastAcknowledgedUpdate: 'app_last_acknowledged_update',
+  features: 'app_features',
 } as const;
 
 /*

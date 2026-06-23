@@ -26,6 +26,7 @@ import { Search } from './Search'; // <-- Ensure Search is imported
 import { classNames } from '~/utils/classNames'; // <-- Import classNames if not already present
 import { LockManager } from './LockManager'; // <-- Import LockManager
 import { WorkbenchWelcome } from './WorkbenchWelcome';
+import { CortexPanel, ThinkFlowPanel } from '~/components/cortex';
 
 interface EditorPanelProps {
   files?: FileMap;
@@ -86,8 +87,12 @@ export const EditorPanel = memo(
         <Panel defaultSize={showTerminal ? DEFAULT_EDITOR_SIZE : 100} minSize={20}>
           <PanelGroup direction="horizontal">
             <Panel defaultSize={20} minSize={15} collapsible className="border-r border-ui-borderColor">
-              <div className="h-full">
-                <Tabs.Root defaultValue="files" className="flex flex-col h-full">
+              <div className="h-full flex flex-col overflow-hidden">
+                {/* Cortex Panel — context graph & branch navigation */}
+                <CortexPanel />
+                <ThinkFlowPanel />
+
+                <Tabs.Root defaultValue="files" className="flex flex-col flex-1 min-h-0">
                   <PanelHeader className="w-full text-sm font-medium text-ui-textSecondary px-1">
                     <div className="h-full flex-shrink-0 flex items-center justify-between w-full">
                       <Tabs.List className="h-full flex-shrink-0 flex items-center">

@@ -88,6 +88,8 @@ export const shortcutsStore = map<Shortcuts>({
 // Create a single key for provider settings
 const PROVIDER_SETTINGS_KEY = 'provider_settings';
 const AUTO_ENABLED_KEY = 'auto_enabled_providers';
+const CONFIGURED_PROVIDERS_CACHE_KEY = 'app_configured_providers';
+const CONFIGURED_PROVIDERS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Add this helper function at the top of the file
 const isBrowser = typeof window !== 'undefined';
@@ -99,9 +101,26 @@ interface ConfiguredProvider {
   configMethod: 'environment' | 'none';
 }
 
-// Fetch configured providers from server
+// Fetch configured providers from server with session caching
 const fetchConfiguredProviders = async (): Promise<ConfiguredProvider[]> => {
   try {
+    // Check sessionStorage cache first
+    if (isBrowser) {
+      try {
+        const cached = sessionStorage.getItem(CONFIGURED_PROVIDERS_CACHE_KEY);
+
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached) as { data: ConfiguredProvider[]; timestamp: number };
+
+          if (Date.now() - timestamp < CONFIGURED_PROVIDERS_CACHE_TTL) {
+            return data;
+          }
+        }
+      } catch {
+        // Ignore cache read errors
+      }
+    }
+
     const response = await fetch('/api/configured-providers');
 
     if (!response.ok) {
@@ -109,8 +128,21 @@ const fetchConfiguredProviders = async (): Promise<ConfiguredProvider[]> => {
     }
 
     const data = (await response.json()) as { providers?: ConfiguredProvider[] };
+    const providers = data.providers || [];
 
-    return data.providers || [];
+    // Cache result in sessionStorage
+    if (isBrowser) {
+      try {
+        sessionStorage.setItem(
+          CONFIGURED_PROVIDERS_CACHE_KEY,
+          JSON.stringify({ data: providers, timestamp: Date.now() }),
+        );
+      } catch {
+        // Ignore cache write errors
+      }
+    }
+
+    return providers;
   } catch (error) {
     logger.error('Error fetching configured providers:', error);
     return [];
@@ -206,10 +238,12 @@ const autoEnableConfiguredProviders = async () => {
 
       // Save to localStorage
       safeSetItem(PROVIDER_SETTINGS_KEY, JSON.stringify(currentSettings));
+      import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
 
       // Update the auto-enabled providers list
       const allAutoEnabled = [...new Set([...previouslyAutoEnabled, ...newlyAutoEnabled])];
       safeSetItem(AUTO_ENABLED_KEY, JSON.stringify(allAutoEnabled));
+      import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
 
       logger.info(`Auto-enabled providers: ${newlyAutoEnabled.join(', ')}`);
     }
@@ -251,6 +285,7 @@ export const updateProviderSettings = (provider: string, settings: ProviderSetti
   if (typeof window !== 'undefined') {
     const allSettings = providersStore.get();
     safeSetItem(PROVIDER_SETTINGS_KEY, JSON.stringify(allSettings));
+    import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
   }
 
   // If this is a local provider, update the auto-enabled tracking
@@ -274,11 +309,13 @@ const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => 
       if (!currentAutoEnabled.includes(providerName)) {
         currentAutoEnabled.push(providerName);
         safeSetItem(AUTO_ENABLED_KEY, JSON.stringify(currentAutoEnabled));
+        import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
       }
     } else {
       // If user disables provider, remove from auto-enabled list (respect user choice)
       const updatedAutoEnabled = currentAutoEnabled.filter((name: string) => name !== providerName);
       safeSetItem(AUTO_ENABLED_KEY, JSON.stringify(updatedAutoEnabled));
+      import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
     }
   } catch (error) {
     logger.error('Error updating auto-enabled tracking:', error);
@@ -352,26 +389,31 @@ export const promptStore = atom<string>(initialSettings.promptId);
 export const updateLatestBranch = (enabled: boolean) => {
   latestBranchStore.set(enabled);
   safeSetItem(SETTINGS_KEYS.LATEST_BRANCH, JSON.stringify(enabled));
+  import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
 };
 
 export const updateAutoSelectTemplate = (enabled: boolean) => {
   autoSelectStarterTemplate.set(enabled);
   safeSetItem(SETTINGS_KEYS.AUTO_SELECT_TEMPLATE, JSON.stringify(enabled));
+  import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
 };
 
 export const updateContextOptimization = (enabled: boolean) => {
   enableContextOptimizationStore.set(enabled);
   safeSetItem(SETTINGS_KEYS.CONTEXT_OPTIMIZATION, JSON.stringify(enabled));
+  import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
 };
 
 export const updateEventLogs = (enabled: boolean) => {
   isEventLogsEnabled.set(enabled);
   safeSetItem(SETTINGS_KEYS.EVENT_LOGS, JSON.stringify(enabled));
+  import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
 };
 
 export const updatePromptId = (id: string) => {
   promptStore.set(id);
   safeSetItem(SETTINGS_KEYS.PROMPT_ID, id);
+  import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
 };
 
 export const updateDebugMode = (enabled: boolean) => {
@@ -379,6 +421,7 @@ export const updateDebugMode = (enabled: boolean) => {
 
   if (typeof window !== 'undefined') {
     safeSetItem(SETTINGS_KEYS.DEBUG_MODE, JSON.stringify(enabled));
+    import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
   }
 };
 
@@ -422,6 +465,7 @@ if (isBrowser) {
   const unsubscribeTabConfig = tabConfigurationStore.subscribe((config) => {
     try {
       safeSetItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(config));
+      import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
     } catch (error) {
       logger.error('Failed to persist tab configuration:', error);
     }
@@ -444,5 +488,6 @@ export const resetTabConfiguration = () => {
 
   if (typeof window !== 'undefined') {
     safeSetItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(defaultConfig));
+    import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());
   }
 };

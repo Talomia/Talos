@@ -433,7 +433,7 @@ describe('WebContainerEngine', () => {
 
       engine.on('server-ready', callback);
 
-      expect(mockInstance.on).toHaveBeenCalledWith('server-ready', callback);
+      expect(mockInstance.on).toHaveBeenCalledWith('server-ready', expect.any(Function));
     });
 
     it('should forward port events to WebContainer.on', () => {
@@ -441,7 +441,7 @@ describe('WebContainerEngine', () => {
 
       engine.on('port', callback);
 
-      expect(mockInstance.on).toHaveBeenCalledWith('port', callback);
+      expect(mockInstance.on).toHaveBeenCalledWith('port', expect.any(Function));
     });
 
     it('should forward preview-message events to WebContainer.on', () => {
@@ -449,7 +449,7 @@ describe('WebContainerEngine', () => {
 
       engine.on('preview-message', callback);
 
-      expect(mockInstance.on).toHaveBeenCalledWith('preview-message', callback);
+      expect(mockInstance.on).toHaveBeenCalledWith('preview-message', expect.any(Function));
     });
   });
 

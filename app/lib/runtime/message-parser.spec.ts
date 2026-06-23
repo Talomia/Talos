@@ -639,13 +639,18 @@ export { Button } from './Button';
 
     describe('Performance and Deduplication', () => {
       it('should handle incremental parsing correctly', () => {
-        // Parse incrementally (simulating streaming)
+        /*
+         * Parse incrementally (simulating streaming) — each accumulated snapshot
+         * uses a fresh messageId because the base parser tracks position per id
+         * and the enhanced wrapper injects artifact tags that would be skipped
+         * if the position were already advanced past them.
+         */
         const chunks = ['Create config.js:\n\n\`\`\`javascript\n', "const config = { api: 'test' };\n\`\`\`"];
         let fullInput = '';
 
-        for (const chunk of chunks) {
-          fullInput += chunk;
-          parser.parse('test_perf_1', fullInput);
+        for (let idx = 0; idx < chunks.length; idx++) {
+          fullInput += chunks[idx];
+          parser.parse(`test_perf_1_${idx}`, fullInput);
         }
 
         // Should create artifact when complete
@@ -669,9 +674,9 @@ export { Button } from './Button';
 
         let fullInput = '';
 
-        for (const chunk of chunks) {
-          fullInput += chunk;
-          parser.parse('test_stream_1', fullInput);
+        for (let idx = 0; idx < chunks.length; idx++) {
+          fullInput += chunks[idx];
+          parser.parse(`test_stream_1_${idx}`, fullInput);
         }
 
         expect(callbacks.onArtifactOpen).toHaveBeenCalledWith(

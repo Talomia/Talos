@@ -1,22 +1,5 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
-
-/** Parse cookies from a Cookie header string into a key-value record. */
-function parseCookie(cookieHeader: string): Record<string, string> {
-  const cookies: Record<string, string> = {};
-
-  for (const pair of cookieHeader.split(';')) {
-    const eqIdx = pair.indexOf('=');
-
-    if (eqIdx > 0) {
-      const key = pair.slice(0, eqIdx).trim();
-      const value = pair.slice(eqIdx + 1).trim();
-      cookies[key] = decodeURIComponent(value);
-    }
-  }
-
-  return cookies;
-}
-
+import { parseCookies } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Security');
@@ -349,7 +332,7 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
     // Enforce authentication if required (checked BEFORE rate limiting)
     if (options.requireAuth) {
       const cookieHeader = request.headers.get('Cookie') || '';
-      const cookies = parseCookie(cookieHeader);
+      const cookies = parseCookies(cookieHeader);
 
       if (!cookies.rc_vault) {
         return new Response(JSON.stringify({ error: 'Authentication required' }), {

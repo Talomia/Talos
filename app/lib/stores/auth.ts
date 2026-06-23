@@ -50,6 +50,9 @@ export async function initAuth(): Promise<() => void> {
         identifyUser({ id: data.user!.id, email: data.user!.email || undefined, name: data.user!.name || undefined }),
       );
 
+      // Enable settings cloud sync
+      import('~/lib/persistence/settingsSync').then(({ enableSettingsSync }) => enableSettingsSync());
+
       // Set up periodic session refresh every 5 minutes
       intervalId = setInterval(
         async () => {
@@ -207,6 +210,9 @@ export async function signOut(): Promise<void> {
 
     // Clear monitoring identity
     import('~/lib/monitoring').then(({ clearUser }) => clearUser());
+
+    // Disable settings cloud sync
+    import('~/lib/persistence/settingsSync').then(({ disableSettingsSync }) => disableSettingsSync());
   } catch (_err) {
     logger.error('Failed to sign out:', _err);
 

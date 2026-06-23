@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { type ActionFunctionArgs, json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
@@ -9,45 +9,30 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
   const authHeader = request.headers.get('Authorization');
 
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'No authorization token provided' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ error: 'No authorization token provided' }, { status: 401 });
   }
 
   try {
     const { projectId, query } = (await request.json()) as { projectId: string; query: string };
 
     if (!projectId || typeof projectId !== 'string' || !/^[a-zA-Z0-9_-]+$/.test(projectId)) {
-      return new Response(JSON.stringify({ error: 'Invalid project ID' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Invalid project ID' }, { status: 400 });
     }
 
     if (!query || typeof query !== 'string' || query.trim().length === 0) {
-      return new Response(JSON.stringify({ error: 'Query is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Query is required' }, { status: 400 });
     }
 
     // SQL injection guards
     const MAX_QUERY_LENGTH = 10000;
 
     if (query.length > MAX_QUERY_LENGTH) {
-      return new Response(JSON.stringify({ error: 'Query too long' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Query too long' }, { status: 400 });
     }
 
     // Reject multi-statement attacks (semicolons)
     if (query.includes(';')) {
-      return new Response(JSON.stringify({ error: 'Multi-statement queries are not allowed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Multi-statement queries are not allowed' }, { status: 400 });
     }
 
     const normalizedQuery = query.trim().toUpperCase();
@@ -57,10 +42,7 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
     const startsWithAllowed = ALLOWED_STATEMENTS.some((stmt) => normalizedQuery.startsWith(stmt));
 
     if (!startsWithAllowed) {
-      return new Response(JSON.stringify({ error: 'Only SELECT, INSERT, and UPDATE queries are allowed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'Only SELECT, INSERT, and UPDATE queries are allowed' }, { status: 400 });
     }
 
     // Reject DDL and dangerous statements anywhere in the query
@@ -71,32 +53,20 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
     const CTE_MUTATE_PATTERN = /\bWITH\b[\s\S]+\b(DELETE|UPDATE)\b/i;
 
     if (DDL_PATTERN.test(query)) {
-      return new Response(JSON.stringify({ error: 'DDL statements are not allowed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'DDL statements are not allowed' }, { status: 400 });
     }
 
     if (DANGEROUS_PATTERN.test(query) || ANON_BLOCK_PATTERN.test(query) || SET_PATTERN.test(query)) {
-      return new Response(JSON.stringify({ error: 'This statement type is not allowed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'This statement type is not allowed' }, { status: 400 });
     }
 
     if (CTE_MUTATE_PATTERN.test(query)) {
-      return new Response(JSON.stringify({ error: 'WITH ... DELETE/UPDATE patterns are not allowed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'WITH ... DELETE/UPDATE patterns are not allowed' }, { status: 400 });
     }
 
     // Reject DELETE without WHERE
     if (/\bDELETE\b/i.test(query)) {
-      return new Response(JSON.stringify({ error: 'DELETE statements are not allowed' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return json({ error: 'DELETE statements are not allowed' }, { status: 400 });
     }
 
     logger.debug('Executing query:', { projectId, queryLength: query.length, preview: query.slice(0, 80) });
@@ -134,43 +104,29 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
         }),
       );
 
-      return new Response(
-        JSON.stringify({
+      return json(
+        {
           error: {
             status: response.status,
             message: 'Query execution failed',
           },
-        }),
-        {
-          status: response.status,
-          headers: {
-            'Content-Type': 'application/json',
-          },
         },
+        { status: response.status },
       );
     }
 
     const result = await response.json();
 
-    return new Response(JSON.stringify(result), {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return json(result);
   } catch (error) {
     logger.error('Query execution error:', error);
-    return new Response(
-      JSON.stringify({
+    return json(
+      {
         error: {
           message: 'Query execution failed',
         },
-      }),
-      {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json',
-        },
       },
+      { status: 500 },
     );
   }
 }

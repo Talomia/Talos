@@ -257,7 +257,9 @@ const NotificationsTab = () => {
           </motion.div>
         ) : (
           filteredLogs.map((log) => {
-            const style = getNotificationStyle(log.level, log.details?.type);
+            const detailType = log.details?.type;
+            const style = getNotificationStyle(log.level, typeof detailType === 'string' ? detailType : undefined);
+
             return (
               <motion.div
                 key={log.id}

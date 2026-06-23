@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { createScopedLogger } from '~/utils/logger';
+import { STORAGE_KEYS } from '~/lib/app-config';
 
 const logger = createScopedLogger('Features');
 
-// TODO: Replace with real feature flags backend when available
 interface Feature {
   id: string;
   name: string;
@@ -12,12 +12,45 @@ interface Feature {
   releaseDate: string;
 }
 
-const getFeatureFlags = async (): Promise<Feature[]> => [];
-const markFeatureViewed = async (_featureId: string): Promise<void> => {
-  // TODO: Implement when feature flags backend is available
+const FEATURE_REGISTRY: Feature[] = [
+  {
+    id: 'cortex-context-graph',
+    name: 'Context Graph',
+    description: 'Git-like versioning for AI conversation context with branching and merging',
+    viewed: false,
+    releaseDate: '2026-06-23',
+  },
+  {
+    id: 'cortex-think-flow',
+    name: 'ThinkFlow',
+    description: 'Parallel thinking orchestration for multi-path AI reasoning',
+    viewed: false,
+    releaseDate: '2026-06-23',
+  },
+  {
+    id: 'cloud-sync',
+    name: 'Cloud Sync',
+    description: 'Cross-device synchronization of projects, settings, and chat history',
+    viewed: false,
+    releaseDate: '2026-06-23',
+  },
+];
+
+const getFeatureFlags = (): Feature[] => {
+  const viewedIds = getViewedFeatures();
+  return FEATURE_REGISTRY.map((feature) => ({
+    ...feature,
+    viewed: viewedIds.includes(feature.id),
+  }));
 };
 
-const VIEWED_FEATURES_KEY = 'app_viewed_features';
+const markFeatureViewed = (featureId: string): void => {
+  const viewedIds = getViewedFeatures();
+
+  if (!viewedIds.includes(featureId)) {
+    setViewedFeatures([...viewedIds, featureId]);
+  }
+};
 
 const getViewedFeatures = (): string[] => {
   if (typeof window === 'undefined') {
@@ -25,7 +58,7 @@ const getViewedFeatures = (): string[] => {
   }
 
   try {
-    const stored = localStorage.getItem(VIEWED_FEATURES_KEY);
+    const stored = localStorage.getItem(STORAGE_KEYS.features);
     return stored ? JSON.parse(stored) : [];
   } catch {
     return [];
@@ -38,7 +71,7 @@ const setViewedFeatures = (featureIds: string[]) => {
   }
 
   try {
-    localStorage.setItem(VIEWED_FEATURES_KEY, JSON.stringify(featureIds));
+    localStorage.setItem(STORAGE_KEYS.features, JSON.stringify(featureIds));
   } catch (error) {
     logger.error('Failed to persist viewed features:', error);
   }
@@ -50,9 +83,9 @@ export const useFeatures = () => {
   const [viewedFeatureIds, setViewedFeatureIds] = useState<string[]>(() => getViewedFeatures());
 
   useEffect(() => {
-    const checkNewFeatures = async () => {
+    const checkNewFeatures = () => {
       try {
-        const features = await getFeatureFlags();
+        const features = getFeatureFlags();
         const unviewed = features.filter((feature) => !viewedFeatureIds.includes(feature.id));
         setUnviewedFeatures(unviewed);
         setHasNewFeatures(unviewed.length > 0);
@@ -64,9 +97,9 @@ export const useFeatures = () => {
     checkNewFeatures();
   }, [viewedFeatureIds]);
 
-  const acknowledgeFeature = async (featureId: string) => {
+  const acknowledgeFeature = (featureId: string) => {
     try {
-      await markFeatureViewed(featureId);
+      markFeatureViewed(featureId);
 
       const newViewedIds = [...viewedFeatureIds, featureId];
       setViewedFeatureIds(newViewedIds);
@@ -78,9 +111,9 @@ export const useFeatures = () => {
     }
   };
 
-  const acknowledgeAllFeatures = async () => {
+  const acknowledgeAllFeatures = () => {
     try {
-      await Promise.all(unviewedFeatures.map((feature) => markFeatureViewed(feature.id)));
+      unviewedFeatures.forEach((feature) => markFeatureViewed(feature.id));
 
       const newViewedIds = [...viewedFeatureIds, ...unviewedFeatures.map((f) => f.id)];
       setViewedFeatureIds(newViewedIds);

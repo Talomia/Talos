@@ -4,12 +4,14 @@ const logger = createScopedLogger('HeaderActionButtons');
 import { useStore } from '@nanostores/react';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { DeployButton } from '~/components/deploy/DeployButton';
+import { TokenUsageIndicator } from '~/components/chat/TokenUsageIndicator';
+import { CloudSyncStatus } from '~/components/chat/CloudSyncStatus';
 
 interface HeaderActionButtonsProps {
   chatStarted: boolean;
 }
 
-export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionButtonsProps) {
+export function HeaderActionButtons({ chatStarted }: HeaderActionButtonsProps) {
   const activePreviewIndex = 0;
   const previews = useStore(workbenchStore.previews);
   const activePreview = previews[activePreviewIndex];
@@ -17,7 +19,15 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
   const shouldShowButtons = activePreview;
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2">
+      {/* Token Usage & Sync Status — always visible when chat is active */}
+      {chatStarted && (
+        <div className="flex items-center gap-1.5">
+          <CloudSyncStatus />
+          <TokenUsageIndicator />
+        </div>
+      )}
+
       {/* Deploy Button */}
       {shouldShowButtons && <DeployButton />}
 

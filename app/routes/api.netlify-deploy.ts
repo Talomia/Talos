@@ -4,7 +4,7 @@ import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.netlify-deploy');
-import crypto from 'crypto';
+
 import type { NetlifySiteInfo } from '~/types/netlify';
 
 interface DeployRequestBody {
@@ -43,6 +43,15 @@ async function readNetlifyError(response: Response) {
   } catch {
     return undefined;
   }
+}
+
+async function sha1Hex(content: string | Uint8Array): Promise<string> {
+  const data = typeof content === 'string' ? new TextEncoder().encode(content) : content;
+  const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 async function netlifyDeployAction({ request }: ActionFunctionArgs) {
@@ -163,7 +172,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     for (const [filePath, content] of Object.entries(files)) {
       // Ensure file path starts with a forward slash
       const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
-      const hash = crypto.createHash('sha1').update(content).digest('hex');
+      const hash = await sha1Hex(content);
       fileDigests[normalizedPath] = hash;
     }
 

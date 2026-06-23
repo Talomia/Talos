@@ -6,11 +6,32 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('DataImport');
 
+interface ImportedMessage {
+  id?: string;
+  role: string;
+  content: string;
+  name?: string;
+  function_call?: unknown;
+  timestamp?: number;
+}
+
+interface ImportedChat {
+  id: string;
+  description?: string;
+  messages: ImportedMessage[];
+  timestamp?: string;
+  urlId?: string;
+  metadata?: Record<string, unknown>;
+}
+
+const MAX_FILE_SIZE_MB = 50;
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
 interface UseDataImportParams {
   db: IDBDatabase | null | undefined;
   showProgress: (message: string, percent: number) => void;
   setIsImporting: (value: boolean) => void;
-  setLastOperation: (op: { type: string; data: any } | null) => void;
+  setLastOperation: (op: { type: string; data: unknown } | null) => void;
   onReloadSettings?: () => void;
   onReloadChats?: () => void;
 }
@@ -32,6 +53,14 @@ export function useDataImport({
    */
   const handleImportSettings = useCallback(
     async (file: File) => {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast.error(
+          `File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is ${MAX_FILE_SIZE_MB}MB.`,
+          { position: 'bottom-right', autoClose: 5000 },
+        );
+        return;
+      }
+
       setIsImporting(true);
 
       // Dismiss any existing toast first
@@ -102,6 +131,14 @@ export function useDataImport({
    */
   const handleImportChats = useCallback(
     async (file: File) => {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast.error(
+          `File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is ${MAX_FILE_SIZE_MB}MB.`,
+          { position: 'bottom-right', autoClose: 5000 },
+        );
+        return;
+      }
+
       if (!db) {
         toast.error('Database not available', {
           position: 'bottom-right',
@@ -173,8 +210,8 @@ export function useDataImport({
         // Step 3: Validate each chat object
         showProgress('Validating chat data', 30);
 
-        for (let i = 0; i < (normalizedData.chats as any[]).length; i++) {
-          const chat = (normalizedData.chats as any[])[i];
+        for (let i = 0; i < (normalizedData.chats as ImportedChat[]).length; i++) {
+          const chat = (normalizedData.chats as ImportedChat[])[i];
 
           if (!chat || typeof chat !== 'object') {
             toast.dismiss('progress-toast');
@@ -209,9 +246,9 @@ export function useDataImport({
 
         showProgress('Building validated chat objects', 40);
 
-        const validatedChats = (normalizedData.chats as any[]).map((chat: any) => {
+        const validatedChats = (normalizedData.chats as ImportedChat[]).map((chat: ImportedChat) => {
           // Ensure each message has required fields
-          const validatedMessages = chat.messages.map((msg: any) => {
+          const validatedMessages = chat.messages.map((msg: ImportedMessage) => {
             if (!msg.role || !msg.content) {
               throw new Error('Invalid message format: missing required fields');
             }
@@ -336,6 +373,14 @@ export function useDataImport({
    */
   const handleImportAPIKeys = useCallback(
     async (file: File) => {
+      if (file.size > MAX_FILE_SIZE_BYTES) {
+        toast.error(
+          `File is too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum allowed size is ${MAX_FILE_SIZE_MB}MB.`,
+          { position: 'bottom-right', autoClose: 5000 },
+        );
+        return;
+      }
+
       setIsImporting(true);
 
       // Dismiss any existing toast first

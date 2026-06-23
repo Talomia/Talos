@@ -72,11 +72,11 @@ export const action = withSecurity(async ({ request, context }: ActionFunctionAr
         id: string;
         urlId: string;
         description?: string;
-        messages: any[];
-        metadata?: Record<string, any>;
+        messages: unknown[];
+        metadata?: Record<string, unknown>;
         snapshot?: {
           chatIndex: string;
-          files: Record<string, any>;
+          files: Record<string, unknown>;
           summary?: string;
         };
       }>();

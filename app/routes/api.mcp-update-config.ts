@@ -1,18 +1,15 @@
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
-import { MCPService, type MCPConfig } from '~/lib/services/mcpService';
+import { MCPService, mcpConfigSchema } from '~/lib/services/mcpService';
 import { z } from 'zod';
 
 const logger = createScopedLogger('api.mcp-update-config');
 
 export const action = withSecurity(async ({ request }: ActionFunctionArgs) => {
   try {
-    const mcpConfig = (await request.json()) as MCPConfig;
-
-    if (!mcpConfig || typeof mcpConfig !== 'object') {
-      return Response.json({ error: 'Invalid MCP servers configuration' }, { status: 400 });
-    }
+    const rawBody = await request.json();
+    const mcpConfig = mcpConfigSchema.parse(rawBody);
 
     const mcpService = MCPService.getInstance();
     const serverTools = await mcpService.updateConfig(mcpConfig);

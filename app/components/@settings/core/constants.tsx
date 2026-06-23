@@ -52,6 +52,7 @@ export const TAB_ICONS: Record<TabType, string | React.ComponentType<{ className
   supabase: () => <SupabaseIcon />,
   'event-logs': 'i-ph:list',
   mcp: 'i-ph:wrench',
+  usage: 'i-ph:coins',
 };
 
 export const TAB_LABELS: Record<TabType, string> = {
@@ -69,6 +70,7 @@ export const TAB_LABELS: Record<TabType, string> = {
   supabase: 'Supabase',
   'event-logs': 'Event Logs',
   mcp: 'MCP Servers',
+  usage: 'Usage',
 };
 
 export const TAB_DESCRIPTIONS: Record<TabType, string> = {
@@ -86,6 +88,7 @@ export const TAB_DESCRIPTIONS: Record<TabType, string> = {
   supabase: 'Setup Supabase database connection',
   'event-logs': 'View system events and logs',
   mcp: 'Configure MCP (Model Context Protocol) servers',
+  usage: 'View token usage, costs, and budget',
 };
 
 export const DEFAULT_TAB_CONFIG = [
@@ -100,8 +103,9 @@ export const DEFAULT_TAB_CONFIG = [
   { id: 'vercel', visible: true, window: 'user' as const, order: 7 },
   { id: 'supabase', visible: true, window: 'user' as const, order: 8 },
   { id: 'notifications', visible: true, window: 'user' as const, order: 9 },
-  { id: 'event-logs', visible: true, window: 'user' as const, order: 10 },
-  { id: 'mcp', visible: true, window: 'user' as const, order: 11 },
+  { id: 'usage', visible: true, window: 'user' as const, order: 10 },
+  { id: 'event-logs', visible: true, window: 'user' as const, order: 11 },
+  { id: 'mcp', visible: true, window: 'user' as const, order: 12 },
 
   // User Window Tabs (In dropdown, initially hidden)
 ];

@@ -1,4 +1,4 @@
-import { type ActionFunctionArgs } from '@remix-run/cloudflare';
+import { type ActionFunctionArgs, json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
 import { readVault } from '~/lib/.server/api-key-vault';
 import { createDataStream, generateId } from 'ai';
@@ -26,19 +26,32 @@ export async function action(args: ActionFunctionArgs) {
 const logger = createScopedLogger('api.chat');
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
+  // Abort controller for the LLM stream — allows recovery to abort a stalled request
+  const streamAbortController = new AbortController();
+
   const streamRecovery = new StreamRecoveryManager({
     timeout: 45000,
     maxRetries: 2,
-    onTimeout: () => {
-      logger.warn('Stream timeout - attempting recovery');
+    onStallDetected: (attempt, isRecoverable) => {
+      logger.warn(`Stream stall detected (attempt ${attempt}, recoverable: ${isRecoverable})`);
+    },
+    onRetry: async (attempt) => {
+      logger.info(`Stream recovery attempt ${attempt} — aborting stalled stream`);
+
+      // Abort the current stream so the provider connection is released
+      streamAbortController.abort();
+    },
+    onRecovery: (attempt) => {
+      logger.info(`Stream recovered after ${attempt} attempt(s)`);
     },
     onMaxRetriesReached: () => {
-      logger.error('Stream stalled beyond recovery — notifying client');
+      logger.error('Stream stalled beyond recovery — aborting');
+      streamAbortController.abort();
     },
   });
 
   let messages: Messages;
-  let files: any;
+  let files: FileMap | undefined;
   let promptId: string | undefined;
   let contextOptimization: boolean;
   let supabase:
@@ -52,7 +65,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     ({ messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps } =
       await request.json<{
         messages: Messages;
-        files: any;
+        files: FileMap | undefined;
         promptId?: string;
         contextOptimization: boolean;
         chatMode: 'discuss' | 'build';
@@ -68,10 +81,20 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         maxLLMSteps: number;
       }>());
   } catch {
-    return new Response(JSON.stringify({ error: true, message: 'Invalid or malformed JSON in request body' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return json({ error: true, message: 'Invalid or malformed JSON in request body' }, { status: 400 });
+  }
+
+  // Validate required fields
+  if (!Array.isArray(messages) || messages.length < 1) {
+    return json({ error: true, message: 'messages must be a non-empty array' }, { status: 400 });
+  }
+
+  if (chatMode !== 'discuss' && chatMode !== 'build') {
+    return json({ error: true, message: "chatMode must be 'discuss' or 'build'" }, { status: 400 });
+  }
+
+  if (typeof maxLLMSteps !== 'number' || maxLLMSteps <= 0 || maxLLMSteps > 20) {
+    return json({ error: true, message: 'maxLLMSteps must be a positive number ≤ 20' }, { status: 400 });
   }
 
   const cookieHeader = request.headers.get('Cookie');
@@ -226,7 +249,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             messages: [...processedMessages],
             env: context.cloudflare?.env,
             apiKeys,
-            files,
+            files: files ?? ({} as FileMap),
             providerSettings,
             promptId,
             contextOptimization,
@@ -356,7 +379,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               try {
                 for await (const part of result.fullStream) {
                   if (part.type === 'error') {
-                    const error: any = part.error;
+                    const error = part.error as Error & { provider?: string };
                     logger.error(`Continuation stream error: ${error}`);
                     dataStream.writeMessageAnnotation({
                       type: 'error',
@@ -367,7 +390,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                     return;
                   }
                 }
-              } catch (continuationError: any) {
+              } catch (continuationError: unknown) {
                 logger.error('Continuation stream consumption error:', continuationError);
                 dataStream.writeMessageAnnotation({
                   type: 'error',
@@ -414,7 +437,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               streamRecovery.updateActivity();
 
               if (part.type === 'error') {
-                const error: any = part.error;
+                const error = part.error as Error & { provider?: string };
                 logger.error('Streaming error:', error);
                 streamRecovery.stop();
 
@@ -436,11 +459,14 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               }
             }
             streamRecovery.stop();
-          } catch (streamError: any) {
+          } catch (streamError: unknown) {
             streamRecovery.stop();
 
             // Fix 2: Catch timeout/abort errors and emit user-friendly message
-            if (streamError.name === 'AbortError' || streamError.message?.includes('aborted')) {
+            if (
+              streamError instanceof Error &&
+              (streamError.name === 'AbortError' || streamError.message?.includes('aborted'))
+            ) {
               logger.error('LLM request timed out after 5 minutes');
               dataStream.writeMessageAnnotation({
                 type: 'error',
@@ -451,7 +477,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               logger.error('Unexpected stream consumption error:', streamError);
               dataStream.writeMessageAnnotation({
                 type: 'error',
-                message: streamError.message || 'I encountered an unexpected error during streaming.',
+                message:
+                  streamError instanceof Error
+                    ? streamError.message
+                    : 'I encountered an unexpected error during streaming.',
                 provider: 'unknown',
               });
             }
@@ -461,9 +490,9 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         })();
         result.mergeIntoDataStream(dataStream);
       },
-      onError: (error: any) => {
+      onError: (error: unknown): string => {
         // Provide more specific error messages for common issues
-        const errorMessage = error.message || 'Unknown error';
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
         if (errorMessage.includes('model') && errorMessage.includes('not found')) {
           return 'Custom error: Invalid model selected. Please check that the model name is correct and available.';
@@ -542,46 +571,41 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         'Text-Encoding': 'chunked',
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     logger.error(error);
+
+    const errObj = error instanceof Error ? error : new Error(String(error));
+    const errMeta = error as Record<string, unknown>;
 
     const errorResponse = {
       error: true,
-      message: error.message || 'An unexpected error occurred',
-      statusCode: error.statusCode || 500,
-      isRetryable: error.isRetryable !== false, // Default to retryable unless explicitly false
-      provider: error.provider || 'unknown',
+      message: errObj.message || 'An unexpected error occurred',
+      statusCode: (errMeta.statusCode as number) || 500,
+      isRetryable: errMeta.isRetryable !== false, // Default to retryable unless explicitly false
+      provider: (errMeta.provider as string) || 'unknown',
     };
 
-    if (error.message?.includes('API key')) {
-      return new Response(
-        JSON.stringify({
+    if (errObj.message?.includes('API key')) {
+      return json(
+        {
           ...errorResponse,
           message: 'Invalid or missing API key',
           statusCode: 401,
           isRetryable: false,
-        }),
-        {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-          statusText: 'Unauthorized',
         },
+        { status: 401, statusText: 'Unauthorized' },
       );
     }
 
-    return new Response(
-      JSON.stringify({
+    return json(
+      {
         error: true,
         message: 'An unexpected error occurred',
         statusCode: 500,
         isRetryable: true,
         provider: 'unknown',
-      }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-        statusText: 'Error',
       },
+      { status: 500, statusText: 'Error' },
     );
   }
 }

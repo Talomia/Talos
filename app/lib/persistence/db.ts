@@ -9,6 +9,7 @@ export interface IChatMetadata {
   gitUrl: string;
   gitBranch?: string;
   netlifySiteId?: string;
+  [key: string]: unknown;
 }
 
 /**
@@ -117,7 +118,7 @@ export async function setMessages(
         description: description || '',
         messages,
         updatedAt: now,
-        metadata,
+        metadata: metadata as Record<string, unknown> | undefined,
       });
       resolve();
     };
@@ -293,6 +294,28 @@ export async function forkChat(
       name: description,
       createdAt: Date.now(),
     });
+
+    // Optionally track fork in ContextGraph
+    try {
+      const { openContextGraphDB, saveNode } = await import('./contextGraphStore');
+      const { createNode } = await import('./contextGraph');
+      const graphDb = await openContextGraphDB();
+
+      if (graphDb) {
+        const node = await createNode({
+          parents: [],
+          chatId: newChat.id,
+          messageIndex,
+          messageCount: messages.length,
+          changeSummary: `Forked from ${chatId} at message ${messageIndex}`,
+          currentFiles: {},
+          previousFiles: {},
+        });
+        await saveNode(graphDb, node);
+      }
+    } catch {
+      // ContextGraph integration is optional
+    }
   }
 
   return urlId;
@@ -408,18 +431,21 @@ export async function deleteSnapshot(db: IDBDatabase, chatId: string): Promise<v
 
 export async function deleteAllChats(db: IDBDatabase): Promise<void> {
   return new Promise((resolve, reject) => {
-    const transaction = db.transaction(['chats', 'snapshots'], 'readwrite');
+    const transaction = db.transaction(['chats', 'snapshots', 'branches'], 'readwrite');
     const chatStore = transaction.objectStore('chats');
     const snapshotStore = transaction.objectStore('snapshots');
+    const branchStore = transaction.objectStore('branches');
 
     const clearChats = chatStore.clear();
     const clearSnapshots = snapshotStore.clear();
+    const clearBranches = branchStore.clear();
 
     let chatsCleared = false;
     let snapshotsCleared = false;
+    let branchesCleared = false;
 
     const checkCompletion = () => {
-      if (chatsCleared && snapshotsCleared) {
+      if (chatsCleared && snapshotsCleared && branchesCleared) {
         // Sync delete-all to cloud
         syncDeleteAllToCloud();
         resolve();
@@ -437,6 +463,12 @@ export async function deleteAllChats(db: IDBDatabase): Promise<void> {
       checkCompletion();
     };
     clearSnapshots.onerror = () => reject(clearSnapshots.error);
+
+    clearBranches.onsuccess = () => {
+      branchesCleared = true;
+      checkCompletion();
+    };
+    clearBranches.onerror = () => reject(clearBranches.error);
 
     transaction.onerror = () => reject(transaction.error);
   });

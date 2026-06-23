@@ -1,3 +1,6 @@
+import type { Message } from 'ai';
+import type { Snapshot } from './types';
+import { atom } from 'nanostores';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('cloud-persistence');
@@ -41,18 +44,29 @@ interface SyncableChat {
   id: string;
   urlId: string;
   description: string;
-  messages: any[];
+  messages: Message[];
   updatedAt?: number;
-  metadata?: Record<string, any>;
-  snapshot?: {
-    chatIndex: string;
-    files: Record<string, any>;
-    summary?: string;
-  };
+  metadata?: Record<string, unknown>;
+  snapshot?: Snapshot;
 }
 
 let _isAuthenticated = false;
 let _isSyncing = false;
+
+/*
+ * ==========================================
+ * Reactive State (for UI components)
+ * ==========================================
+ */
+
+/** Reactive sync status for UI binding. */
+export const syncStatus = atom<'idle' | 'syncing' | 'synced' | 'error'>('idle');
+
+/** Timestamp of last successful sync. */
+export const lastSyncTime = atom<number | null>(null);
+
+/** Whether cloud sync is enabled (user authenticated). */
+export const cloudEnabled = atom<boolean>(false);
 
 /**
  * Pending sync operations keyed by chat ID.
@@ -71,8 +85,9 @@ let _syncScheduled = false;
 export async function initCloudPersistence(): Promise<void> {
   try {
     const response = await fetch('/api/auth/user');
-    const data = (await response.json()) as { user: any };
+    const data = (await response.json()) as { user: Record<string, unknown> | null };
     _isAuthenticated = !!data.user;
+    cloudEnabled.set(_isAuthenticated);
 
     if (_isAuthenticated) {
       logger.info('Cloud persistence enabled — user is authenticated');
@@ -88,6 +103,7 @@ export async function initCloudPersistence(): Promise<void> {
     }
   } catch {
     _isAuthenticated = false;
+    cloudEnabled.set(false);
     logger.info('Cloud persistence disabled — auth check failed');
   }
 }
@@ -119,13 +135,13 @@ export async function pullFromCloud(): Promise<number> {
   }
 
   // Load all local chats keyed by ID for conflict resolution
-  const localChats = await new Promise<Map<string, any>>((resolve, reject) => {
+  const localChats = await new Promise<Map<string, SyncableChat>>((resolve, reject) => {
     const transaction = db.transaction('chats', 'readonly');
     const store = transaction.objectStore('chats');
     const request = store.getAll();
 
     request.onsuccess = () => {
-      const map = new Map<string, any>();
+      const map = new Map<string, SyncableChat>();
 
       for (const chat of request.result) {
         map.set(chat.id, chat);
@@ -179,6 +195,17 @@ export async function pullFromCloud(): Promise<number> {
 
   if (imported > 0) {
     logger.info(`Cloud pull: imported/updated ${imported} project(s) from cloud`);
+
+    // Notify other tabs that IDB has been updated
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const channel = new BroadcastChannel('talos-sync');
+        channel.postMessage({ type: 'cloud-pull-complete', imported });
+        channel.close();
+      } catch (error) {
+        logger.debug('BroadcastChannel notify failed:', error);
+      }
+    }
   }
 
   return imported;
@@ -188,7 +215,7 @@ export async function pullFromCloud(): Promise<number> {
  * Resolve a conflict between a local and remote version of the same chat.
  * Returns 'local' to keep the local version, or 'remote' to accept the cloud version.
  */
-function resolveConflict(localChat: any, remoteChat: SyncableChat): 'local' | 'remote' {
+function resolveConflict(localChat: SyncableChat, remoteChat: SyncableChat): 'local' | 'remote' {
   if (_conflictResolution === 'remote-wins') {
     return 'remote';
   }
@@ -249,9 +276,10 @@ async function importCloudProject(db: IDBDatabase, project: SyncableChat): Promi
 export async function refreshCloudAuthState(): Promise<void> {
   try {
     const response = await fetch('/api/auth/user');
-    const data = (await response.json()) as { user: any };
+    const data = (await response.json()) as { user: Record<string, unknown> | null };
     const wasAuthenticated = _isAuthenticated;
     _isAuthenticated = !!data.user;
+    cloudEnabled.set(_isAuthenticated);
 
     if (_isAuthenticated && !wasAuthenticated) {
       logger.info('Cloud persistence re-enabled after auth refresh');
@@ -261,6 +289,7 @@ export async function refreshCloudAuthState(): Promise<void> {
     }
   } catch {
     _isAuthenticated = false;
+    cloudEnabled.set(false);
   }
 }
 
@@ -349,7 +378,7 @@ export async function loadProjectsFromCloud(): Promise<SyncableChat[] | null> {
       return null;
     }
 
-    const data = (await response.json()) as { projects?: any[]; authenticated?: boolean };
+    const data = (await response.json()) as { projects?: SyncableChat[]; authenticated?: boolean };
 
     if (!data.authenticated || !data.projects) {
       return null;
@@ -365,7 +394,9 @@ export async function loadProjectsFromCloud(): Promise<SyncableChat[] | null> {
 /**
  * Load a single project with messages from the server.
  */
-export async function loadProjectFromCloud(projectId: string): Promise<{ chat: SyncableChat; snapshot?: any } | null> {
+export async function loadProjectFromCloud(
+  projectId: string,
+): Promise<{ chat: SyncableChat; snapshot?: Snapshot } | null> {
   if (!_isAuthenticated) {
     return null;
   }
@@ -378,7 +409,7 @@ export async function loadProjectFromCloud(projectId: string): Promise<{ chat: S
       return null;
     }
 
-    const data = (await response.json()) as { project?: any; snapshot?: any };
+    const data = (await response.json()) as { project?: SyncableChat; snapshot?: Snapshot };
 
     if (!data.project) {
       return null;
@@ -430,6 +461,7 @@ async function flushPendingSyncs(): Promise<void> {
   }
 
   _isSyncing = true;
+  syncStatus.set('syncing');
 
   try {
     // Re-check auth before syncing
@@ -503,7 +535,8 @@ async function flushPendingSyncs(): Promise<void> {
             // Handle auth expiry
             if (response.status === 401 || response.status === 403) {
               _isAuthenticated = false;
-              logger.warn('Cloud sync auth expired — disabling cloud persistence');
+              cloudEnabled.set(false);
+              syncStatus.set('error');
             }
 
             throw new Error(`Chat sync failed: ${response.status}`);
@@ -516,6 +549,11 @@ async function flushPendingSyncs(): Promise<void> {
     _pendingChatSyncs.clear();
   } finally {
     _isSyncing = false;
+
+    if (syncStatus.get() !== 'error') {
+      syncStatus.set('synced');
+      lastSyncTime.set(Date.now());
+    }
   }
 }
 
@@ -535,10 +573,174 @@ async function flushDeleteAll(): Promise<void> {
   }
 }
 
+/*
+ * =============================================
+ * Failed Sync Retry Queue
+ * =============================================
+ * When a sync operation fails (network error, server error),
+ * it's added to a retry queue with exponential backoff.
+ */
+
+interface RetryEntry {
+  operation: () => Promise<void>;
+  type: string;
+  id: string;
+  attempt: number;
+  maxAttempts: number;
+  nextRetryAt: number;
+}
+
+const _retryQueue: RetryEntry[] = [];
+const MAX_RETRY_ATTEMPTS = 5;
+const BASE_RETRY_DELAY_MS = 1000; // 1 second, doubles each attempt
+let _retryTimerId: ReturnType<typeof setTimeout> | null = null;
+
 async function executeSyncOperation(operation: () => Promise<void>, type: string, id: string): Promise<void> {
   try {
     await operation();
   } catch (error) {
     logger.error(`Failed to sync ${type} (${id}) to cloud:`, error);
+
+    // Don't retry auth errors — they won't succeed
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
+    if (errorMessage.includes('401') || errorMessage.includes('403')) {
+      return;
+    }
+
+    // Add to retry queue
+    _retryQueue.push({
+      operation,
+      type,
+      id,
+      attempt: 0,
+      maxAttempts: MAX_RETRY_ATTEMPTS,
+      nextRetryAt: Date.now() + BASE_RETRY_DELAY_MS,
+    });
+
+    scheduleRetryFlush();
+  }
+}
+
+function scheduleRetryFlush(): void {
+  if (_retryTimerId) {
+    return;
+  }
+
+  if (_retryQueue.length === 0) {
+    return;
+  }
+
+  // Find the soonest retry time
+  const nextRetry = Math.min(..._retryQueue.map((e) => e.nextRetryAt));
+  const delay = Math.max(0, nextRetry - Date.now());
+
+  _retryTimerId = setTimeout(() => {
+    _retryTimerId = null;
+    processRetryQueue().catch((error) => {
+      logger.error('Retry queue processing error:', error);
+    });
+  }, delay);
+}
+
+async function processRetryQueue(): Promise<void> {
+  if (_retryQueue.length === 0) {
+    return;
+  }
+
+  const now = Date.now();
+  const ready = _retryQueue.filter((e) => e.nextRetryAt <= now);
+
+  for (const entry of ready) {
+    entry.attempt++;
+
+    try {
+      await entry.operation();
+
+      // Success — remove from queue
+      const index = _retryQueue.indexOf(entry);
+
+      if (index >= 0) {
+        _retryQueue.splice(index, 1);
+      }
+
+      logger.info(`Retry succeeded for ${entry.type} (${entry.id}) on attempt ${entry.attempt}`);
+    } catch (error) {
+      if (entry.attempt >= entry.maxAttempts) {
+        // Give up
+        const index = _retryQueue.indexOf(entry);
+
+        if (index >= 0) {
+          _retryQueue.splice(index, 1);
+        }
+
+        logger.error(
+          `Retry queue: giving up on ${entry.type} (${entry.id}) after ${entry.maxAttempts} attempts:`,
+          error,
+        );
+      } else {
+        // Exponential backoff
+        const delay = BASE_RETRY_DELAY_MS * Math.pow(2, entry.attempt);
+        entry.nextRetryAt = Date.now() + delay;
+        logger.warn(
+          `Retry queue: ${entry.type} (${entry.id}) attempt ${entry.attempt}/${entry.maxAttempts} failed, ` +
+            `next retry in ${delay}ms`,
+        );
+      }
+    }
+  }
+
+  // Schedule next batch if there are remaining entries
+  if (_retryQueue.length > 0) {
+    scheduleRetryFlush();
+  }
+}
+
+/** Get the current retry queue status (for UI display). */
+export function getRetryQueueStatus(): {
+  pending: number;
+  entries: Array<{ type: string; id: string; attempt: number }>;
+} {
+  return {
+    pending: _retryQueue.length,
+    entries: _retryQueue.map((e) => ({ type: e.type, id: e.id, attempt: e.attempt })),
+  };
+}
+
+/** Manually trigger retry of all queued operations. */
+export function retryAllPending(): void {
+  for (const entry of _retryQueue) {
+    entry.nextRetryAt = Date.now();
+  }
+
+  scheduleRetryFlush();
+}
+
+/*
+ * =============================================
+ * Cross-tab sync via BroadcastChannel
+ * =============================================
+ */
+
+if (typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined') {
+  try {
+    const _syncChannel = new BroadcastChannel('talos-sync');
+
+    _syncChannel.addEventListener('message', (event: MessageEvent) => {
+      const data = event.data as { type?: string; imported?: number } | undefined;
+
+      if (data?.type === 'cloud-pull-complete' && _isAuthenticated) {
+        logger.info(`Another tab synced ${data.imported ?? '?'} project(s) — refreshing local data`);
+
+        /*
+         * Re-import from IDB; the other tab already wrote the data,
+         * so we just need the UI in *this* tab to pick it up.
+         * Dispatch a custom event that UI components can listen for.
+         */
+        window.dispatchEvent(new CustomEvent('talos-sync-update', { detail: data }));
+      }
+    });
+  } catch (error) {
+    logger.debug('BroadcastChannel listener setup failed:', error);
   }
 }
