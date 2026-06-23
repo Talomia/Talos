@@ -32,6 +32,10 @@ interface Env {
   GITHUB_BUG_REPORT_TOKEN?: string;
   BUG_REPORT_REPO?: string;
 
+  // Supabase Platform Auth
+  SUPABASE_URL: string;
+  SUPABASE_PUBLISHABLE_KEY: string;
+
   // Allow index access for dynamic env lookups
   [key: string]: string | undefined;
 }
