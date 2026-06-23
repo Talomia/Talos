@@ -178,7 +178,17 @@ export const ChatImpl = memo(
         }
 
         // Auto-commit context to ContextGraph (non-blocking)
-        import('~/lib/stores/cortex').then(({ commitContext, cortexInitialized }) => {
+        import('~/lib/stores/cortex').then(async ({ commitContext, cortexInitialized, initCortex }) => {
+          // Auto-initialize cortex for new chats on first response
+          if (!cortexInitialized.get()) {
+            const { chatId: chatIdAtom } = await import('~/lib/persistence/useChatHistory');
+            const id = chatIdAtom.get();
+
+            if (id) {
+              await initCortex(id).catch(() => {});
+            }
+          }
+
           if (!cortexInitialized.get()) {
             return;
           }
@@ -243,7 +253,7 @@ export const ChatImpl = memo(
     // Initialize ContextGraph when chat starts with existing messages
     useEffect(() => {
       if (initialMessages.length > 0) {
-        import('~/lib/persistence').then(({ chatId: chatIdAtom }) => {
+        import('~/lib/persistence/useChatHistory').then(({ chatId: chatIdAtom }) => {
           const id = chatIdAtom.get();
 
           if (id) {
@@ -287,6 +297,62 @@ export const ChatImpl = memo(
       window.addEventListener('talos:export-markdown', handleExportMarkdown);
 
       return () => window.removeEventListener('talos:export-markdown', handleExportMarkdown);
+    }, [messages]);
+
+    // Listen for manual context commit (Cmd+Shift+G)
+    useEffect(() => {
+      const handleCommitContext = () => {
+        if (messages.length === 0) {
+          return;
+        }
+
+        import('~/lib/stores/cortex').then(async ({ commitContext, cortexInitialized, initCortex }) => {
+          if (!cortexInitialized.get()) {
+            const { chatId: chatIdAtom } = await import('~/lib/persistence/useChatHistory');
+            const id = chatIdAtom.get();
+
+            if (id) {
+              await initCortex(id).catch(() => {});
+            }
+          }
+
+          if (!cortexInitialized.get()) {
+            toast.info('No active context to commit');
+
+            return;
+          }
+
+          const currentFiles = workbenchStore.files.get();
+          const fileMap: Record<string, string> = {};
+
+          for (const [path, file] of Object.entries(currentFiles)) {
+            if (file?.type === 'file') {
+              fileMap[path] = file.content ?? '';
+            }
+          }
+
+          try {
+            const nodeId = await commitContext({
+              messages: messages.map((m) => ({
+                role: m.role,
+                content: typeof m.content === 'string' ? m.content : '',
+              })),
+              files: fileMap,
+              summary: 'Manual commit',
+            });
+
+            if (nodeId) {
+              toast.success('Context committed');
+            }
+          } catch {
+            toast.error('Failed to commit context');
+          }
+        });
+      };
+
+      window.addEventListener('talos:commit-context', handleCommitContext);
+
+      return () => window.removeEventListener('talos:commit-context', handleCommitContext);
     }, [messages]);
 
     const scrollTextArea = () => {

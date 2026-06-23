@@ -27,6 +27,7 @@ import { classNames } from '~/utils/classNames'; // <-- Import classNames if not
 import { LockManager } from './LockManager'; // <-- Import LockManager
 import { WorkbenchWelcome } from './WorkbenchWelcome';
 import { CortexPanel, ThinkFlowPanel } from '~/components/cortex';
+import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 
 interface EditorPanelProps {
   files?: FileMap;
@@ -89,8 +90,12 @@ export const EditorPanel = memo(
             <Panel defaultSize={20} minSize={15} collapsible className="border-r border-ui-borderColor">
               <div className="h-full flex flex-col overflow-hidden">
                 {/* Cortex Panel — context graph & branch navigation */}
-                <CortexPanel />
-                <ThinkFlowPanel />
+                <ErrorBoundary panelName="the context graph panel">
+                  <CortexPanel />
+                </ErrorBoundary>
+                <ErrorBoundary panelName="the think flow panel">
+                  <ThinkFlowPanel />
+                </ErrorBoundary>
 
                 <Tabs.Root defaultValue="files" className="flex flex-col flex-1 min-h-0">
                   <PanelHeader className="w-full text-sm font-medium text-ui-textSecondary px-1">

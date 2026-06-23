@@ -29,6 +29,7 @@ export interface Shortcuts {
   toggleSidebar: Shortcut;
   toggleWorkbench: Shortcut;
   newChat: Shortcut;
+  commitContext: Shortcut;
 }
 
 export const URL_CONFIGURABLE_PROVIDERS = ['Ollama', 'LMStudio', 'OpenAILike'];
@@ -81,6 +82,16 @@ export const shortcutsStore = map<Shortcuts>({
       window.location.href = '/';
     },
     description: 'New chat',
+    isPreventDefault: true,
+  },
+  commitContext: {
+    key: 'g',
+    ctrlOrMetaKey: true,
+    shiftKey: true,
+    action: () => {
+      window.dispatchEvent(new CustomEvent('talos:commit-context'));
+    },
+    description: 'Commit context snapshot',
     isPreventDefault: true,
   },
 });
