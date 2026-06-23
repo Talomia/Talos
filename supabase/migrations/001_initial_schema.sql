@@ -1,5 +1,5 @@
 -- ============================================
--- Recurrsive — Supabase Schema Migration
+-- Talos — Supabase Schema Migration
 -- ============================================
 -- This migration creates the core tables for
 -- server-side persistence of chats, snapshots,
@@ -65,7 +65,7 @@ CREATE TRIGGER on_auth_user_created
 -- ==========================================
 -- 2. PROJECTS TABLE
 -- ==========================================
--- A "project" in Recurrsive maps to a chat session
+-- A "project" in Talos maps to a chat session
 -- where the user builds an application.
 
 CREATE TABLE IF NOT EXISTS public.projects (
