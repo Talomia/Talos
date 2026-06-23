@@ -194,6 +194,18 @@ export async function deleteById(db: IDBDatabase, id: string): Promise<void> {
   } catch {
     // Branch cleanup is best-effort
   }
+
+  // Clean up ContextGraph data for this chat (separate IDB database)
+  try {
+    const { openContextGraphDB, deleteGraphForChat } = await import('./contextGraphStore');
+    const graphDb = await openContextGraphDB();
+
+    if (graphDb) {
+      await deleteGraphForChat(graphDb, id);
+    }
+  } catch {
+    // ContextGraph cleanup is best-effort
+  }
 }
 
 export async function getNextId(_db: IDBDatabase): Promise<string> {
@@ -448,6 +460,14 @@ export async function deleteAllChats(db: IDBDatabase): Promise<void> {
       if (chatsCleared && snapshotsCleared && branchesCleared) {
         // Sync delete-all to cloud
         syncDeleteAllToCloud();
+
+        // Also clear the ContextGraph database (separate IDB)
+        try {
+          indexedDB.deleteDatabase('talosContextGraph');
+        } catch {
+          // ContextGraph DB may not exist — that's fine
+        }
+
         resolve();
       }
     };

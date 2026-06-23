@@ -25,6 +25,8 @@ const SYNCABLE_KEYS = [
   'app_theme',
   'app_tab_configuration',
   'app_debug_mode',
+  'app_token_budget',
+  'app_features',
 ] as const;
 
 interface SyncedSettings {
