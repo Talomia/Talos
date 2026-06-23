@@ -136,8 +136,6 @@ COPY --from=prod-deps /app/package.json /app/package.json
 COPY --from=prod-deps /app/bindings.sh /app/bindings.sh
 # bindings.sh reads this to enumerate env var names for --binding flags
 COPY --from=prod-deps /app/worker-configuration.d.ts /app/worker-configuration.d.ts
-# Default env values (bindings.sh prefers .env.local if it exists)
-COPY --from=prod-deps /app/.env.production /app/.env.local
 
 # Run as non-root user for security
 # Create appuser WITH a real home directory so corepack/pnpm can cache there

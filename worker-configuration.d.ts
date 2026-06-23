@@ -2,6 +2,10 @@ interface Env {
   // Runtime configuration
   RUNNING_IN_DOCKER: string;
   DEFAULT_NUM_CTX: string;
+  VITE_LOG_LEVEL: string;
+
+  // Security
+  VAULT_SECRET: string;
 
   // LLM Provider API keys
   ANTHROPIC_API_KEY: string;
@@ -22,6 +26,11 @@ interface Env {
   XAI_API_KEY: string;
   PERPLEXITY_API_KEY: string;
   AWS_BEDROCK_CONFIG: string;
+  COHERE_API_KEY: string;
+  HYPERBOLIC_API_KEY: string;
+  CEREBRAS_API_KEY: string;
+  FIREWORKS_API_KEY: string;
+  GITHUB_API_KEY: string;
 
   // Cloudflare Pages environment
   CF_PAGES?: string;
@@ -35,6 +44,24 @@ interface Env {
   // Supabase Platform Auth
   SUPABASE_URL: string;
   SUPABASE_PUBLISHABLE_KEY: string;
+
+  // Supabase client-side (VITE_ prefix)
+  VITE_SUPABASE_URL: string;
+  VITE_SUPABASE_ANON_KEY: string;
+  VITE_SUPABASE_ACCESS_TOKEN: string;
+
+  // Integration tokens
+  VITE_GITHUB_ACCESS_TOKEN: string;
+  VITE_GITHUB_TOKEN_TYPE: string;
+  VITE_GITLAB_ACCESS_TOKEN: string;
+  VITE_GITLAB_URL: string;
+  VITE_VERCEL_ACCESS_TOKEN: string;
+  VITE_NETLIFY_ACCESS_TOKEN: string;
+
+  // Monitoring
+  VITE_SENTRY_DSN: string;
+  VITE_POSTHOG_KEY: string;
+  VITE_APP_VERSION: string;
 
   // Allow index access for dynamic env lookups
   [key: string]: string | undefined;
