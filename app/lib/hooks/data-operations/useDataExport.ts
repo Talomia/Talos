@@ -214,7 +214,7 @@ export function useDataExport({ db, showProgress, setIsExporting, setLastOperati
       let snapshots: any[] = [];
 
       if (db.objectStoreNames.contains('snapshots')) {
-        snapshots = await new Promise<any[]>((resolve, reject) => {
+        snapshots = await new Promise<any[]>((resolve, _reject) => {
           try {
             const transaction = db.transaction(['snapshots'], 'readonly');
             const store = transaction.objectStore('snapshots');

@@ -46,73 +46,76 @@ export const loader = withSecurity(async ({ request, context }: LoaderFunctionAr
  * DELETE /api/keys - Remove an API key
  * Body: { provider: string }
  */
-export const action = withSecurity(async ({ request, context }: ActionFunctionArgs) => {
-  const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+export const action = withSecurity(
+  async ({ request, context }: ActionFunctionArgs) => {
+    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
 
-  if (request.method === 'POST') {
-    try {
-      const body = await request.json<{ provider: string; apiKey: string }>();
+    if (request.method === 'POST') {
+      try {
+        const body = await request.json<{ provider: string; apiKey: string }>();
 
-      if (!body.provider || typeof body.provider !== 'string' || FORBIDDEN_PROVIDER_NAMES.has(body.provider)) {
-        return json({ error: 'Invalid provider' }, { status: 400 });
+        if (!body.provider || typeof body.provider !== 'string' || FORBIDDEN_PROVIDER_NAMES.has(body.provider)) {
+          return json({ error: 'Invalid provider' }, { status: 400 });
+        }
+
+        const cookieHeader = request.headers.get('Cookie');
+        const vault = await readVault(cookieHeader, env);
+
+        vault.apiKeys[body.provider] = body.apiKey || '';
+        vault.updatedAt = new Date().toISOString();
+
+        // Remove empty keys
+        if (!vault.apiKeys[body.provider]) {
+          delete vault.apiKeys[body.provider];
+        }
+
+        const setCookie = await writeVault(vault, env);
+
+        return json(
+          { success: true, provider: body.provider },
+          {
+            headers: {
+              'Set-Cookie': setCookie,
+            },
+          },
+        );
+      } catch (error) {
+        logger.error('Failed to store key:', error);
+        return json({ error: 'Failed to store key' }, { status: 500 });
       }
+    }
 
-      const cookieHeader = request.headers.get('Cookie');
-      const vault = await readVault(cookieHeader, env);
+    if (request.method === 'DELETE') {
+      try {
+        const body = await request.json<{ provider: string }>();
 
-      vault.apiKeys[body.provider] = body.apiKey || '';
-      vault.updatedAt = new Date().toISOString();
+        if (!body.provider || typeof body.provider !== 'string' || FORBIDDEN_PROVIDER_NAMES.has(body.provider)) {
+          return json({ error: 'Invalid provider' }, { status: 400 });
+        }
 
-      // Remove empty keys
-      if (!vault.apiKeys[body.provider]) {
+        const cookieHeader = request.headers.get('Cookie');
+        const vault = await readVault(cookieHeader, env);
+
         delete vault.apiKeys[body.provider];
-      }
+        vault.updatedAt = new Date().toISOString();
 
-      const setCookie = await writeVault(vault, env);
+        const setCookie = await writeVault(vault, env);
 
-      return json(
-        { success: true, provider: body.provider },
-        {
-          headers: {
-            'Set-Cookie': setCookie,
+        return json(
+          { success: true, provider: body.provider },
+          {
+            headers: {
+              'Set-Cookie': setCookie,
+            },
           },
-        },
-      );
-    } catch (error) {
-      logger.error('Failed to store key:', error);
-      return json({ error: 'Failed to store key' }, { status: 500 });
-    }
-  }
-
-  if (request.method === 'DELETE') {
-    try {
-      const body = await request.json<{ provider: string }>();
-
-      if (!body.provider || typeof body.provider !== 'string' || FORBIDDEN_PROVIDER_NAMES.has(body.provider)) {
-        return json({ error: 'Invalid provider' }, { status: 400 });
+        );
+      } catch (error) {
+        logger.error('Failed to delete key:', error);
+        return json({ error: 'Failed to delete key' }, { status: 500 });
       }
-
-      const cookieHeader = request.headers.get('Cookie');
-      const vault = await readVault(cookieHeader, env);
-
-      delete vault.apiKeys[body.provider];
-      vault.updatedAt = new Date().toISOString();
-
-      const setCookie = await writeVault(vault, env);
-
-      return json(
-        { success: true, provider: body.provider },
-        {
-          headers: {
-            'Set-Cookie': setCookie,
-          },
-        },
-      );
-    } catch (error) {
-      logger.error('Failed to delete key:', error);
-      return json({ error: 'Failed to delete key' }, { status: 500 });
     }
-  }
 
-  return json({ error: 'Method not allowed' }, { status: 405 });
-}, { allowedMethods: ['POST', 'DELETE'] });
+    return json({ error: 'Method not allowed' }, { status: 405 });
+  },
+  { allowedMethods: ['POST', 'DELETE'] },
+);

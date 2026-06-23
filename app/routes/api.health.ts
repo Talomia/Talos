@@ -9,7 +9,7 @@ import { withSecurity } from '~/lib/security';
  * Returns minimal health information — no configuration details.
  * Public endpoint: no requireAuth (health checks must be unauthenticated).
  */
-export const loader = withSecurity(async ({ context }: LoaderFunctionArgs) => {
+export const loader = withSecurity(async ({ context: _context }: LoaderFunctionArgs) => {
   return json(
     { status: 'ok' as const, timestamp: Date.now() },
     {

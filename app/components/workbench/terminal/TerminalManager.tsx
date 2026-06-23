@@ -62,6 +62,8 @@ export const TerminalManager = memo(({ terminal, isActive }: TerminalManagerProp
 
       return () => clearTimeout(timer);
     }
+
+    return undefined;
   }, [isActive, terminal]);
 
   return null; // This is a utility component, no UI

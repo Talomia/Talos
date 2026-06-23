@@ -1,5 +1,5 @@
 import type { Message } from 'ai';
-import React, { useEffect, useRef as useReactRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef as useReactRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { createScopedLogger } from '~/utils/logger';
 import { ClientOnly } from 'remix-utils/client-only';

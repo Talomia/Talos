@@ -286,7 +286,7 @@ export function useDataImport({
             }
           }
 
-          await new Promise((resolve, reject) => {
+          await new Promise((resolve, _reject) => {
             snapshotTx.oncomplete = resolve;
 
             snapshotTx.onerror = () => {

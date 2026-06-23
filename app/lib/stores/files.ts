@@ -7,7 +7,6 @@ import { bufferWatchEvents } from '~/utils/buffer';
 import { WORK_DIR } from '~/utils/constants';
 import { computeFileModifications } from '~/utils/diff';
 import { createScopedLogger } from '~/utils/logger';
-import { unreachable } from '~/utils/unreachable';
 import { STORAGE_KEYS } from '~/lib/app-config';
 import { safeSetItem } from '~/utils/safeStorage';
 import {

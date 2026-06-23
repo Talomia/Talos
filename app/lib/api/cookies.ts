@@ -1,5 +1,3 @@
-
-
 export function parseCookies(cookieHeader: string | null) {
   const cookies: Record<string, string> = {};
 

@@ -10,6 +10,7 @@ export async function loader({ request, context }: LoaderFunctionArgs) {
   if (process.env.NODE_ENV === 'production') {
     // In production, require authentication
     const authCookie = request.headers.get('Cookie');
+
     if (!authCookie || !authCookie.includes('sb-')) {
       return json({ error: 'Authentication required' }, { status: 401 });
     }

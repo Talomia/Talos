@@ -266,8 +266,6 @@ export class PreviewsStore {
       const previewIndex = previews.findIndex((p) => this.getPreviewId(p.baseUrl) === previewId);
 
       if (previewIndex !== -1) {
-        const preview = previews[previewIndex];
-
         // Create new array with a new object reference (ready: false)
         const updatedPreviews = previews.map((p, i) => (i === previewIndex ? { ...p, ready: false } : p));
         this.previews.set(updatedPreviews);

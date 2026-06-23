@@ -58,6 +58,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Signup error:', error.message);
+
           const sanitized = sanitizeSupabaseError(error.message);
 
           return json(
@@ -88,6 +89,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Login error:', error.message);
+
           const sanitized = sanitizeSupabaseError(error.message);
 
           return json(
@@ -163,9 +165,11 @@ async function authAction({ request, context }: ActionFunctionArgs) {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
-    // Supabase returns plain text (e.g. "404 page not found") when the auth
-    // service is unreachable, which the SDK tries to JSON.parse — producing
-    // "Unexpected non-whitespace character after JSON at position X"
+    /*
+     * Supabase returns plain text (e.g. "404 page not found") when the auth
+     * service is unreachable, which the SDK tries to JSON.parse — producing
+     * "Unexpected non-whitespace character after JSON at position X"
+     */
     if (message.includes('Unexpected') && message.includes('JSON')) {
       logger.error('Supabase auth service unreachable:', message);
 

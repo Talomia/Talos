@@ -32,7 +32,7 @@ export const Terminal = memo(
 
       useEffect(() => {
         if (!terminalElementRef.current) {
-          return;
+          return undefined;
         }
 
         const element = terminalElementRef.current;

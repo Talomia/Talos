@@ -131,7 +131,9 @@ export class WebContainerEngine implements RuntimeEngine {
     }
 
     if (this.#bootPromise) {
-      return this.#bootPromise;
+      await this.#bootPromise;
+
+      return;
     }
 
     this.#bootPromise = (async () => {

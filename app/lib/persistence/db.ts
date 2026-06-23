@@ -2,7 +2,7 @@ import type { Message } from 'ai';
 import { createScopedLogger } from '~/utils/logger';
 import type { ChatHistoryItem } from './useChatHistory';
 import type { Snapshot } from './types'; // Import Snapshot type
-import { syncChatToCloud, syncDeleteToCloud, syncDeleteAllToCloud, syncDescriptionToCloud } from './cloudSync';
+import { syncChatToCloud, syncDeleteToCloud, syncDeleteAllToCloud } from './cloudSync';
 import { handleIDBQuotaError } from '~/utils/safeStorage';
 
 export interface IChatMetadata {

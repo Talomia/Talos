@@ -350,8 +350,6 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                   title="preview"
                   className="border-none w-full h-full bg-ui-background-depth-1"
                   src={iframeUrl}
-
-                  // Fix 4: Sandbox restricts what user-generated code can do in the preview
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
                   onLoad={handleIframeLoad}
                   onError={handleIframeError}
