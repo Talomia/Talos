@@ -152,6 +152,9 @@ RUN corepack enable
 # Make bindings script executable
 RUN chmod +x /app/bindings.sh
 
+# Give Wrangler a writable tmp directory inside /app
+RUN mkdir -p /app/.wrangler && chown appuser:appuser /app/.wrangler
+
 EXPOSE 5173
 
 # Healthcheck for deployment platforms
