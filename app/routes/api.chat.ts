@@ -84,6 +84,19 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     return json({ error: true, message: 'Invalid or malformed JSON in request body' }, { status: 400 });
   }
 
+  // Apply defaults for optional fields
+  if (!chatMode) {
+    chatMode = 'build';
+  }
+
+  if (typeof maxLLMSteps !== 'number' || maxLLMSteps <= 0) {
+    maxLLMSteps = 3;
+  }
+
+  if (typeof contextOptimization !== 'boolean') {
+    contextOptimization = true;
+  }
+
   // Validate required fields
   if (!Array.isArray(messages) || messages.length < 1) {
     return json({ error: true, message: 'messages must be a non-empty array' }, { status: 400 });
@@ -93,8 +106,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     return json({ error: true, message: "chatMode must be 'discuss' or 'build'" }, { status: 400 });
   }
 
-  if (typeof maxLLMSteps !== 'number' || maxLLMSteps <= 0 || maxLLMSteps > 20) {
-    return json({ error: true, message: 'maxLLMSteps must be a positive number ≤ 20' }, { status: 400 });
+  if (maxLLMSteps > 20) {
+    return json({ error: true, message: 'maxLLMSteps must be ≤ 20' }, { status: 400 });
   }
 
   const cookieHeader = request.headers.get('Cookie');
