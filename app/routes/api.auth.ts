@@ -41,7 +41,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Signup error:', error.message);
-          return json({ error: 'Registration failed' }, { status: 400, headers: responseHeaders });
+          return json({ error: error.message || 'Registration failed' }, { status: 400, headers: responseHeaders });
         }
 
         return json(
@@ -66,7 +66,7 @@ async function authAction({ request, context }: ActionFunctionArgs) {
 
         if (error) {
           logger.error('Login error:', error.message);
-          return json({ error: 'Invalid credentials' }, { status: 401, headers: responseHeaders });
+          return json({ error: error.message || 'Invalid credentials' }, { status: 401, headers: responseHeaders });
         }
 
         return json({ success: true, user: data.user }, { headers: responseHeaders });
