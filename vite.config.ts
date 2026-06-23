@@ -19,6 +19,10 @@ export default defineConfig((config) => {
     server: {
       // Fixes the blocked host issue on Easypanel subdomains
       allowedHosts: true,
+      headers: {
+        'Cross-Origin-Embedder-Policy': 'credentialless',
+        'Cross-Origin-Opener-Policy': 'same-origin',
+      },
     },
     build: {
       target: 'esnext',
