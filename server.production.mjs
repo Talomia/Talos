@@ -10,6 +10,19 @@
  * continues to work unchanged.
  */
 
+// Load .env files BEFORE anything else so process.env is populated
+// In Docker, env vars come from the container environment instead
+import * as dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+dotenv.config({ path: '.env' });
+
+// Node.js 20 lacks native WebSocket — polyfill with the `ws` package
+// so Supabase Realtime and other libraries work correctly
+import { WebSocket } from 'ws';
+if (!globalThis.WebSocket) {
+  globalThis.WebSocket = WebSocket;
+}
+
 import express from 'express';
 import compression from 'compression';
 import morgan from 'morgan';

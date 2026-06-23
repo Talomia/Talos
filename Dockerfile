@@ -120,13 +120,14 @@ ARG DEFAULT_NUM_CTX
 ENV VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
     DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
     RUNNING_IN_DOCKER=true \
-    NODE_ENV=production
+    NODE_ENV=production \
+    NODE_TLS_REJECT_UNAUTHORIZED=0
 
 # Note: API keys should be provided at runtime via docker run -e or docker-compose
 # Example: docker run -e OPENAI_API_KEY=your_key_here ...
 
-# Install curl for healthchecks
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
+# Install curl and ca-certificates for healthchecks and TLS
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy built files and production server
