@@ -78,9 +78,9 @@ export const UsageTab = memo(() => {
       </div>
 
       {/* Budget Section */}
-      <div className="rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-4">
+      <div className="rounded-lg border border-ui-borderColor bg-ui-background-depth-2 p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-bolt-elements-textPrimary flex items-center gap-2">
+          <h3 className="text-sm font-medium text-ui-textPrimary flex items-center gap-2">
             <span className="i-ph:target text-sm" />
             Monthly Budget
           </h3>
@@ -98,9 +98,7 @@ export const UsageTab = memo(() => {
         {editingBudget ? (
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
-              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-bolt-elements-textTertiary">
-                $
-              </span>
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-ui-textTertiary">$</span>
               <input
                 type="number"
                 value={budgetInput}
@@ -108,7 +106,7 @@ export const UsageTab = memo(() => {
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full pl-6 pr-3 py-1.5 text-sm bg-bolt-elements-background-depth-3 border border-bolt-elements-borderColor rounded text-bolt-elements-textPrimary focus:outline-none focus:border-purple-400"
+                className="w-full pl-6 pr-3 py-1.5 text-sm bg-ui-background-depth-3 border border-ui-borderColor rounded text-ui-textPrimary focus:outline-none focus:border-purple-400"
               />
             </div>
             <button
@@ -123,7 +121,7 @@ export const UsageTab = memo(() => {
             {budget.monthlyLimitUsd > 0 ? (
               <div>
                 <div className="flex items-center justify-between text-xs mb-1.5">
-                  <span className="text-bolt-elements-textSecondary">
+                  <span className="text-ui-textSecondary">
                     {formatCost(summary.monthlyTotalUsd)} of ${budget.monthlyLimitUsd.toFixed(2)}
                   </span>
                   <span
@@ -136,7 +134,7 @@ export const UsageTab = memo(() => {
                     {summary.budgetUsedPercent.toFixed(0)}%
                   </span>
                 </div>
-                <div className="w-full h-2 rounded-full bg-bolt-elements-background-depth-3 overflow-hidden">
+                <div className="w-full h-2 rounded-full bg-ui-background-depth-3 overflow-hidden">
                   <div
                     className={classNames('h-full rounded-full transition-all duration-500', {
                       'bg-green-500': summary.budgetStatus === 'ok',
@@ -148,7 +146,7 @@ export const UsageTab = memo(() => {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-bolt-elements-textTertiary">No budget limit set. Click Edit to set one.</p>
+              <p className="text-xs text-ui-textTertiary">No budget limit set. Click Edit to set one.</p>
             )}
           </>
         )}
@@ -156,8 +154,8 @@ export const UsageTab = memo(() => {
 
       {/* Usage by Provider */}
       {Object.keys(summary.costByProvider).length > 0 && (
-        <div className="rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-4">
-          <h3 className="text-sm font-medium text-bolt-elements-textPrimary mb-3 flex items-center gap-2">
+        <div className="rounded-lg border border-ui-borderColor bg-ui-background-depth-2 p-4">
+          <h3 className="text-sm font-medium text-ui-textPrimary mb-3 flex items-center gap-2">
             <span className="i-ph:cloud text-sm" />
             Cost by Provider
           </h3>
@@ -170,14 +168,14 @@ export const UsageTab = memo(() => {
 
                 return (
                   <div key={provider} className="flex items-center gap-3">
-                    <span className="text-xs text-bolt-elements-textSecondary w-24 truncate shrink-0">{provider}</span>
-                    <div className="flex-1 h-4 rounded bg-bolt-elements-background-depth-3 overflow-hidden">
+                    <span className="text-xs text-ui-textSecondary w-24 truncate shrink-0">{provider}</span>
+                    <div className="flex-1 h-4 rounded bg-ui-background-depth-3 overflow-hidden">
                       <div
                         className="h-full rounded bg-purple-500/70 transition-all duration-300"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="text-xs font-medium text-bolt-elements-textPrimary w-16 text-right shrink-0">
+                    <span className="text-xs font-medium text-ui-textPrimary w-16 text-right shrink-0">
                       {formatCost(cost)}
                     </span>
                   </div>
@@ -189,8 +187,8 @@ export const UsageTab = memo(() => {
 
       {/* Usage by Model */}
       {Object.keys(summary.costByModel).length > 0 && (
-        <div className="rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-4">
-          <h3 className="text-sm font-medium text-bolt-elements-textPrimary mb-3 flex items-center gap-2">
+        <div className="rounded-lg border border-ui-borderColor bg-ui-background-depth-2 p-4">
+          <h3 className="text-sm font-medium text-ui-textPrimary mb-3 flex items-center gap-2">
             <span className="i-ph:cpu text-sm" />
             Cost by Model
           </h3>
@@ -199,8 +197,8 @@ export const UsageTab = memo(() => {
               .sort(([, a], [, b]) => b - a)
               .map(([model, cost]) => (
                 <div key={model} className="flex items-center justify-between text-xs py-1">
-                  <span className="text-bolt-elements-textSecondary truncate mr-3">{model}</span>
-                  <span className="font-medium text-bolt-elements-textPrimary shrink-0">{formatCost(cost)}</span>
+                  <span className="text-ui-textSecondary truncate mr-3">{model}</span>
+                  <span className="font-medium text-ui-textPrimary shrink-0">{formatCost(cost)}</span>
                 </div>
               ))}
           </div>
@@ -209,8 +207,8 @@ export const UsageTab = memo(() => {
 
       {/* Daily Usage Chart */}
       {summary.dailyCosts.length > 0 && (
-        <div className="rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-4">
-          <h3 className="text-sm font-medium text-bolt-elements-textPrimary mb-3 flex items-center gap-2">
+        <div className="rounded-lg border border-ui-borderColor bg-ui-background-depth-2 p-4">
+          <h3 className="text-sm font-medium text-ui-textPrimary mb-3 flex items-center gap-2">
             <span className="i-ph:chart-bar text-sm" />
             Daily Usage
           </h3>
@@ -232,7 +230,7 @@ export const UsageTab = memo(() => {
                       style={{ height: `${Math.max(1, heightPct)}%` }}
                     />
                   </div>
-                  <span className="text-[9px] text-bolt-elements-textTertiary">{dayNum}</span>
+                  <span className="text-[9px] text-ui-textTertiary">{dayNum}</span>
                 </div>
               );
             })}
@@ -244,7 +242,7 @@ export const UsageTab = memo(() => {
       <div className="flex items-center gap-2 pt-2">
         <button
           onClick={handleExportCSV}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-bolt-elements-textSecondary border border-bolt-elements-borderColor rounded hover:bg-bolt-elements-background-depth-3 transition-colors"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ui-textSecondary border border-ui-borderColor rounded hover:bg-ui-background-depth-3 transition-colors"
         >
           <span className="i-ph:download text-sm" />
           Export CSV
@@ -288,14 +286,14 @@ function SummaryCard({
   };
 
   return (
-    <div className="rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-3">
+    <div className="rounded-lg border border-ui-borderColor bg-ui-background-depth-2 p-3">
       <div className="flex items-center gap-2 mb-1">
         <div className={classNames('w-6 h-6 rounded flex items-center justify-center', bgColor[accent])}>
           <span className={classNames(icon, 'text-sm')} />
         </div>
-        <span className="text-xs text-bolt-elements-textTertiary">{label}</span>
+        <span className="text-xs text-ui-textTertiary">{label}</span>
       </div>
-      <div className="text-lg font-semibold text-bolt-elements-textPrimary">{value}</div>
+      <div className="text-lg font-semibold text-ui-textPrimary">{value}</div>
     </div>
   );
 }

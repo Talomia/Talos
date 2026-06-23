@@ -118,10 +118,8 @@ export function extractCurrentContext(messages: Message[]) {
 
     if (annotationObject.type === 'codeContext') {
       codeContext = annotationObject as unknown as ContextAnnotation;
-      break;
     } else if (annotationObject.type === 'chatSummary') {
       summary = annotationObject as unknown as ContextAnnotation;
-      break;
     }
   }
 

@@ -29,7 +29,7 @@ import type { Thought, ThoughtStatus } from '~/lib/modules/thinkflow';
  */
 
 const statusConfig: Record<ThoughtStatus, { label: string; color: string; icon: string }> = {
-  pending: { label: 'Pending', color: 'text-bolt-elements-textTertiary', icon: 'i-ph:clock' },
+  pending: { label: 'Pending', color: 'text-ui-textTertiary', icon: 'i-ph:clock' },
   running: { label: 'Running', color: 'text-blue-400', icon: 'i-ph:spinner-gap animate-spin' },
   streaming: { label: 'Streaming', color: 'text-blue-400', icon: 'i-ph:lightning animate-pulse' },
   completed: { label: 'Done', color: 'text-green-400', icon: 'i-ph:check-circle' },
@@ -50,7 +50,7 @@ const ThoughtCard = memo(({ thought }: { thought: Thought }) => {
     <div
       className={classNames(
         'rounded-lg border p-3',
-        'bg-bolt-elements-background-depth-2 border-bolt-elements-borderColor',
+        'bg-ui-background-depth-2 border-ui-borderColor',
         thought.status === 'running' && 'border-blue-400/30',
         thought.status === 'completed' && 'border-green-400/20',
         thought.status === 'failed' && 'border-red-400/20',
@@ -60,14 +60,14 @@ const ThoughtCard = memo(({ thought }: { thought: Thought }) => {
       <div className="flex items-center gap-2 mb-1.5">
         <div className={classNames(config.icon, 'text-base', config.color)} />
 
-        <span className="text-sm font-medium text-bolt-elements-textPrimary flex-1 truncate">{thought.label}</span>
+        <span className="text-sm font-medium text-ui-textPrimary flex-1 truncate">{thought.label}</span>
 
         <span className={classNames('text-xs', config.color)}>{config.label}</span>
       </div>
 
       {/* Progress Bar */}
       {(thought.status === 'running' || thought.status === 'streaming') && (
-        <div className="w-full h-1 rounded-full bg-bolt-elements-background-depth-1 mb-2 overflow-hidden">
+        <div className="w-full h-1 rounded-full bg-ui-background-depth-1 mb-2 overflow-hidden">
           <div
             className="h-full rounded-full bg-blue-400 transition-all duration-300"
             style={{ width: `${thought.progress}%` }}
@@ -77,7 +77,7 @@ const ThoughtCard = memo(({ thought }: { thought: Thought }) => {
 
       {/* Response Preview */}
       {thought.responseText && (
-        <div className="mt-2 text-xs text-bolt-elements-textSecondary line-clamp-3 leading-relaxed">
+        <div className="mt-2 text-xs text-ui-textSecondary line-clamp-3 leading-relaxed">
           {thought.responseText.slice(0, 200)}
           {thought.responseText.length > 200 && '...'}
         </div>
@@ -90,7 +90,7 @@ const ThoughtCard = memo(({ thought }: { thought: Thought }) => {
 
       {/* Timing */}
       {thought.timing.durationMs > 0 && (
-        <div className="mt-1.5 text-xs text-bolt-elements-textTertiary">
+        <div className="mt-1.5 text-xs text-ui-textTertiary">
           {(thought.timing.durationMs / 1000).toFixed(1)}s
           {thought.tokenUsage.totalTokens > 0 && ` · ${thought.tokenUsage.totalTokens.toLocaleString()} tokens`}
         </div>
@@ -120,20 +120,20 @@ const FlowHeader = memo(() => {
   }
 
   return (
-    <div className="px-3 py-2 bg-bolt-elements-background-depth-2 border-b border-bolt-elements-borderColor">
+    <div className="px-3 py-2 bg-ui-background-depth-2 border-b border-ui-borderColor">
       <div className="flex items-center gap-2">
         <div
           className={classNames(
             'text-lg',
-            running ? 'i-ph:brain animate-pulse text-purple-400' : 'i-ph:brain text-bolt-elements-textTertiary',
+            running ? 'i-ph:brain animate-pulse text-purple-400' : 'i-ph:brain text-ui-textTertiary',
           )}
         />
 
-        <span className="text-sm font-medium text-bolt-elements-textPrimary flex-1">
+        <span className="text-sm font-medium text-ui-textPrimary flex-1">
           {running ? "I'm thinking..." : flow.status === 'completed' ? 'Thoughts compiled' : `ThinkFlow ${flow.status}`}
         </span>
 
-        <span className="text-xs text-bolt-elements-textTertiary">
+        <span className="text-xs text-ui-textTertiary">
           {completed}/{flow.thoughts.length}
           {failed > 0 && <span className="text-red-400 ml-1">({failed} failed)</span>}
         </span>
@@ -150,7 +150,7 @@ const FlowHeader = memo(() => {
 
         <button
           onClick={() => thinkFlowPanelExpanded.set(!expanded)}
-          className="text-bolt-elements-textTertiary hover:text-bolt-elements-textSecondary transition-colors"
+          className="text-ui-textTertiary hover:text-ui-textSecondary transition-colors"
         >
           <div className={classNames('i-ph:caret-down transition-transform duration-200', expanded && 'rotate-180')} />
         </button>
@@ -158,7 +158,7 @@ const FlowHeader = memo(() => {
 
       {/* Overall Progress Bar */}
       {running && (
-        <div className="w-full h-1.5 rounded-full bg-bolt-elements-background-depth-1 mt-2 overflow-hidden">
+        <div className="w-full h-1.5 rounded-full bg-ui-background-depth-1 mt-2 overflow-hidden">
           <div
             className="h-full rounded-full bg-gradient-to-r from-purple-400 to-blue-400 transition-all duration-300"
             style={{ width: `${progress}%` }}
@@ -185,13 +185,13 @@ const CompiledResult = memo(() => {
   }
 
   return (
-    <div className="px-3 py-2 border-t border-bolt-elements-borderColor">
+    <div className="px-3 py-2 border-t border-ui-borderColor">
       <div className="flex items-center gap-2 mb-2">
         <div className="i-ph:file-text text-sm text-purple-400" />
-        <span className="text-xs font-medium text-bolt-elements-textPrimary">Compiled Result</span>
+        <span className="text-xs font-medium text-ui-textPrimary">Compiled Result</span>
       </div>
 
-      <div className="text-xs text-bolt-elements-textSecondary leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap">
+      <div className="text-xs text-ui-textSecondary leading-relaxed max-h-48 overflow-y-auto whitespace-pre-wrap">
         {result}
       </div>
     </div>
@@ -220,11 +220,11 @@ export const ThinkFlowPanel = memo(() => {
   }
 
   return (
-    <div className="border-b border-bolt-elements-borderColor">
+    <div className="border-b border-ui-borderColor">
       <FlowHeader />
 
       {expanded && (
-        <div className="bg-bolt-elements-background-depth-1">
+        <div className="bg-ui-background-depth-1">
           {/* Thought Cards */}
           <div className="flex flex-col gap-2 p-3">
             {thoughtList.map((thought) => (
@@ -237,14 +237,14 @@ export const ThinkFlowPanel = memo(() => {
 
           {/* Footer */}
           {flow.status === 'completed' && (
-            <div className="flex items-center justify-between px-3 py-2 border-t border-bolt-elements-borderColor">
-              <span className="text-xs text-bolt-elements-textTertiary">
+            <div className="flex items-center justify-between px-3 py-2 border-t border-ui-borderColor">
+              <span className="text-xs text-ui-textTertiary">
                 Completed in {((flow.timing.durationMs ?? 0) / 1000).toFixed(1)}s
               </span>
 
               <button
                 onClick={handleClear}
-                className="text-xs text-bolt-elements-textTertiary hover:text-bolt-elements-textSecondary transition-colors"
+                className="text-xs text-ui-textTertiary hover:text-ui-textSecondary transition-colors"
               >
                 Clear
               </button>

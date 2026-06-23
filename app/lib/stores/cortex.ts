@@ -511,24 +511,14 @@ export async function mergeInto(
   try {
     const result = await mergeBranches(nodes, currentBranch.headNodeId, sourceBranch.headNodeId, chatId, strategy);
 
-    if (result.success && result.mergedNodeId) {
+    if (result.success && result.mergedNode) {
       // The merge created a new node — save it and advance branch
-      const mergeNode = await createNode({
-        parents: [currentBranch.headNodeId, sourceBranch.headNodeId],
-        chatId,
-        messageIndex: 0,
-        messageCount: 0,
-        changeSummary: `Merge '${sourceBranchName}' into '${head.branchName}'`,
-        currentFiles: {},
-        previousFiles: {},
-      });
+      await saveNode(db, result.mergedNode);
 
-      await saveNode(db, mergeNode);
-
-      const updatedBranch = advanceBranch(currentBranch, mergeNode.id);
+      const updatedBranch = advanceBranch(currentBranch, result.mergedNode.id);
       await saveBranchRef(db, updatedBranch);
 
-      cortexNodes.set([...nodes, mergeNode]);
+      cortexNodes.set([...nodes, result.mergedNode]);
       cortexBranches.set(branches.map((b) => (b.name === updatedBranch.name ? updatedBranch : b)));
 
       logger.info(`Merged '${sourceBranchName}' into '${head.branchName}'`);

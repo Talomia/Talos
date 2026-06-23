@@ -5,7 +5,7 @@ import { createDataStream, generateId } from 'ai';
 import { MAX_RESPONSE_SEGMENTS, MAX_TOKENS, type FileMap } from '~/lib/.server/llm/constants';
 import { CONTINUE_PROMPT } from '~/lib/common/prompts/prompts';
 import { streamText, type Messages, type StreamingOptions } from '~/lib/.server/llm/stream-text';
-import SwitchableStream from '~/lib/.server/llm/switchable-stream';
+
 import type { IProviderSetting } from '~/types/model';
 import { createScopedLogger } from '~/utils/logger';
 import { getFilePaths, selectContext } from '~/lib/.server/llm/select-context';
@@ -118,7 +118,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   const apiKeys = vault.apiKeys;
   const providerSettings: Record<string, IProviderSetting> = getProviderSettingsFromCookie(cookieHeader);
 
-  const stream = new SwitchableStream();
+  let continuationCount = 0;
 
   const cumulativeUsage = {
     completionTokens: 0,
@@ -353,11 +353,13 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               return;
             }
 
-            if (stream.switches >= MAX_RESPONSE_SEGMENTS) {
+            continuationCount++;
+
+            if (continuationCount >= MAX_RESPONSE_SEGMENTS) {
               throw Error('Cannot continue message: Maximum segments reached');
             }
 
-            const switchesLeft = MAX_RESPONSE_SEGMENTS - stream.switches;
+            const switchesLeft = MAX_RESPONSE_SEGMENTS - continuationCount;
 
             logger.info(`Reached max token limit (${MAX_TOKENS}): Continuing message (${switchesLeft} switches left)`);
 
@@ -610,15 +612,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
       );
     }
 
-    return json(
-      {
-        error: true,
-        message: 'An unexpected error occurred',
-        statusCode: 500,
-        isRetryable: true,
-        provider: 'unknown',
-      },
-      { status: 500, statusText: 'Error' },
-    );
+    return json(errorResponse, { status: errorResponse.statusCode, statusText: 'Error' });
   }
 }

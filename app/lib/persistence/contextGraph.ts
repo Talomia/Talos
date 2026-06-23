@@ -115,6 +115,7 @@ export type MergeStrategy = 'ours' | 'theirs' | 'newer-wins';
 export interface MergeResult {
   success: boolean;
   mergedNodeId?: NodeId;
+  mergedNode?: ContextNode;
   conflicts?: MergeConflict[];
 }
 
@@ -519,6 +520,7 @@ export async function mergeBranches(
   return {
     success: true,
     mergedNodeId: mergeNode.id,
+    mergedNode: mergeNode,
     conflicts: conflicts.length > 0 ? conflicts : undefined,
   };
 }

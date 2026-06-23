@@ -45,8 +45,8 @@ function getCompletionTokenLimit(modelDetails: any): number {
 }
 
 function sanitizeText(text: string): string {
-  let sanitized = text.replace(new RegExp(`<div class=\\"(?:${CSS_CLASS_THOUGHT})\\">.*?<\\/div>`, 's'), '');
-  sanitized = sanitized.replace(/<think>.*?<\/think>/s, '');
+  let sanitized = text.replace(new RegExp(`<div class=\\"(?:${CSS_CLASS_THOUGHT})\\">.*?<\\/div>`, 'gs'), '');
+  sanitized = sanitized.replace(/<think>.*?<\/think>/gs, '');
   sanitized = sanitized.replace(
     new RegExp(
       `(?:${ACTION_TAG_OPEN}) type="file" filePath="package-lock\\.json">[\\s\\S]*?(?:${ACTION_TAG_CLOSE})`,

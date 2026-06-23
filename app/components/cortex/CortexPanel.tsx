@@ -45,31 +45,24 @@ const PanelHeader = memo(() => {
       className={classNames(
         'flex items-center gap-2 w-full px-3 py-2',
         'text-sm font-medium',
-        'bg-bolt-elements-background-depth-2 hover:bg-bolt-elements-background-depth-3',
-        'border-b border-bolt-elements-borderColor',
+        'bg-ui-background-depth-2 hover:bg-ui-background-depth-3',
+        'border-b border-ui-borderColor',
         'transition-colors duration-150',
       )}
     >
-      <div
-        className={classNames(
-          'i-ph:git-branch text-lg',
-          branch ? 'text-purple-400' : 'text-bolt-elements-textTertiary',
-        )}
-      />
+      <div className={classNames('i-ph:git-branch text-lg', branch ? 'text-purple-400' : 'text-ui-textTertiary')} />
 
-      <span className="text-bolt-elements-textPrimary flex-1 text-left truncate">
-        {branch ? branch.name : 'No branch'}
-      </span>
+      <span className="text-ui-textPrimary flex-1 text-left truncate">{branch ? branch.name : 'No branch'}</span>
 
       {hasDirtyChanges && (
         <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" title="Uncommitted changes" />
       )}
 
-      {loading && <div className="i-ph:spinner-gap animate-spin text-bolt-elements-textTertiary" />}
+      {loading && <div className="i-ph:spinner-gap animate-spin text-ui-textTertiary" />}
 
       <div
         className={classNames(
-          'i-ph:caret-down text-bolt-elements-textTertiary transition-transform duration-200',
+          'i-ph:caret-down text-ui-textTertiary transition-transform duration-200',
           isOpen && 'rotate-180',
         )}
       />
@@ -97,30 +90,23 @@ const BranchItem = memo(({ branch, isActive, onCheckout, onDelete }: BranchItemP
     <div
       className={classNames(
         'flex items-center gap-2 px-3 py-1.5 text-sm',
-        'hover:bg-bolt-elements-background-depth-3 transition-colors',
-        isActive && 'bg-bolt-elements-background-depth-3',
+        'hover:bg-ui-background-depth-3 transition-colors',
+        isActive && 'bg-ui-background-depth-3',
       )}
     >
-      <div
-        className={classNames(
-          'i-ph:git-branch text-sm',
-          isActive ? 'text-purple-400' : 'text-bolt-elements-textTertiary',
-        )}
-      />
+      <div className={classNames('i-ph:git-branch text-sm', isActive ? 'text-purple-400' : 'text-ui-textTertiary')} />
 
       <span
         className={classNames(
           'flex-1 truncate',
-          isActive ? 'text-bolt-elements-textPrimary font-medium' : 'text-bolt-elements-textSecondary',
+          isActive ? 'text-ui-textPrimary font-medium' : 'text-ui-textSecondary',
         )}
       >
         {branch.name}
       </span>
 
       {branch.isDefault && (
-        <span className="text-xs text-bolt-elements-textTertiary bg-bolt-elements-background-depth-1 px-1.5 py-0.5 rounded">
-          default
-        </span>
+        <span className="text-xs text-ui-textTertiary bg-ui-background-depth-1 px-1.5 py-0.5 rounded">default</span>
       )}
 
       {!isActive && (
@@ -178,7 +164,7 @@ const BranchTab = memo(() => {
   return (
     <div className="flex flex-col">
       {branches.length === 0 ? (
-        <div className="px-3 py-4 text-sm text-bolt-elements-textTertiary text-center">
+        <div className="px-3 py-4 text-sm text-ui-textTertiary text-center">
           No branches yet. Commit to create the first branch.
         </div>
       ) : (
@@ -194,14 +180,14 @@ const BranchTab = memo(() => {
       )}
 
       {showNewBranch ? (
-        <div className="flex items-center gap-1 px-3 py-2 border-t border-bolt-elements-borderColor">
+        <div className="flex items-center gap-1 px-3 py-2 border-t border-ui-borderColor">
           <input
             type="text"
             value={newBranchName}
             onChange={(e) => setNewBranchName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreateBranch()}
             placeholder="branch-name"
-            className="flex-1 text-sm bg-transparent border border-bolt-elements-borderColor rounded px-2 py-1 text-bolt-elements-textPrimary placeholder:text-bolt-elements-textTertiary focus:outline-none focus:border-purple-400"
+            className="flex-1 text-sm bg-transparent border border-ui-borderColor rounded px-2 py-1 text-ui-textPrimary placeholder:text-ui-textTertiary focus:outline-none focus:border-purple-400"
             autoFocus
           />
 
@@ -211,7 +197,7 @@ const BranchTab = memo(() => {
 
           <button
             onClick={() => setShowNewBranch(false)}
-            className="text-sm text-bolt-elements-textTertiary hover:text-bolt-elements-textSecondary px-1"
+            className="text-sm text-ui-textTertiary hover:text-ui-textSecondary px-1"
           >
             <div className="i-ph:x" />
           </button>
@@ -219,7 +205,7 @@ const BranchTab = memo(() => {
       ) : (
         <button
           onClick={() => setShowNewBranch(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-bolt-elements-background-depth-3 transition-colors border-t border-bolt-elements-borderColor"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-ui-background-depth-3 transition-colors border-t border-ui-borderColor"
         >
           <div className="i-ph:plus" />
           New branch
@@ -245,7 +231,7 @@ const HistoryTab = memo(() => {
 
   if (sortedNodes.length === 0) {
     return (
-      <div className="px-3 py-4 text-sm text-bolt-elements-textTertiary text-center">
+      <div className="px-3 py-4 text-sm text-ui-textTertiary text-center">
         No context history. Commit to create the first snapshot.
       </div>
     );
@@ -268,30 +254,30 @@ const NodeItem = memo(({ node }: { node: ContextNode }) => {
   const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   return (
-    <div className="flex items-start gap-2 px-3 py-2 hover:bg-bolt-elements-background-depth-3 transition-colors border-b border-bolt-elements-borderColor last:border-b-0">
+    <div className="flex items-start gap-2 px-3 py-2 hover:bg-ui-background-depth-3 transition-colors border-b border-ui-borderColor last:border-b-0">
       <div className="mt-1">
         <div
           className={classNames(
             'w-2.5 h-2.5 rounded-full',
-            node.parents.length > 1 ? 'bg-purple-400' : 'bg-bolt-elements-textTertiary',
+            node.parents.length > 1 ? 'bg-purple-400' : 'bg-ui-textTertiary',
           )}
         />
       </div>
 
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-bolt-elements-textPrimary truncate">{node.changeSummary}</p>
+        <p className="text-sm text-ui-textPrimary truncate">{node.changeSummary}</p>
 
         <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-xs text-bolt-elements-textTertiary">
+          <span className="text-xs text-ui-textTertiary">
             {dateStr} {timeStr}
           </span>
-          <span className="text-xs text-bolt-elements-textTertiary">·</span>
-          <span className="text-xs text-bolt-elements-textTertiary">{node.changedFiles.length} files</span>
+          <span className="text-xs text-ui-textTertiary">·</span>
+          <span className="text-xs text-ui-textTertiary">{node.changedFiles.length} files</span>
           {node.parents.length > 1 && <span className="text-xs text-purple-400">merge</span>}
         </div>
       </div>
 
-      <span className="text-xs font-mono text-bolt-elements-textTertiary mt-0.5" title={node.id}>
+      <span className="text-xs font-mono text-ui-textTertiary mt-0.5" title={node.id}>
         {node.id.slice(0, 7)}
       </span>
     </div>
@@ -310,9 +296,7 @@ const StatsTab = memo(() => {
   const stats = useStore(graphStats);
 
   if (!stats) {
-    return (
-      <div className="px-3 py-4 text-sm text-bolt-elements-textTertiary text-center">No statistics available yet.</div>
-    );
+    return <div className="px-3 py-4 text-sm text-ui-textTertiary text-center">No statistics available yet.</div>;
   }
 
   const statItems = [
@@ -327,13 +311,13 @@ const StatsTab = memo(() => {
       {statItems.map((item) => (
         <div
           key={item.label}
-          className="flex items-center gap-2 p-2 rounded-lg bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor"
+          className="flex items-center gap-2 p-2 rounded-lg bg-ui-background-depth-1 border border-ui-borderColor"
         >
           <div className={classNames(item.icon, 'text-lg text-purple-400')} />
 
           <div>
-            <div className="text-sm font-medium text-bolt-elements-textPrimary">{item.value}</div>
-            <div className="text-xs text-bolt-elements-textTertiary">{item.label}</div>
+            <div className="text-sm font-medium text-ui-textPrimary">{item.value}</div>
+            <div className="text-xs text-ui-textTertiary">{item.label}</div>
           </div>
         </div>
       ))}
@@ -366,13 +350,13 @@ export const CortexPanel = memo(() => {
   ];
 
   return (
-    <div className="border-b border-bolt-elements-borderColor">
+    <div className="border-b border-ui-borderColor">
       <PanelHeader />
 
       {isOpen && (
-        <div className="bg-bolt-elements-background-depth-1">
+        <div className="bg-ui-background-depth-1">
           {/* Tab Bar */}
-          <div className="flex border-b border-bolt-elements-borderColor">
+          <div className="flex border-b border-ui-borderColor">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -381,7 +365,7 @@ export const CortexPanel = memo(() => {
                   'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
                   activeTab === tab.id
                     ? 'text-purple-400 border-b-2 border-purple-400'
-                    : 'text-bolt-elements-textTertiary hover:text-bolt-elements-textSecondary',
+                    : 'text-ui-textTertiary hover:text-ui-textSecondary',
                 )}
               >
                 <div className={classNames(tab.icon, 'text-sm')} />
