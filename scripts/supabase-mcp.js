@@ -1,5 +1,7 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+
 
 const STUDIO_URL = process.env.STUDIO_URL;
 const STUDIO_USER = process.env.STUDIO_USER;
@@ -22,7 +24,7 @@ const server = new Server(
   }
 );
 
-server.setRequestHandler({ method: "tools/list" }, async () => ({
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "execute_sql",
@@ -49,7 +51,7 @@ server.setRequestHandler({ method: "tools/list" }, async () => ({
   ]
 }));
 
-server.setRequestHandler({ method: "tools/call" }, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
   
   const headers = {
