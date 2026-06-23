@@ -139,6 +139,11 @@ COPY --from=prod-deps /app/worker-configuration.d.ts /app/worker-configuration.d
 # Wrangler needs this for nodejs_compat flag and compatibility settings
 COPY --from=prod-deps /app/wrangler.toml /app/wrangler.toml
 
+# Let's Encrypt CA bundle — workerd's default CA store doesn't include
+# the LE E8 ECDSA intermediate used by EasyPanel's auto-provisioned certs
+COPY certs/extra-ca-certificates.pem /app/certs/extra-ca-certificates.pem
+ENV NODE_EXTRA_CA_CERTS=/app/certs/extra-ca-certificates.pem
+
 # Run as non-root user for security
 # Create appuser WITH a real home directory so corepack/pnpm can cache there
 RUN addgroup --gid 1001 --system appuser && \
