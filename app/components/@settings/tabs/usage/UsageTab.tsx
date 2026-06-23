@@ -10,6 +10,7 @@ import { useStore } from '@nanostores/react';
 import { usageSummary, budgetConfig, updateBudget, clearUsageHistory, exportUsageCSV } from '~/lib/stores/tokenCost';
 import { classNames } from '~/utils/classNames';
 import { toast } from 'react-toastify';
+import { formatCost, formatTokenCount } from '~/utils/formatters';
 
 export const UsageTab = memo(() => {
   const summary = useStore(usageSummary);
@@ -68,7 +69,7 @@ export const UsageTab = memo(() => {
           accent={summary.budgetStatus === 'exceeded' ? 'red' : summary.budgetStatus === 'warning' ? 'amber' : 'green'}
         />
         <SummaryCard label="Today" value={formatCost(summary.dailyTotalUsd)} icon="i-ph:calendar" accent="blue" />
-        <SummaryCard label="Tokens" value={formatTokens(totalTokens)} icon="i-ph:hash" accent="purple" />
+        <SummaryCard label="Tokens" value={formatTokenCount(totalTokens)} icon="i-ph:hash" accent="purple" />
         <SummaryCard
           label="Requests"
           value={summary.monthlyRequests.toLocaleString()}
@@ -296,34 +297,4 @@ function SummaryCard({
       <div className="text-lg font-semibold text-ui-textPrimary">{value}</div>
     </div>
   );
-}
-
-/*
- * ==========================================
- * Format Helpers
- * ==========================================
- */
-
-function formatCost(usd: number): string {
-  if (usd === 0) {
-    return '$0.00';
-  }
-
-  if (usd > 0 && usd < 0.01) {
-    return '< $0.01';
-  }
-
-  return `$${usd.toFixed(2)}`;
-}
-
-function formatTokens(count: number): string {
-  if (count >= 1_000_000) {
-    return `${(count / 1_000_000).toFixed(1)}M`;
-  }
-
-  if (count >= 1_000) {
-    return `${(count / 1_000).toFixed(1)}K`;
-  }
-
-  return count.toString();
 }

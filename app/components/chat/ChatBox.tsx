@@ -19,6 +19,8 @@ import { McpTools } from './MCPTools';
 import { WebSearch } from './WebSearch.client';
 import { useChatContext } from '~/lib/contexts/ChatContext';
 import { usePromptHistory } from '~/lib/hooks/usePromptHistory';
+import { startThinkFlow, flowRunning } from '~/lib/modules/thinkflow';
+import { useStore } from '@nanostores/react';
 
 /**
  * Props that are local to BaseChat and NOT available from ChatContext.
@@ -54,6 +56,8 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
     refs: { textareaRef },
   } = useChatContext();
 
+  const isFlowRunning = useStore(flowRunning);
+
   // Shell-like prompt history (↑/↓)
   const setInputValue = React.useCallback(
     (value: string) => {
@@ -62,6 +66,38 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
     [handleInputChange],
   );
   const { pushToHistory, handleHistoryKeyDown } = usePromptHistory(input, setInputValue);
+
+  const handleDeepThink = React.useCallback(() => {
+    const prompt = input.trim();
+
+    if (!prompt) {
+      return;
+    }
+
+    const thoughtDefinitions = [
+      {
+        label: 'Architecture Analysis',
+        focus: `Analyze the architectural implications of: ${prompt}\n\nFocus on system design, component relationships, and scalability.`,
+      },
+      {
+        label: 'Implementation Strategy',
+        focus: `Propose a concrete implementation plan for: ${prompt}\n\nFocus on specific files, functions, and code changes needed.`,
+      },
+      {
+        label: 'Risk Assessment',
+        focus: `Identify potential risks and edge cases for: ${prompt}\n\nFocus on error scenarios, performance implications, and security concerns.`,
+      },
+    ];
+
+    startThinkFlow(thoughtDefinitions, {
+      model: model || '',
+      provider: provider?.name || '',
+    });
+
+    // Clear the input after starting the flow
+    handleInputChange({ target: { value: '' } } as React.ChangeEvent<HTMLTextAreaElement>);
+    toast.success('Deep Think started!');
+  }, [input, model, provider, handleInputChange]);
 
   return (
     <div
@@ -286,6 +322,21 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
                 <div className="i-app:stars text-xl"></div>
               )}
             </IconButton>
+
+            {input.length > 0 && (
+              <IconButton
+                title="Deep Think"
+                disabled={isFlowRunning}
+                className={classNames('transition-all', isFlowRunning ? 'opacity-100' : '')}
+                onClick={handleDeepThink}
+              >
+                {isFlowRunning ? (
+                  <div className="i-svg-spinners:90-ring-with-bg text-ui-loader-progress text-xl animate-spin"></div>
+                ) : (
+                  <div className="i-ph:brain text-xl"></div>
+                )}
+              </IconButton>
+            )}
 
             <SpeechRecognitionButton
               isListening={props.isListening}

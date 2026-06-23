@@ -16,6 +16,7 @@ import {
   createChatFromMessages,
   getSnapshot,
   setSnapshot,
+  updateChatMetadata as dbUpdateChatMetadata,
   type IChatMetadata,
 } from './db';
 import type { FileMap } from '~/lib/stores/files';
@@ -33,6 +34,7 @@ export interface ChatHistoryItem {
   description?: string;
   messages: Message[];
   timestamp: string;
+  updatedAt?: number;
   metadata?: IChatMetadata;
 }
 
@@ -361,7 +363,7 @@ ${value.content}
       }
 
       try {
-        await setMessages(db, id, initialMessages, urlId, description.get(), undefined, metadata);
+        await dbUpdateChatMetadata(db, id, metadata);
         chatMetadata.set(metadata);
       } catch (error) {
         toast.error('Failed to update chat metadata');
@@ -431,7 +433,7 @@ ${value.content}
         db,
         finalChatId, // Use the potentially updated chatId
         [...archivedMessagesRef.current, ...messages],
-        urlId,
+        _urlId,
         description.get(),
         undefined,
         chatMetadata.get(),

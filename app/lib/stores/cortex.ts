@@ -131,6 +131,22 @@ export const cortexDirty = map<{ files: boolean; messages: boolean }>({
   messages: false,
 });
 
+/**
+ * Mark files or messages as dirty (having uncommitted changes).
+ */
+export function markDirty(what: 'files' | 'messages'): void {
+  cortexDirty.setKey(what, true);
+}
+
+/*
+ * ==========================================
+ * Last committed state (for dirty detection)
+ * ==========================================
+ */
+
+let _lastCommittedMessages: string | null = null;
+let _lastCommittedFiles: string | null = null;
+
 /*
  * ==========================================
  * Database Reference
@@ -216,6 +232,18 @@ export async function commitContext(params: {
     const head = cortexHead.get();
     const branches = cortexBranches.get();
 
+    // Detect dirty state by comparing against last committed snapshot
+    const messagesFingerprint = JSON.stringify(params.messages);
+    const filesFingerprint = JSON.stringify(params.files);
+
+    if (_lastCommittedMessages !== null && messagesFingerprint !== _lastCommittedMessages) {
+      cortexDirty.setKey('messages', true);
+    }
+
+    if (_lastCommittedFiles !== null && filesFingerprint !== _lastCommittedFiles) {
+      cortexDirty.setKey('files', true);
+    }
+
     // Determine parent node
     let parentNodeId: NodeId | undefined;
     let previousFiles: Record<string, string> = {};
@@ -276,6 +304,10 @@ export async function commitContext(params: {
 
     // Update nodes list
     cortexNodes.set([...currentNodes, node]);
+
+    // Commit succeeded — record snapshot and reset dirty flags
+    _lastCommittedMessages = messagesFingerprint;
+    _lastCommittedFiles = filesFingerprint;
     cortexDirty.set({ files: false, messages: false });
 
     logger.info(`Committed context node ${node.id.slice(0, 8)}... (${node.changedFiles.length} changed files)`);
