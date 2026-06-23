@@ -135,9 +135,19 @@ COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=prod-deps /app/package.json /app/package.json
 COPY --from=prod-deps /app/bindings.sh /app/bindings.sh
 
-# Pre-configure wrangler to disable metrics
-RUN mkdir -p /root/.config/.wrangler && \
-    echo '{"enabled":false}' > /root/.config/.wrangler/metrics.json
+# Run as non-root user for security
+# Create appuser WITH a real home directory so corepack/pnpm can cache there
+RUN addgroup --gid 1001 --system appuser && \
+    adduser --uid 1001 --system --ingroup appuser --home /home/appuser appuser
+
+# Pre-configure wrangler to disable metrics (under appuser's home)
+RUN mkdir -p /home/appuser/.config/.wrangler && \
+    echo '{"enabled":false}' > /home/appuser/.config/.wrangler/metrics.json && \
+    chown -R appuser:appuser /home/appuser
+
+# Give corepack a writable cache directory
+ENV COREPACK_HOME=/home/appuser/.cache/corepack
+RUN corepack enable
 
 # Make bindings script executable
 RUN chmod +x /app/bindings.sh
@@ -148,9 +158,6 @@ EXPOSE 5173
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
   CMD curl -fsS http://localhost:5173/ || exit 1
 
-# Run as non-root user for security
-RUN addgroup --gid 1001 --system appuser && \
-    adduser --uid 1001 --system --ingroup appuser appuser
 USER appuser
 
 # Start using dockerstart script with Wrangler
