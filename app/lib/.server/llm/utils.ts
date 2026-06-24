@@ -10,9 +10,25 @@ export function extractPropertiesFromMessage(message: Omit<Message, 'id'>): {
   provider: string;
   content: string;
 } {
-  const textContent = Array.isArray(message.content)
-    ? message.content.find((item) => item.type === 'text')?.text || ''
-    : message.content;
+  /*
+   * Defensive: support both old-style messages (content: string) and
+   * v6 UIMessages (parts: Array<{ type: 'text', text: string }>).
+   * The transport layer converts UIMessages to old format, but this fallback
+   * provides defense-in-depth if messages arrive in raw UIMessage format.
+   */
+  let textContent: string;
+
+  if (typeof message.content === 'string' && message.content) {
+    textContent = message.content;
+  } else if (Array.isArray((message as any).parts)) {
+    textContent =
+      (message as any).parts
+        .filter((p: any) => p.type === 'text')
+        .map((p: any) => p.text || '')
+        .join('') || '';
+  } else {
+    textContent = message.content || '';
+  }
 
   const modelMatch = textContent.match(MODEL_REGEX);
   const providerMatch = textContent.match(PROVIDER_REGEX);
@@ -29,18 +45,7 @@ export function extractPropertiesFromMessage(message: Omit<Message, 'id'>): {
    */
   const provider = providerMatch ? providerMatch[1] : DEFAULT_PROVIDER.name;
 
-  const cleanedContent = Array.isArray(message.content)
-    ? message.content.map((item) => {
-        if (item.type === 'text') {
-          return {
-            type: 'text',
-            text: item.text?.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, ''),
-          };
-        }
-
-        return item; // Preserve image_url and other types as is
-      })
-    : textContent.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '');
+  const cleanedContent = textContent.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '');
 
   return { model, provider, content: cleanedContent };
 }

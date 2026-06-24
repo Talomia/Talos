@@ -147,9 +147,9 @@ export async function streamText(props: {
       const { model, provider, content } = extractPropertiesFromMessage(message);
       currentModel = model;
       currentProvider = provider;
-      newMessage.content = sanitizeText(content);
+      newMessage.content = sanitizeText(typeof content === 'string' ? content : '');
     } else if (message.role === 'assistant') {
-      newMessage.content = sanitizeText(message.content);
+      newMessage.content = sanitizeText(typeof message.content === 'string' ? message.content : '');
     }
 
     // Sanitize all text parts in parts array, if present

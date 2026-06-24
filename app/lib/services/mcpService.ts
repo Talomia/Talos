@@ -414,8 +414,8 @@ export class MCPService {
                   messages.map((m: any) => ({
                     id: m.id || '',
                     role: m.role,
-                    parts: [{ type: 'text', text: m.content || '' }],
-                    metadata: m.annotations,
+                    parts: m.parts || [{ type: 'text', text: m.content || '' }],
+                    metadata: m.annotations || m.metadata,
                   })),
                 ),
                 toolCallId,
