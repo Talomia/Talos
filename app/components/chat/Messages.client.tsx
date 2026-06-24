@@ -171,9 +171,29 @@ export const Messages = memo(
             })
           : null}
         {isStreaming && (
-          <div className="flex items-center gap-2 mt-4 ml-1">
-            <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-            <span className="text-sm text-ui-textTertiary">Thinking…</span>
+          <div className="flex flex-col gap-1 mt-4">
+            {/* Avatar row */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 rounded-full shrink-0 bg-gradient-to-br from-purple-500 to-indigo-600 shadow-sm">
+                <div className="i-ph:lightning-fill text-white text-xs" />
+              </div>
+              <span className="text-sm font-medium text-ui-textPrimary">Talos</span>
+            </div>
+            {/* Typing bubble */}
+            <div className="ml-8 flex items-center gap-1.5 px-4 py-3 rounded-lg bg-gray-100/60 dark:bg-gray-800/40 w-fit">
+              <span
+                className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-400"
+                style={{ animation: 'typing-bounce 1.4s ease-in-out infinite', animationDelay: '0ms' }}
+              />
+              <span
+                className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-400"
+                style={{ animation: 'typing-bounce 1.4s ease-in-out infinite', animationDelay: '200ms' }}
+              />
+              <span
+                className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-400"
+                style={{ animation: 'typing-bounce 1.4s ease-in-out infinite', animationDelay: '400ms' }}
+              />
+            </div>
           </div>
         )}
       </div>
