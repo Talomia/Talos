@@ -38,6 +38,7 @@ export const PROVIDER_COMPLETION_LIMITS: Record<string, number> = {
  *   - OpenAI: o1, o3, gpt-5
  *   - DeepSeek: deepseek-reasoner, deepseek-r1
  *   - Perplexity: *-reasoning-*
+ *   - Google: gemini-2.5-* (uses thinkingConfig)
  *   - QwQ and other reasoning-named models
  */
 export function isReasoningModel(modelName: string): boolean {
@@ -48,7 +49,8 @@ export function isReasoningModel(modelName: string): boolean {
     lower.includes('deepseek-reasoner') ||
     lower.includes('deepseek-r1') ||
     lower.includes('-reasoning-') ||
-    lower.includes('qwq')
+    lower.includes('qwq') ||
+    lower.startsWith('gemini-2.5')
   );
 }
 
