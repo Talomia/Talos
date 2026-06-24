@@ -320,11 +320,6 @@ export class WorkbenchStore {
     }
   }
 
-  getFileModifcations() {
-    return getFileModifications(this.#filesStore);
-  }
-
-  /** Alias with corrected spelling */
   getFileModifications() {
     return getFileModifications(this.#filesStore);
   }

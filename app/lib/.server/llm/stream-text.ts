@@ -292,22 +292,9 @@ export async function streamText(props: {
     ...(isReasoning ? { temperature: 1 } : {}),
   };
 
-  // DEBUG: Log final streaming parameters
-  logger.info(
-    `DEBUG STREAM: Final streaming params for model "${modelDetails.name}":`,
-    JSON.stringify(
-      {
-        hasTemperature: 'temperature' in streamParams,
-        hasMaxTokens: 'maxTokens' in streamParams,
-        hasMaxCompletionTokens: 'maxCompletionTokens' in streamParams,
-        paramKeys: Object.keys(streamParams).filter((key) => !['model', 'messages', 'system'].includes(key)),
-        streamParams: Object.fromEntries(
-          Object.entries(streamParams).filter(([key]) => !['model', 'messages', 'system'].includes(key)),
-        ),
-      },
-      null,
-      2,
-    ),
+  logger.trace(
+    'Stream params:',
+    Object.keys(streamParams).filter((key) => !['model', 'messages', 'system'].includes(key)),
   );
 
   return await _streamText(streamParams);

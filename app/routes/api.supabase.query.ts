@@ -64,9 +64,14 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
       return json({ error: 'WITH ... DELETE/UPDATE patterns are not allowed' }, { status: 400 });
     }
 
-    // Reject DELETE without WHERE
+    // Reject DELETE entirely
     if (/\bDELETE\b/i.test(query)) {
       return json({ error: 'DELETE statements are not allowed' }, { status: 400 });
+    }
+
+    // Require WHERE clause for UPDATE to prevent mass-update of all rows
+    if (/\bUPDATE\b/i.test(query) && !/\bWHERE\b/i.test(query)) {
+      return json({ error: 'UPDATE statements must include a WHERE clause' }, { status: 400 });
     }
 
     logger.debug('Executing query:', { projectId, queryLength: query.length, preview: query.slice(0, 80) });

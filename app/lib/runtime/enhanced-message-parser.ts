@@ -38,15 +38,18 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   parse(messageId: string, input: string): string {
     // Prune _processedCodeBlocks if it exceeds the limit
     if (this._processedCodeBlocks.size > MAX_PROCESSED_BLOCKS) {
-      const keysIter = this._processedCodeBlocks.keys();
+      const targetSize = Math.floor(MAX_PROCESSED_BLOCKS / 2);
 
-      for (const key of keysIter) {
+      for (const key of this._processedCodeBlocks.keys()) {
         if (key === messageId) {
           continue;
         }
 
         this._processedCodeBlocks.delete(key);
-        break;
+
+        if (this._processedCodeBlocks.size <= targetSize) {
+          break;
+        }
       }
     }
 
@@ -138,7 +141,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
           [language, filePath, content] = args;
         } else if (pattern.type === 'structured_file') {
           content = args[0];
-          language = pattern.regex.source.includes('json') ? 'json' : 'jsx';
+          language = content.trimStart().startsWith('{') ? 'json' : 'jsx';
           filePath = this._inferFileNameFromContent(content, language);
         } else {
           // file_path, explicit_create, in_filename patterns
