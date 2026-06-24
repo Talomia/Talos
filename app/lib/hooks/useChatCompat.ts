@@ -27,16 +27,12 @@ export function useChat(options: UseChatOptions = {}) {
     setDataState(value);
   }, []);
 
-  const onData = useCallback(
-    (parts: any[]) => {
-      setDataState((prev) => [...(prev || []), ...parts]);
+  const onData = useCallback((parts: any[]) => {
+    setDataState((prev) => [...(prev || []), ...parts]);
+  }, []);
 
-      if (options.onFinish && parts.find((p) => p.type === 'finish')) {
-        // call onFinish if present
-      }
-    },
-    [options.onFinish],
-  );
+  const onFinishRef = useRef(options.onFinish);
+  onFinishRef.current = options.onFinish;
 
   const v6Options: any = {
     id: options.id,
@@ -51,6 +47,40 @@ export function useChat(options: UseChatOptions = {}) {
     initialInput: options.initialInput,
     onError: options.onError,
     onData,
+    onFinish: ({ message }: { message: any }) => {
+      if (!onFinishRef.current) {
+        return;
+      }
+
+      // Extract usage from message metadata (sent as annotations from the server)
+      let usage: any;
+      const metadata = message.metadata;
+
+      if (metadata) {
+        // metadata could be an object or an array of annotation objects
+        const annotations = Array.isArray(metadata) ? metadata : [metadata];
+
+        for (const ann of annotations) {
+          if (ann?.type === 'usage' && ann?.value) {
+            usage = ann.value;
+            break;
+          }
+        }
+      }
+
+      // Build compat message with content extracted from parts
+      let content = '';
+
+      if (Array.isArray(message.parts)) {
+        for (const part of message.parts) {
+          if (part.type === 'text') {
+            content += part.text;
+          }
+        }
+      }
+
+      onFinishRef.current({ id: message.id, role: message.role, content }, { usage });
+    },
   };
 
   const api = options.api || '/api/chat';
