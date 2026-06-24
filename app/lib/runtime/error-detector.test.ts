@@ -279,3 +279,64 @@ describe('deduplicateErrors', () => {
     expect(result).toHaveLength(2);
   });
 });
+
+describe('new error patterns', () => {
+  it('detects Next.js server component errors', () => {
+    const output = 'Server Component cannot use useEffect hook - error in page.tsx';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('detects Tailwind CSS errors', () => {
+    const output = 'CssSyntaxError: Unknown word in tailwind.config.ts';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+    expect(errors[0].message).toContain('CSS:');
+  });
+
+  it('detects PostCSS errors', () => {
+    const output = 'postcss: Failed to compile custom directive';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('detects Webpack build failures', () => {
+    const output = 'Module build failed: SyntaxError in component.js';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('detects Turbopack errors', () => {
+    const output = 'turbopack compilation failed: cannot resolve module';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('detects process exit codes', () => {
+    const output = 'process exited with code 1';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+    expect(errors[0].message).toContain('code 1');
+  });
+
+  it('detects "use client" directive errors', () => {
+    const output = '"use client" error: cannot use hooks in Server Component';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('detects exit code pattern variations', () => {
+    const output = 'exit code 127 - command not found';
+    const errors = parseTerminalOutput(output);
+
+    expect(errors.length).toBeGreaterThanOrEqual(1);
+    expect(errors[0].message).toContain('127');
+  });
+});

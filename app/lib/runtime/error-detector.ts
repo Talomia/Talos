@@ -206,6 +206,30 @@ const ERROR_PATTERNS: Array<{
     regex: /(?:ERR_PNPM_|WARN.*deprecated|error.*ERESOLVE)\s*(.*)/i,
     extract: (match) => ({ message: match[1]?.trim() || match[0].trim() }),
   },
+
+  // Next.js server component errors
+  {
+    regex: /(?:Server Component|"use client"|"use server").*(?:error|cannot|invalid)/i,
+    extract: (_match, line) => ({ message: line.trim() }),
+  },
+
+  // Tailwind CSS / PostCSS errors
+  {
+    regex: /(?:CssSyntaxError|postcss|tailwindcss)[:\s]+(.*)/i,
+    extract: (match) => ({ message: `CSS: ${match[1].trim()}` }),
+  },
+
+  // Webpack/Turbopack compilation errors
+  {
+    regex: /(?:Module build failed|webpack|turbopack).*(?:error|failed)[:\s]*(.*)/i,
+    extract: (match) => ({ message: match[1]?.trim() || match[0].trim() }),
+  },
+
+  // Process exit with non-zero code
+  {
+    regex: /(?:process exited with code|exit code|exited with)\s*(\d+)/i,
+    extract: (match) => ({ message: `Process exited with code ${match[1]}` }),
+  },
 ];
 
 export function parseTerminalOutput(output: string): DetectedError[] {
