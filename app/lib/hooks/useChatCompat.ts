@@ -123,10 +123,10 @@ export function useChat(options: UseChatOptions = {}) {
 
   const reload = useCallback(async (requestOptions?: any): Promise<string | null | undefined> => {
     /*
-     * Yield control to the React commit phase to let the state update propagate.
-     * We poll chatRef.current.messages until it is not empty, for up to 200ms.
+     * Yield control to the React commit phase so that setMessages
+     * propagates to the v6 SDK's internal state before we act on it.
      */
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < 40; i++) {
       if (chatRef.current.messages.length > 0) {
         break;
       }
@@ -134,6 +134,41 @@ export function useChat(options: UseChatOptions = {}) {
       await new Promise((resolve) => setTimeout(resolve, 10));
     }
 
+    const msgs = chatRef.current.messages;
+
+    if (msgs.length === 0) {
+      throw new Error('No messages to reload');
+    }
+
+    const lastMsg = msgs[msgs.length - 1];
+
+    /*
+     * v6 SDK semantic difference:
+     *   - regenerate() requires the last message to be an assistant message
+     *   - In the old SDK, reload() would just re-send the current messages
+     *     to get a new response, regardless of who sent the last message.
+     *
+     * When the last message is a user message (new-chat flow or template flow),
+     * we pop it from the internal state and re-send it via sendMessage(), which
+     * both adds the user message AND triggers generation.
+     */
+    if (lastMsg.role === 'user') {
+      const textPart = Array.isArray(lastMsg.parts) ? lastMsg.parts.find((p: any) => p.type === 'text') : undefined;
+      const text = textPart ? (textPart as any).text || '' : '';
+      const metadata = lastMsg.metadata;
+
+      // Remove the last user message — sendMessage will re-add it
+      chatRef.current.setMessages(msgs.slice(0, -1));
+
+      // Brief yield to let the state settle
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      const res = await chatRef.current.sendMessage({ text, metadata }, requestOptions);
+
+      return res as any;
+    }
+
+    // Last message is an assistant message — standard regenerate
     const res = await chatRef.current.regenerate(requestOptions);
 
     return res as any;
