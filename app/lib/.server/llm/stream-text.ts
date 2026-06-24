@@ -7,7 +7,7 @@ import { PromptLibrary } from '~/lib/common/prompt-library';
 import { allowedHTMLElements } from '~/utils/markdown';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import { createScopedLogger } from '~/utils/logger';
-import { createFilesContext, extractPropertiesFromMessage } from './utils';
+import { createFilesContext, extractPropertiesFromMessage, simplifyActions } from './utils';
 import { discussPrompt } from '~/lib/common/prompts/discuss-prompt';
 import type { DesignScheme } from '~/types/design-scheme';
 import { CSS_CLASS_THOUGHT, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
@@ -160,7 +160,46 @@ export async function streamText(props: {
     `Token limits for model ${modelDetails.name}: maxTokens=${safeMaxTokens}, maxTokenAllowed=${modelDetails.maxTokenAllowed}, maxCompletionTokens=${modelDetails.maxCompletionTokens}`,
   );
 
-  let systemPrompt =
+  // ─── Token-Budgeted Context & History Pruning ────────────────
+  const maxTokenAllowed = modelDetails?.maxTokenAllowed || 128000;
+  const completionBudget = safeMaxTokens;
+  const maxInputTokens = maxTokenAllowed - completionBudget;
+
+  const estimateTokens = (text: string) => Math.ceil((text || '').length / 4);
+  const estimateMessageTokens = (m: Omit<Message, 'id'>) => {
+    let len = 0;
+
+    if (typeof m.content === 'string') {
+      len += m.content.length;
+    } else if (Array.isArray(m.content)) {
+      (m.content as any).forEach((part: any) => {
+        if (part.type === 'text') {
+          len += part.text?.length || 0;
+        }
+      });
+    }
+
+    return Math.ceil(len / 4);
+  };
+
+  // Simplify older assistant action blocks to save massive amount of tokens
+  for (let i = 0; i < processedMessages.length - 1; i++) {
+    const msg = processedMessages[i];
+
+    if (msg.role === 'assistant') {
+      if (typeof msg.content === 'string') {
+        msg.content = simplifyActions(msg.content);
+      }
+
+      if (Array.isArray(msg.parts)) {
+        msg.parts = msg.parts.map((part) =>
+          part.type === 'text' ? { ...part, text: simplifyActions(part.text) } : part,
+        );
+      }
+    }
+  }
+
+  const baseSystemPrompt =
     PromptLibrary.getPromptFromLibrary(promptId || 'default', {
       cwd: WORK_DIR,
       allowedHtmlElements: allowedHTMLElements,
@@ -173,9 +212,81 @@ export async function streamText(props: {
       },
     }) ?? getSystemPrompt();
 
-  if (chatMode === 'build' && contextFiles && contextOptimization) {
-    const codeContext = createFilesContext(contextFiles, true);
+  const summaryPrompt = summary ? `Below is the chat history so far\nCHAT SUMMARY:\n---\n${summary}\n---\n` : '';
+  const customInstructionsPrompt = customInstructions?.trim()
+    ? `\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${customInstructions}\n</custom_instructions>`
+    : '';
+  const projectRulesPrompt = projectRules?.trim()
+    ? `\n\n<project_rules>\nThe following project-level rules MUST be followed for this project:\n${projectRules.trim()}\n</project_rules>`
+    : '';
 
+  const fixedTokens =
+    estimateTokens(baseSystemPrompt) +
+    estimateTokens(summaryPrompt) +
+    estimateTokens(customInstructionsPrompt) +
+    estimateTokens(projectRulesPrompt);
+
+  const availableTokens = Math.max(1000, maxInputTokens - fixedTokens - 500); // 500 safety buffer
+  const HISTORY_BUDGET = Math.min(availableTokens * 0.4, 8000);
+
+  const lastMessage = processedMessages[processedMessages.length - 1];
+  const keptMessages: typeof processedMessages = [];
+  let currentHistoryTokens = lastMessage ? estimateMessageTokens(lastMessage) : 0;
+
+  for (let i = processedMessages.length - 2; i >= 0; i--) {
+    const msg = processedMessages[i];
+    const msgTokens = estimateMessageTokens(msg);
+
+    if (currentHistoryTokens + msgTokens > HISTORY_BUDGET) {
+      logger.info(
+        `Context window limit: trimming message history at index ${i} to fit HISTORY_BUDGET (${HISTORY_BUDGET} tokens)`,
+      );
+      break;
+    }
+
+    keptMessages.unshift(msg);
+    currentHistoryTokens += msgTokens;
+  }
+
+  if (lastMessage) {
+    keptMessages.push(lastMessage);
+  }
+
+  processedMessages = keptMessages;
+
+  const contextBudget = availableTokens - currentHistoryTokens;
+  const prunedContextFiles: FileMap = {};
+  let currentContextTokens = 0;
+
+  if (contextFiles && chatMode === 'build' && contextOptimization) {
+    for (const [path, fileEntry] of Object.entries(contextFiles)) {
+      if (fileEntry && fileEntry.type === 'file') {
+        const fileTokens = estimateTokens(fileEntry.content);
+
+        if (currentContextTokens + fileTokens > contextBudget) {
+          logger.info(`Context window limit: omitting file ${path} to fit contextBudget (${contextBudget} tokens)`);
+
+          if (Object.keys(prunedContextFiles).length === 0) {
+            const allowedLength = Math.max(100, contextBudget * 4);
+            prunedContextFiles[path] = {
+              ...fileEntry,
+              content: fileEntry.content.slice(0, allowedLength) + '\n... [truncated to fit context window] ...',
+            };
+          }
+
+          break;
+        }
+
+        prunedContextFiles[path] = fileEntry;
+        currentContextTokens += fileTokens;
+      }
+    }
+  }
+
+  let systemPrompt = baseSystemPrompt;
+
+  if (chatMode === 'build' && Object.keys(prunedContextFiles).length > 0) {
+    const codeContext = createFilesContext(prunedContextFiles, true);
     systemPrompt = `${systemPrompt}
 
     Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fullfill current user request.
@@ -184,26 +295,10 @@ export async function streamText(props: {
     ${codeContext}
     ---
     `;
+  }
 
-    if (summary) {
-      systemPrompt = `${systemPrompt}
-      Below is the chat history so far
-      CHAT SUMMARY:
-      ---
-      ${props.summary}
-      ---
-      `;
-
-      if (props.messageSliceId) {
-        processedMessages = processedMessages.slice(props.messageSliceId);
-      } else {
-        const lastMessage = processedMessages.pop();
-
-        if (lastMessage) {
-          processedMessages = [lastMessage];
-        }
-      }
-    }
+  if (summary) {
+    systemPrompt = `${systemPrompt}\n\n${summaryPrompt}`;
   }
 
   const effectiveLockedFilePaths = new Set<string>();
