@@ -594,8 +594,14 @@ export class FilesStore {
       });
     this.#writeQueue.set(
       filePath,
+
+      /*
+       * Swallow the rejection in the queue so future writes aren't blocked.
+       * The actual error is already logged and re-thrown in the .catch() above.
+       */
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       newWrite.catch(() => {}),
-    ); // Prevent rejection from blocking future writes
+    );
     await newWrite;
   }
 

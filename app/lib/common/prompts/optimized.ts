@@ -467,9 +467,9 @@ Examples:
     </icons>
 
     <image_handling>
-      - Use Unsplash for stock photos
+      - Use Pexels for stock photos
       - Direct URL linking only
-      - ONLY use valid, existing Unsplash URLs
+      - ONLY use valid, existing Pexels URLs
       - NO downloading or storing of images locally
       - Proper Image component implementation
       - Test all image URLs to ensure they load correctly

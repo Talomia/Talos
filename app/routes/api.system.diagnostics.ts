@@ -16,11 +16,38 @@ interface AppContext {
 export const loader: LoaderFunction = withSecurity(
   async ({ request, context }: LoaderFunctionArgs & { context: AppContext }) => {
     if (process.env.NODE_ENV === 'production') {
-      // In production, require authentication
-      const authCookie = request.headers.get('Cookie');
+      /*
+       * Validate authentication via Supabase auth cookie.
+       * The cookie name follows the pattern: sb-<project-ref>-auth-token
+       */
+      const authCookie = request.headers.get('Cookie') || '';
 
-      if (!authCookie || !authCookie.includes('sb-')) {
+      // Extract the Supabase project reference from the configured URL
+      const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+      const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase/)?.[1];
+
+      // Look for a Supabase auth token cookie with proper JWT structure
+      const cookiePattern = projectRef
+        ? new RegExp(`sb-${projectRef}-auth-token=([^;]+)`)
+        : /sb-[a-z]+-auth-token=([^;]+)/;
+
+      const tokenMatch = authCookie.match(cookiePattern);
+
+      if (!tokenMatch) {
         return json({ error: 'Authentication required' }, { status: 401 });
+      }
+
+      // Validate basic JWT structure (3 base64url dot-separated parts)
+      const tokenValue = decodeURIComponent(tokenMatch[1]);
+
+      /*
+       * Supabase stores an array: ["access_token", "refresh_token"]
+       * or a direct JWT string
+       */
+      const jwtToValidate = tokenValue.startsWith('[') ? JSON.parse(tokenValue)?.[0] : tokenValue;
+
+      if (!jwtToValidate || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(jwtToValidate)) {
+        return json({ error: 'Invalid authentication token' }, { status: 401 });
       }
     }
 

@@ -159,8 +159,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
   try {
     const mcpService = MCPService.getInstance();
-    const totalMessageContent = messages.map((message) => message.content).join(' ');
-    logger.debug(`Total message length: ${totalMessageContent.split(' ').length}, words`);
+    logger.debug(`Chat request: ${messages.length} messages`);
 
     let lastChunk: string | undefined = undefined;
 
@@ -169,7 +168,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
      * Also reuses the streamAbortController so the StreamRecoveryManager
      * can abort stalled streams (it calls streamAbortController.abort()).
      */
-    const timeoutMs = 300000; // 5 minutes
+    const timeoutMs = parseInt(process.env.CHAT_TIMEOUT_MS || '300000', 10); // default: 5 minutes
     const timeoutId = setTimeout(() => streamAbortController.abort(), timeoutMs);
 
     const dataStream = createDataStream({
@@ -195,8 +194,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
          * This ensures the model always has the system prompt and enough recent
          * context to produce coherent responses, without exceeding token limits.
          */
-        const MAX_CONVERSATION_LENGTH = 40;
-        const RECENT_MESSAGES_TO_KEEP = 20;
+        const MAX_CONVERSATION_LENGTH = parseInt(process.env.CHAT_MAX_CONVERSATION_LENGTH || '40', 10);
+        const RECENT_MESSAGES_TO_KEEP = parseInt(process.env.CHAT_RECENT_MESSAGES_TO_KEEP || '20', 10);
 
         if (processedMessages.length > MAX_CONVERSATION_LENGTH) {
           logger.info(

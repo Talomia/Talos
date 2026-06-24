@@ -58,11 +58,11 @@ const detectFramework = (files: Record<string, string>): string => {
         return 'vite';
       }
 
-      if (dependencies['@nuxt/react']) {
+      if (dependencies.nuxt) {
         return 'nuxt';
       }
 
-      if (dependencies['@qwik-city/qwik']) {
+      if (dependencies['@builder.io/qwik']) {
         return 'qwik';
       }
 
@@ -95,40 +95,7 @@ const detectFramework = (files: Record<string, string>): string => {
         return 'react';
       }
 
-      // Check for other frameworks
-      if (dependencies['@angular/core']) {
-        return 'angular';
-      }
-
-      if (dependencies.vue) {
-        return 'vue';
-      }
-
-      if (dependencies['@sveltejs/kit']) {
-        return 'sveltekit';
-      }
-
-      if (dependencies.astro) {
-        return 'astro';
-      }
-
-      if (dependencies['@nuxt/core']) {
-        return 'nuxt';
-      }
-
-      if (dependencies['@qwik-city/qwik']) {
-        return 'qwik';
-      }
-
-      if (dependencies['@expo/react-native']) {
-        return 'expo';
-      }
-
-      if (dependencies['react-native']) {
-        return 'react-native';
-      }
-
-      // Check for build tools
+      // Check for build tools (non-React projects)
       if (dependencies.vite) {
         return 'vite';
       }
