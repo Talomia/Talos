@@ -33,6 +33,51 @@ export function safeSetItem(key: string, value: string): boolean {
 }
 
 /**
+ * Safely read from localStorage.
+ * Returns null if the key doesn't exist or if localStorage is unavailable.
+ */
+export function safeGetItem(key: string): string | null {
+  try {
+    return localStorage.getItem(key);
+  } catch (error) {
+    logger.error(`localStorage.getItem failed for key '${key}':`, error);
+    return null;
+  }
+}
+
+/**
+ * Safely remove from localStorage.
+ */
+export function safeRemoveItem(key: string): boolean {
+  try {
+    localStorage.removeItem(key);
+    return true;
+  } catch (error) {
+    logger.error(`localStorage.removeItem failed for key '${key}':`, error);
+    return false;
+  }
+}
+
+/**
+ * Parse a JSON string from localStorage with type safety.
+ * Returns the fallback value if parsing fails or the key doesn't exist.
+ */
+export function safeParseJSON<T>(key: string, fallback: T): T {
+  const raw = safeGetItem(key);
+
+  if (raw === null) {
+    return fallback;
+  }
+
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    logger.warn(`Failed to parse JSON for key '${key}'. Using fallback.`);
+    return fallback;
+  }
+}
+
+/**
  * Check if an IDB error is a quota error and log appropriately.
  */
 export function handleIDBQuotaError(error: unknown, context: string): boolean {
