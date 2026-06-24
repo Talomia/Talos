@@ -6,8 +6,13 @@ WORKDIR /app
 ENV HUSKY=0
 ENV CI=true
 
-# Use pnpm
-RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+# Use pnpm — version MUST match package.json "packageManager" field
+RUN corepack enable && corepack prepare pnpm@9.14.4 --activate
+
+# Increase network timeouts for Docker builds behind proxies
+ENV npm_config_fetch_retries=5
+ENV npm_config_fetch_retry_mintimeout=20000
+ENV npm_config_fetch_retry_maxtimeout=120000
 
 # Ensure git is available for build and runtime scripts
 RUN apt-get update && apt-get install -y --no-install-recommends git \
@@ -17,16 +22,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends git \
 ARG VITE_PUBLIC_APP_URL
 ENV VITE_PUBLIC_APP_URL=${VITE_PUBLIC_APP_URL}
 
-# Install deps efficiently
+# Install deps
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm fetch
+RUN pnpm install --frozen-lockfile
 
 # Copy source and build
 COPY . .
-# install with dev deps (needed to build)
-RUN pnpm install --offline --frozen-lockfile
-
-# Build the Remix app (SSR + client)
 RUN NODE_OPTIONS=--max-old-space-size=4096 pnpm run build
 
 # ---- production dependencies stage ----
@@ -71,7 +72,7 @@ FROM node:22-bookworm-slim AS runtime-server
 WORKDIR /app
 
 # Install pnpm and required tools
-RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+RUN corepack enable && corepack prepare pnpm@9.14.4 --activate
 
 # Install curl for Docker API communication via unix socket
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
@@ -79,10 +80,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl \
 
 # Copy package files for dependency installation
 COPY package.json pnpm-lock.yaml* ./
-RUN pnpm fetch
+RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm install --offline --frozen-lockfile
 
 ENV NODE_ENV=production
 ENV RUNTIME_WS_PORT=3001

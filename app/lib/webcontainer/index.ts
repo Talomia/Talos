@@ -122,6 +122,33 @@ if (!import.meta.env.SSR) {
       .catch((error) => {
         logger.error('Fatal: Runtime engine could not be initialized:', error);
 
+        const isCrossOriginIsolated = typeof window !== 'undefined' && window.crossOriginIsolated;
+        const hasSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined';
+
+        let description = 'The execution runtime failed to start. ';
+
+        if (!isCrossOriginIsolated) {
+          description +=
+            'Your browser is not cross-origin isolated (COOP/COEP headers may be stripped by the reverse proxy). ' +
+            'Try hard-refreshing the page (Ctrl+Shift+R) to activate the isolation service worker, ' +
+            'or ensure your hosting provider preserves Cross-Origin-Opener-Policy and Cross-Origin-Embedder-Policy headers.';
+        } else if (!hasSharedArrayBuffer) {
+          description +=
+            'SharedArrayBuffer is not available in your browser. ' +
+            'This feature is required for the in-browser runtime. ' +
+            'Try using a Chromium-based browser (Chrome, Edge, Brave).';
+        } else {
+          description +=
+            'This may be caused by insufficient memory or a third-party extension. ' +
+            'Try refreshing the page or disabling browser extensions.';
+        }
+
+        logger.error(
+          `Diagnostics: crossOriginIsolated=${isCrossOriginIsolated}, ` +
+            `SharedArrayBuffer=${hasSharedArrayBuffer}, ` +
+            `isSecureContext=${typeof window !== 'undefined' && window.isSecureContext}`,
+        );
+
         /*
          * Surface the boot failure to the user via the workbench alert system.
          * The lazy import avoids circular dependency issues.
@@ -131,10 +158,7 @@ if (!import.meta.env.SSR) {
             workbenchStore.actionAlert.set({
               type: 'preview',
               title: 'Runtime Boot Failure',
-              description:
-                'The execution runtime failed to start. This may be caused by browser restrictions, ' +
-                'insufficient memory, or a third-party extension blocking SharedArrayBuffer. ' +
-                'Try refreshing the page or disabling extensions.',
+              description,
               content: error instanceof Error ? error.message : String(error),
               source: 'preview',
             });
