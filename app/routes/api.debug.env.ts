@@ -9,6 +9,11 @@ import { withSecurity } from '~/lib/security';
  */
 export const loader = withSecurity(
   async ({ context }: LoaderFunctionArgs) => {
+    // Block in production — debug endpoints should never be publicly accessible
+    if (process.env.NODE_ENV === 'production') {
+      return json({ error: 'Not found' }, { status: 404 });
+    }
+
     const env = (context?.cloudflare?.env || {}) as Record<string, string | undefined>;
 
     const check = (key: string) => {
