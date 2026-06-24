@@ -269,13 +269,14 @@ export function useChat(options: UseChatOptions = {}) {
     for (const msg of chatRef.current.messages) {
       if (Array.isArray(msg.parts)) {
         for (const part of msg.parts) {
-          if (part.type.startsWith('tool-') && (part as any).toolCallId === args.toolCallId) {
-            toolName = part.type.substring(5);
+          if (part.type === 'tool-invocation' && (part as any).toolInvocation?.toolCallId === args.toolCallId) {
+            toolName = (part as any).toolInvocation?.toolName || 'unknown';
             break;
           }
         }
       }
     }
+
     chatRef.current.addToolResult({
       tool: toolName,
       toolCallId: args.toolCallId,

@@ -377,6 +377,24 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
         headers: responseHeaders,
       });
     } catch (error) {
+      /*
+       * Remix pattern: handlers may `throw new Response(...)` to return
+       * error responses. If the caught value is a Response, add security
+       * headers and forward it as-is rather than wrapping in a generic 500.
+       */
+      if (error instanceof Response) {
+        const responseHeaders = new Headers(error.headers);
+        Object.entries(createSecurityHeaders()).forEach(([key, value]) => {
+          responseHeaders.set(key, value);
+        });
+
+        return new Response(error.body, {
+          status: error.status,
+          statusText: error.statusText,
+          headers: responseHeaders,
+        });
+      }
+
       logger.error('Security-wrapped handler error:', error);
 
       const errorMessage = sanitizeErrorMessage(error, process.env.NODE_ENV === 'development');
