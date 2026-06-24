@@ -100,6 +100,35 @@ export function useChat(options: UseChatOptions = {}) {
       const currentHeaders = headersRef.current;
       return typeof currentHeaders === 'function' ? currentHeaders() : currentHeaders || {};
     },
+
+    /*
+     * Convert v6 UIMessages (parts array) → old-style messages (content string)
+     * before sending to the server. The server's extractPropertiesFromMessage()
+     * and sanitizeText() expect message.content to be a string.
+     */
+    prepareSendMessagesRequest: ({ messages, body, ...rest }) => {
+      const convertedMessages = messages.map((m: any) => {
+        let content = '';
+
+        if (Array.isArray(m.parts)) {
+          for (const part of m.parts) {
+            if (part.type === 'text') {
+              content += part.text;
+            }
+          }
+        }
+
+        return {
+          id: m.id,
+          role: m.role,
+          content,
+          parts: m.parts, // Keep parts for convertToModelMessages
+          annotations: m.metadata,
+        };
+      });
+
+      return { ...rest, messages: convertedMessages, body: { ...body, messages: convertedMessages } };
+    },
   });
 
   const chat = useChatV6(v6Options);
@@ -219,7 +248,7 @@ export function useChat(options: UseChatOptions = {}) {
         return updated.map((msg: any) => ({
           id: msg.id || generateId(),
           role: msg.role,
-          parts: [{ type: 'text', text: msg.content }],
+          parts: Array.isArray(msg.parts) ? msg.parts : [{ type: 'text', text: msg.content || '' }],
           metadata: msg.annotations,
         }));
       });
@@ -227,7 +256,7 @@ export function useChat(options: UseChatOptions = {}) {
       const uiMessages = value.map((msg: any) => ({
         id: msg.id || generateId(),
         role: msg.role,
-        parts: [{ type: 'text', text: msg.content }],
+        parts: Array.isArray(msg.parts) ? msg.parts : [{ type: 'text', text: msg.content || '' }],
         metadata: msg.annotations,
       }));
       chatRef.current.setMessages(uiMessages);
