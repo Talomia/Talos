@@ -108,7 +108,7 @@ export function classifyError(message: string): {
 
   // Warning indicators
   if (msg.includes('warning') || msg.includes('deprecat')) {
-    return { severity: 'warning', category: 'unknown', autoFixable: true };
+    return { severity: 'warning', category: 'unknown', autoFixable: false };
   }
 
   return { severity: 'error', category: 'unknown', autoFixable: true };
@@ -182,6 +182,30 @@ const ERROR_PATTERNS: Array<{
     regex: /EADDRINUSE[:\s]*(.*)/,
     extract: (match) => ({ message: `Port in use: ${match[1] || 'address already in use'}` }),
   },
+
+  // Vite/Rollup build errors: "[vite]: Rollup failed to resolve import"
+  {
+    regex: /\[vite\][:\s]*(?:Rollup\s+)?(?:failed to resolve|Internal server error)[:\s]*(.*)/i,
+    extract: (match) => ({ message: `Vite: ${match[1].trim()}` }),
+  },
+
+  // React hydration/rendering errors
+  {
+    regex: /(Hydration failed|Text content did not match|There was an error while hydrating)[.:\s]*(.*)/,
+    extract: (match) => ({ message: `${match[1]}${match[2] ? ': ' + match[2].trim() : ''}` }),
+  },
+
+  // ESM import errors
+  {
+    regex: /(?:does not provide an export named|is not exported from|Named export .+ not found)/,
+    extract: (_match, line) => ({ message: line.trim() }),
+  },
+
+  // pnpm/yarn errors
+  {
+    regex: /(?:ERR_PNPM_|WARN.*deprecated|error.*ERESOLVE)\s*(.*)/i,
+    extract: (match) => ({ message: match[1]?.trim() || match[0].trim() }),
+  },
 ];
 
 export function parseTerminalOutput(output: string): DetectedError[] {
@@ -253,7 +277,7 @@ export function formatErrorsForAI(errors: DetectedError[]): string {
   const parts: string[] = [];
 
   for (const err of unique) {
-    let entry = `[${err.severity.toUpperCase()}] ${err.message}`;
+    let entry = `[${err.severity.toUpperCase()}/${err.category}] ${err.message}`;
 
     if (err.file) {
       entry += ` (${err.file}`;
@@ -269,14 +293,18 @@ export function formatErrorsForAI(errors: DetectedError[]): string {
       entry += ')';
     }
 
+    if (err.source !== 'terminal') {
+      entry += ` [source: ${err.source}]`;
+    }
+
     parts.push(entry);
   }
 
   let summary = parts.join('\n');
 
-  // Keep under 500 chars
-  if (summary.length > 500) {
-    summary = summary.slice(0, 497) + '...';
+  // Keep under 800 chars to give model more error context
+  if (summary.length > 800) {
+    summary = summary.slice(0, 797) + '...';
   }
 
   return summary;
