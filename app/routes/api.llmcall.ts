@@ -255,7 +255,11 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       const result = await generateText(finalParams);
       logger.info(`Generated response`);
 
-      return new Response(JSON.stringify(result), {
+      /*
+       * v6 SDK's generateText result has `text` as a getter that may not
+       * survive JSON.stringify. Extract it explicitly for the client.
+       */
+      return new Response(JSON.stringify({ text: result.text ?? '' }), {
         status: 200,
         headers: {
           'Content-Type': 'application/json',

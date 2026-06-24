@@ -87,7 +87,7 @@ export interface UseSendMessageDeps {
     message: Message | import('@ai-sdk/ui-utils').CreateMessage,
     chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
-  reload: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
+  reload?: (chatRequestOptions?: ChatRequestOptions) => Promise<string | null | undefined>;
   setMessages: (messages: Message[] | ((messages: Message[]) => Message[])) => void;
   setInput: (input: string) => void;
   setFakeLoading: (loading: boolean) => void;
@@ -113,7 +113,6 @@ export function useSendMessage(deps: UseSendMessageDeps) {
     selectedElement,
     textareaRef,
     append,
-    reload,
     setMessages,
     setInput,
     setFakeLoading,
@@ -182,6 +181,11 @@ export function useSendMessage(deps: UseSendMessageDeps) {
                 const { assistantMessage, userMessage } = temResp;
                 const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
 
+                /*
+                 * Set the first two messages (user question + assistant template) as
+                 * conversation history, then append the hidden instruction via
+                 * sendMessage. This avoids the setMessages + reload race condition.
+                 */
                 setMessages([
                   {
                     id: `1-${new Date().getTime()}`,
@@ -194,12 +198,6 @@ export function useSendMessage(deps: UseSendMessageDeps) {
                     role: 'assistant',
                     content: assistantMessage,
                   },
-                  {
-                    id: `3-${new Date().getTime()}`,
-                    role: 'user',
-                    content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`,
-                    annotations: ['hidden'],
-                  },
                 ]);
 
                 const reloadOptions =
@@ -207,10 +205,24 @@ export function useSendMessage(deps: UseSendMessageDeps) {
                     ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
                     : undefined;
 
+                /*
+                 * Brief yield so React can commit the template history.
+                 * If it doesn't commit in time, the hidden instruction still
+                 * works — just without the template context (graceful fallback).
+                 */
+                await new Promise((resolve) => setTimeout(resolve, 50));
+
                 try {
-                  await reload(reloadOptions);
-                } catch (reloadError) {
-                  logger.error('Template reload failed:', reloadError);
+                  await append(
+                    {
+                      role: 'user',
+                      content: `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userMessage}`,
+                      annotations: ['hidden'],
+                    },
+                    reloadOptions,
+                  );
+                } catch (appendError) {
+                  logger.error('Template chat initiation failed:', appendError);
                   toast.error('Failed to start chat. Please try again.');
                 }
 
@@ -235,24 +247,27 @@ export function useSendMessage(deps: UseSendMessageDeps) {
           }
         }
 
-        // If autoSelectTemplate is disabled or template selection failed, proceed with normal message
+        /*
+         * Use append() instead of setMessages() + reload().
+         * setMessages() updates React state asynchronously, so reload() may poll
+         * before the v6 SDK sees the new messages ("No messages to reload").
+         * append() calls v6 SDK's sendMessage() directly — no race condition.
+         */
         const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
-        const attachments = uploadedFiles.length > 0 ? await filesToAttachments(uploadedFiles) : undefined;
-
-        setMessages([
-          {
-            id: `${new Date().getTime()}`,
-            role: 'user',
-            content: userMessageText,
-            parts: createMessageParts(userMessageText, imageDataList),
-            experimental_attachments: attachments,
-          },
-        ]);
+        const attachmentOptions =
+          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
 
         try {
-          await reload(attachments ? { experimental_attachments: attachments } : undefined);
-        } catch (reloadError) {
-          logger.error('Chat reload failed:', reloadError);
+          await append(
+            {
+              role: 'user',
+              content: userMessageText,
+              parts: createMessageParts(userMessageText, imageDataList),
+            },
+            attachmentOptions,
+          );
+        } catch (appendError) {
+          logger.error('Chat initiation failed:', appendError);
           toast.error('Failed to start chat. Please try again.');
         }
 

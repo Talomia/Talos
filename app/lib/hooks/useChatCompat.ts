@@ -139,13 +139,23 @@ export function useChat(options: UseChatOptions = {}) {
 
   const append = useCallback(async (message: any, requestOptions?: any): Promise<string | null | undefined> => {
     const text = typeof message.content === 'string' ? message.content : '';
-    const res = await chatRef.current.sendMessage(
-      {
-        text,
-        metadata: message.annotations,
-      },
-      requestOptions,
-    );
+
+    /*
+     * Forward image/file parts from the message so they reach the v6 SDK.
+     * createMessageParts() creates parts like [{ type:'text' }, { type:'file', ... }].
+     */
+    const fileParts = Array.isArray(message.parts) ? message.parts.filter((p: any) => p.type === 'file') : [];
+
+    const sendArgs: any = {
+      text,
+      metadata: message.annotations,
+    };
+
+    if (fileParts.length > 0) {
+      sendArgs.files = fileParts;
+    }
+
+    const res = await chatRef.current.sendMessage(sendArgs, requestOptions);
 
     return res as any;
   }, []);
