@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { recordRequest, recordError, recordLLMCall, recordLatency } from '~/routes/api.metrics';
 
-/*
- * Note: Tests verify the recording functions don't throw.
- * Full integration testing of the loader would require mocking withSecurity.
- */
+// Note: Tests verify the recording functions don't throw.
+// Full integration testing of the loader would require mocking withSecurity.
 
 describe('metrics recording functions', () => {
   it('recordRequest does not throw', () => {

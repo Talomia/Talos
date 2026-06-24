@@ -441,7 +441,19 @@ export async function streamText(props: {
     }),
     system: chatMode === 'build' ? systemPrompt : discussPrompt(),
     ...tokenParams,
-    messages: await convertToModelMessages(processedMessages as any),
+    messages: await convertToModelMessages(
+      processedMessages.map((m) => ({
+        ...m,
+
+        /*
+         * v6 SDK's convertToModelMessages requires a `parts` array on every message.
+         * Messages arriving from the compat layer may only have `content` (string).
+         */
+        parts: Array.isArray(m.parts)
+          ? m.parts
+          : [{ type: 'text' as const, text: typeof m.content === 'string' ? m.content : '' }],
+      })) as any,
+    ),
     ...filteredOptions,
 
     // Set temperature to 1 for reasoning models (required by OpenAI API)
