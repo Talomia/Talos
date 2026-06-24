@@ -85,6 +85,26 @@ export const Head = createHead(() => (
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <Meta />
     <Links />
+    {/* Cross-Origin Isolation service worker — enables SharedArrayBuffer when
+        the reverse proxy (EasyPanel, CDN) strips COOP/COEP headers */}
+    <script
+      dangerouslySetInnerHTML={{
+        __html: `
+if (!window.crossOriginIsolated && window.SharedArrayBuffer === undefined && window.isSecureContext) {
+  navigator.serviceWorker.register('/coi-serviceworker.js').then(function(reg) {
+    if (reg.active && !navigator.serviceWorker.controller) {
+      window.location.reload();
+    }
+    reg.addEventListener('updatefound', function() {
+      var w = reg.installing;
+      w.addEventListener('statechange', function() {
+        if (w.state === 'activated') window.location.reload();
+      });
+    });
+  }).catch(function(e) { console.warn('[COI] SW registration failed:', e); });
+}`,
+      }}
+    />
     <script dangerouslySetInnerHTML={{ __html: inlineThemeCode }} />
   </>
 ));
