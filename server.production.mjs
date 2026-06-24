@@ -11,10 +11,14 @@
  */
 
 // Load .env files BEFORE anything else so process.env is populated
-// In Docker, env vars come from the container environment instead
-import * as dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
-dotenv.config({ path: '.env' });
+// In production Docker, env vars come from the container environment and dotenv is pruned.
+try {
+  const dotenv = await import('dotenv');
+  dotenv.config({ path: '.env.local' });
+  dotenv.config({ path: '.env' });
+} catch (e) {
+  // dotenv is not installed in production, which is expected.
+}
 
 // Node.js 20 lacks native WebSocket — polyfill with the `ws` package
 // so Supabase Realtime and other libraries work correctly
