@@ -90,15 +90,20 @@ export const Head = createHead(() => (
     <script
       dangerouslySetInnerHTML={{
         __html: `
-if (!window.crossOriginIsolated && window.SharedArrayBuffer === undefined && window.isSecureContext) {
+if (!window.crossOriginIsolated && window.isSecureContext && navigator.serviceWorker) {
   navigator.serviceWorker.register('/coi-serviceworker.js').then(function(reg) {
+    console.log('[COI] Service worker registered');
     if (reg.active && !navigator.serviceWorker.controller) {
+      console.log('[COI] Reloading for cross-origin isolation...');
       window.location.reload();
     }
     reg.addEventListener('updatefound', function() {
       var w = reg.installing;
       w.addEventListener('statechange', function() {
-        if (w.state === 'activated') window.location.reload();
+        if (w.state === 'activated') {
+          console.log('[COI] Service worker activated, reloading...');
+          window.location.reload();
+        }
       });
     });
   }).catch(function(e) { console.warn('[COI] SW registration failed:', e); });
