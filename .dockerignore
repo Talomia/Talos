@@ -2,6 +2,11 @@
 .git
 .github/
 
+# Ignore Electron desktop build files (not needed for Docker web deployment)
+electron/
+electron-builder.yml
+electron-update.yml
+
 # Ignore Husky configuration files
 .husky/
 
