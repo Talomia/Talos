@@ -73,32 +73,41 @@ export function useChat(options: UseChatOptions = {}) {
   });
 
   const chat = useChatV6(v6Options);
+  const chatRef = useRef(chat);
+  chatRef.current = chat;
 
   const isLoading = chat.status === 'submitted' || chat.status === 'streaming';
 
-  const append = useCallback(
-    async (message: any, requestOptions?: any): Promise<string | null | undefined> => {
-      const text = typeof message.content === 'string' ? message.content : '';
-      const res = await chat.sendMessage(
-        {
-          text,
-          metadata: message.annotations,
-        },
-        requestOptions,
-      );
+  const append = useCallback(async (message: any, requestOptions?: any): Promise<string | null | undefined> => {
+    const text = typeof message.content === 'string' ? message.content : '';
+    const res = await chatRef.current.sendMessage(
+      {
+        text,
+        metadata: message.annotations,
+      },
+      requestOptions,
+    );
 
-      return res as any;
-    },
-    [chat],
-  );
+    return res as any;
+  }, []);
 
-  const reload = useCallback(
-    async (requestOptions?: any): Promise<string | null | undefined> => {
-      const res = await chat.regenerate(requestOptions);
-      return res as any;
-    },
-    [chat],
-  );
+  const reload = useCallback(async (requestOptions?: any): Promise<string | null | undefined> => {
+    /*
+     * Yield control to the React commit phase to let the state update propagate.
+     * We poll chatRef.current.messages until it is not empty, for up to 200ms.
+     */
+    for (let i = 0; i < 20; i++) {
+      if (chatRef.current.messages.length > 0) {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+
+    const res = await chatRef.current.regenerate(requestOptions);
+
+    return res as any;
+  }, []);
 
   // Map UIMessage[] to Message[]
   const messages = chat.messages.map((m) => {
@@ -122,70 +131,64 @@ export function useChat(options: UseChatOptions = {}) {
     };
   });
 
-  const setMessages = useCallback(
-    (value: any) => {
-      if (typeof value === 'function') {
-        chat.setMessages((prevUIMessages) => {
-          const mappedMessages = prevUIMessages.map((m) => {
-            let content = '';
+  const setMessages = useCallback((value: any) => {
+    if (typeof value === 'function') {
+      chatRef.current.setMessages((prevUIMessages) => {
+        const mappedMessages = prevUIMessages.map((m) => {
+          let content = '';
 
-            if (Array.isArray(m.parts)) {
-              for (const part of m.parts) {
-                if (part.type === 'text') {
-                  content += part.text;
-                } else if (part.type === 'reasoning') {
-                  content += `<div class="__assistantThought__">\n${part.text}\n</div>\n`;
-                }
+          if (Array.isArray(m.parts)) {
+            for (const part of m.parts) {
+              if (part.type === 'text') {
+                content += part.text;
+              } else if (part.type === 'reasoning') {
+                content += `<div class="__assistantThought__">\n${part.text}\n</div>\n`;
               }
             }
+          }
 
-            return { id: m.id, role: m.role, content, annotations: m.metadata as any };
-          });
-          const updated = value(mappedMessages);
-
-          return updated.map((msg: any) => ({
-            id: msg.id || generateId(),
-            role: msg.role,
-            parts: [{ type: 'text', text: msg.content }],
-            metadata: msg.annotations,
-          }));
+          return { id: m.id, role: m.role, content, annotations: m.metadata as any };
         });
-      } else {
-        const uiMessages = value.map((msg: any) => ({
+        const updated = value(mappedMessages);
+
+        return updated.map((msg: any) => ({
           id: msg.id || generateId(),
           role: msg.role,
           parts: [{ type: 'text', text: msg.content }],
           metadata: msg.annotations,
         }));
-        chat.setMessages(uiMessages);
-      }
-    },
-    [chat],
-  );
+      });
+    } else {
+      const uiMessages = value.map((msg: any) => ({
+        id: msg.id || generateId(),
+        role: msg.role,
+        parts: [{ type: 'text', text: msg.content }],
+        metadata: msg.annotations,
+      }));
+      chatRef.current.setMessages(uiMessages);
+    }
+  }, []);
 
-  const addToolResult = useCallback(
-    (args: { toolCallId: string; result: any }) => {
-      let toolName = 'unknown';
+  const addToolResult = useCallback((args: { toolCallId: string; result: any }) => {
+    let toolName = 'unknown';
 
-      for (const msg of chat.messages) {
-        if (Array.isArray(msg.parts)) {
-          for (const part of msg.parts) {
-            if (part.type.startsWith('tool-') && (part as any).toolCallId === args.toolCallId) {
-              toolName = part.type.substring(5);
-              break;
-            }
+    for (const msg of chatRef.current.messages) {
+      if (Array.isArray(msg.parts)) {
+        for (const part of msg.parts) {
+          if (part.type.startsWith('tool-') && (part as any).toolCallId === args.toolCallId) {
+            toolName = part.type.substring(5);
+            break;
           }
         }
       }
-      chat.addToolResult({
-        tool: toolName,
-        toolCallId: args.toolCallId,
-        state: 'output-available',
-        output: args.result,
-      });
-    },
-    [chat],
-  );
+    }
+    chatRef.current.addToolResult({
+      tool: toolName,
+      toolCallId: args.toolCallId,
+      state: 'output-available',
+      output: args.result,
+    });
+  }, []);
 
   return {
     ...chat,
