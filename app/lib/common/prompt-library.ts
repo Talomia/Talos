@@ -28,18 +28,18 @@ export class PromptLibrary {
     }
   > = {
     default: {
-      label: 'Default Prompt',
-      description: 'A fine-tuned prompt for better results and less token usage',
+      label: 'Default (Recommended)',
+      description: 'Production-grade prompt with planning, code quality standards, and optimized token usage',
       get: (options) => getFineTunedPrompt(options.cwd, options.supabase, options.designScheme),
     },
     original: {
-      label: 'Old Default Prompt',
-      description: 'The OG battle tested default system Prompt',
+      label: 'Classic',
+      description: 'The original system prompt — comprehensive with full HTML element list',
       get: (options) => getSystemPrompt(options.cwd, options.supabase, options.designScheme),
     },
     optimized: {
-      label: 'Optimized Prompt (experimental)',
-      description: 'An Experimental version of the prompt for lower token usage',
+      label: 'Token-Optimized',
+      description: 'Compact prompt variant for lower token usage with faster response times',
       get: (options) => optimized(options),
     },
   };
