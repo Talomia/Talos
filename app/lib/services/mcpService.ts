@@ -1,4 +1,4 @@
-import { type ToolSet, type Message, type DataStreamWriter, convertToCoreMessages, formatDataStreamPart } from 'ai';
+import { type ToolSet, type Message, type DataStreamWriter, convertToModelMessages, formatDataStreamPart } from 'ai';
 import { experimental_createMCPClient } from '@ai-sdk/mcp';
 import { Experimental_StdioMCPTransport } from '@ai-sdk/mcp/mcp-stdio';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
@@ -405,7 +405,7 @@ export class MCPService {
 
             try {
               result = await toolInstance.execute(toolInvocation.args, {
-                messages: convertToCoreMessages(messages),
+                messages: convertToModelMessages(messages),
                 toolCallId,
               });
             } catch (error) {
