@@ -133,7 +133,7 @@ export default class AnthropicProvider extends BaseProvider {
     const { apiKeys, providerSettings, serverEnv, model } = options;
     const { apiKey } = this.getProviderBaseUrlAndKey({
       apiKeys,
-      providerSettings,
+      providerSettings: providerSettings?.[this.name],
       serverEnv,
       defaultBaseUrlKey: '',
       defaultApiTokenKey: 'ANTHROPIC_API_KEY',

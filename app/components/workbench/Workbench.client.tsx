@@ -23,7 +23,6 @@ import { EditorStatusBar } from './EditorStatusBar';
 import { Preview } from './Preview';
 import useViewport from '~/lib/hooks';
 
-import { usePreviewStore } from '~/lib/stores/previews';
 import { chatStore } from '~/lib/stores/chat';
 import { detectedErrors } from '~/lib/stores/errors';
 import type { ElementInfo } from './Inspector';
@@ -135,8 +134,7 @@ export const Workbench = memo(
         .saveCurrentDocument()
         .then(() => {
           // Explicitly refresh all previews after a file save
-          const previewStore = usePreviewStore();
-          previewStore.refreshAllPreviews();
+          workbenchStore.refreshAllPreviews();
         })
         .catch(() => {
           toast.error('Failed to update file content');

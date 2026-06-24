@@ -31,11 +31,25 @@ export const PROVIDER_COMPLETION_LIMITS: Record<string, number> = {
 };
 
 /*
- * Reasoning models that require maxCompletionTokens instead of maxTokens
- * These models use internal reasoning tokens and have different API parameter requirements
+ * Reasoning models that require maxCompletionTokens instead of maxTokens.
+ * These models use internal reasoning tokens and have different API parameter requirements.
+ *
+ * Covers:
+ *   - OpenAI: o1, o3, gpt-5
+ *   - DeepSeek: deepseek-reasoner, deepseek-r1
+ *   - Perplexity: *-reasoning-*
+ *   - QwQ and other reasoning-named models
  */
 export function isReasoningModel(modelName: string): boolean {
-  return /^(o1|o3|gpt-5)/i.test(modelName);
+  const lower = modelName.toLowerCase();
+
+  return (
+    /^(o1|o3|gpt-5)/i.test(modelName) ||
+    lower.includes('deepseek-reasoner') ||
+    lower.includes('deepseek-r1') ||
+    lower.includes('-reasoning-') ||
+    lower.includes('qwq')
+  );
 }
 
 // limits the number of model responses that can be returned in a single request

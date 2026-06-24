@@ -129,7 +129,7 @@ export const AssistantMessage = memo(
         return;
       }
 
-      navigator.clipboard.writeText(content).catch(() => {});
+      navigator.clipboard.writeText(content).catch((err) => console.warn('Clipboard write failed:', err));
 
       setCopied(true);
 

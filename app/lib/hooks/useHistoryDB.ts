@@ -11,7 +11,9 @@ export function useHistoryDB() {
     // Clean up phantom 'appDB' database from legacy code
     try {
       indexedDB.deleteDatabase('appDB');
-    } catch {}
+    } catch {
+      // Best-effort cleanup — failing to delete the legacy DB is harmless
+    }
 
     const initDB = async () => {
       try {

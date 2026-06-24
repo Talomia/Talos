@@ -32,7 +32,7 @@ export const InlineDiffComparison = memo(({ beforeCode, afterCode, filename, lan
     // Fetch the shared highlighter instance
     getSharedHighlighter()
       .then(setHighlighter)
-      .catch(() => {});
+      .catch((err) => console.warn('Failed to initialize syntax highlighter:', err));
 
     /*
      * No cleanup needed here for the highlighter instance itself,

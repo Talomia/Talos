@@ -245,8 +245,8 @@ The year is 2025.
   - Support power users with keyboard shortcuts, ARIA labels, and focus states for accessibility and efficiency
   - Add subtle parallax effects or scroll-triggered animations to create depth and engagement without overwhelming the user
 
-  Technical Requirements h:
-  - Curated color FRpalette (3-5 evocative colors + neutrals) that aligns with the brand’s emotional tone and creates a memorable impact
+  Technical Requirements:
+  - Curated color palette (3-5 evocative colors + neutrals) that aligns with the brand’s emotional tone and creates a memorable impact
   - Ensure a minimum 4.5:1 contrast ratio for all text and interactive elements to meet accessibility standards
   - Use expressive, readable fonts (18px+ for body text, 40px+ for headlines) with a clear hierarchy; pair a modern sans-serif (e.g., Inter) with an elegant serif (e.g., Playfair Display) for personality
   - Design for full responsiveness, ensuring flawless performance and aesthetics across all screen sizes (mobile, tablet, desktop)

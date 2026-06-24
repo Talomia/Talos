@@ -194,7 +194,7 @@ export const ChatImpl = memo(
             const id = chatIdAtom.get();
 
             if (id) {
-              await initCortex(id).catch(() => {});
+              await initCortex(id).catch((err) => console.warn('Cortex init failed:', err));
             }
           }
 
@@ -322,7 +322,7 @@ export const ChatImpl = memo(
             const id = chatIdAtom.get();
 
             if (id) {
-              await initCortex(id).catch(() => {});
+              await initCortex(id).catch((err) => console.warn('Cortex init failed:', err));
             }
           }
 

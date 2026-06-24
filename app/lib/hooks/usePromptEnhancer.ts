@@ -89,6 +89,7 @@ export function usePromptEnhancer() {
         }
       } catch (error) {
         if ((error as DOMException)?.name === 'AbortError') {
+          // eslint-disable-next-line @typescript-eslint/no-empty-function -- stream may already be closed
           await reader.cancel().catch(() => {});
           return;
         }
