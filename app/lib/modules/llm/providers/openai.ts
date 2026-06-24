@@ -97,6 +97,10 @@ export default class OpenAIProvider extends BaseProvider {
       (model: any) =>
         model.object === 'model' &&
         (model.id.startsWith('gpt-') || model.id.startsWith('o') || model.id.startsWith('chatgpt-')) &&
+        !model.id.includes('-image-') &&
+        !model.id.includes('-instruct') &&
+        !model.id.includes('-moderation-') &&
+        !model.id.includes('-embedding-') &&
         !staticModelIds.includes(model.id),
     );
 
