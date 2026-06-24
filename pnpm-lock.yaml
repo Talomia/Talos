@@ -32,6 +32,9 @@ importers:
       '@ai-sdk/google':
         specifier: 0.0.52
         version: 0.0.52(zod@3.25.76)
+      '@ai-sdk/mcp':
+        specifier: ^1.0.52
+        version: 1.0.52(zod@3.25.76)
       '@ai-sdk/mistral':
         specifier: 0.0.43
         version: 0.0.43(zod@3.25.76)
@@ -536,6 +539,12 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.0.0
+
+  '@ai-sdk/mcp@1.0.52':
+    resolution: {integrity: sha512-yudE3Mdl8fsbzjMepOPbikA6nIRWOez+5e/IvOv1jK6XMAtsZ4+Xz8vjRQHI77VMv2TdiaMfsKKFoW6dlZRT3g==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      zod: ^3.25.76 || ^4.1.8
 
   '@ai-sdk/mistral@0.0.43':
     resolution: {integrity: sha512-YcneVvO57bbmseUmnvQaj6OolMj7/q1W/oeiFj1h+CJZsXIOX8P9i2Cmo2B7HMBbt73NIcvtyPze3GjaczZRqw==}
@@ -8379,6 +8388,13 @@ snapshots:
       json-schema: 0.4.0
       zod: 3.25.76
 
+  '@ai-sdk/mcp@1.0.52(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.10
+      '@ai-sdk/provider-utils': 4.0.30(zod@3.25.76)
+      pkce-challenge: 5.0.0
+      zod: 3.25.76
+
   '@ai-sdk/mistral@0.0.43(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 0.0.24
@@ -13526,7 +13542,7 @@ snapshots:
 
   eventsource@3.0.7:
     dependencies:
-      eventsource-parser: 3.0.3
+      eventsource-parser: 3.1.0
 
   evp_bytestokey@1.0.3:
     dependencies:
