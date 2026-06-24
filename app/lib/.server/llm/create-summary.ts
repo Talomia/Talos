@@ -28,7 +28,15 @@ export async function createSummary(props: {
 
       return { ...message, content };
     } else if (message.role === 'assistant') {
-      let content = message.content;
+      let content = typeof message.content === 'string' ? message.content : '';
+
+      // Fallback: extract text from parts if content is empty
+      if (!content && Array.isArray((message as any).parts)) {
+        content = (message as any).parts
+          .filter((p: any) => p.type === 'text')
+          .map((p: any) => p.text || '')
+          .join('');
+      }
 
       content = simplifyActions(content);
       content = content.replace(new RegExp(`<div class=\\\\"${CSS_CLASS_THOUGHT}\\\\">.*?</div>`, 's'), '');

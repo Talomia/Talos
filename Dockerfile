@@ -120,8 +120,7 @@ ARG DEFAULT_NUM_CTX
 ENV VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
     DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX} \
     RUNNING_IN_DOCKER=true \
-    NODE_ENV=production \
-    NODE_TLS_REJECT_UNAUTHORIZED=0
+    NODE_ENV=production
 
 # Note: API keys should be provided at runtime via docker run -e or docker-compose
 # Example: docker run -e OPENAI_API_KEY=your_key_here ...
@@ -145,7 +144,7 @@ EXPOSE 5173
 
 # Healthcheck for deployment platforms
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \
-  CMD curl -fsS http://localhost:5173/ || exit 1
+  CMD curl -fsS http://localhost:5173/health || exit 1
 
 USER appuser
 

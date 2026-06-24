@@ -35,7 +35,15 @@ export async function selectContext(props: {
 
       return { ...message, content };
     } else if (message.role === 'assistant') {
-      let content = message.content;
+      let content = typeof message.content === 'string' ? message.content : '';
+
+      // Fallback: extract text from parts if content is empty
+      if (!content && Array.isArray((message as any).parts)) {
+        content = (message as any).parts
+          .filter((p: any) => p.type === 'text')
+          .map((p: any) => p.text || '')
+          .join('');
+      }
 
       content = simplifyActions(content);
 
@@ -226,7 +234,20 @@ export async function selectContext(props: {
   logger.info(`Total files: ${totalFiles}`);
 
   if (totalFiles === 0) {
-    throw new Error(`Failed to select files`);
+    /*
+     * If no new files were selected, fall back to existing context files
+     * (better than crashing the entire request)
+     */
+    const existingContextCount = Object.keys(contextFiles).length;
+
+    if (existingContextCount > 0) {
+      logger.warn('No new files selected by context optimizer, using existing context buffer');
+      return contextFiles;
+    }
+
+    logger.warn('No files selected and no existing context — returning empty file map');
+
+    return {} as FileMap;
   }
 
   return filteredFiles;

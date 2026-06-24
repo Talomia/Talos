@@ -70,6 +70,20 @@ app.use(
 // Other static files (favicon, social preview, etc. — short cache)
 app.use(express.static('build/client', { maxAge: '1h' }));
 
+// ─── Health Check ───────────────────────────────────────────
+
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    memory: {
+      rss: Math.round(process.memoryUsage().rss / 1024 / 1024) + 'MB',
+      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+    },
+  });
+});
+
 // ─── Remix Handler ──────────────────────────────────────────
 
 app.all(
@@ -91,7 +105,27 @@ app.all(
 
 // ─── Start ──────────────────────────────────────────────────
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`[talos] Production server ready on http://0.0.0.0:${PORT}`);
   console.log(`[talos] Environment: ${process.env.NODE_ENV || 'development'}`);
 });
+
+// ─── Graceful Shutdown ──────────────────────────────────────
+
+function gracefulShutdown(signal) {
+  console.log(`[talos] Received ${signal}, shutting down gracefully...`);
+
+  server.close(() => {
+    console.log('[talos] Server closed. Exiting.');
+    process.exit(0);
+  });
+
+  // Force exit if server doesn't close within 10 seconds
+  setTimeout(() => {
+    console.error('[talos] Could not close connections in time, forcefully shutting down');
+    process.exit(1);
+  }, 10000);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
