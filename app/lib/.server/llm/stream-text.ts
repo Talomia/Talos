@@ -239,11 +239,6 @@ export async function streamText(props: {
     systemPrompt = `${systemPrompt}\n\n<project_rules>\nThe following project-level rules MUST be followed for this project:\n${projectRules.trim()}\n</project_rules>`;
   }
 
-  // Inject user custom instructions
-  if (customInstructions?.trim()) {
-    systemPrompt = `${systemPrompt}\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${customInstructions.trim()}\n</custom_instructions>`;
-  }
-
   logger.info(`Sending llm call to ${provider.name} with model ${modelDetails.name}`);
 
   // Log reasoning model detection and token parameters

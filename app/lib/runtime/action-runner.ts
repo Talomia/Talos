@@ -259,6 +259,9 @@ export class ActionRunner {
       });
     } catch (error) {
       if (action.abortSignal.aborted) {
+        this.#updateAction(actionId, { status: 'aborted' });
+        logger.debug(`[${action.type}]:Action aborted`);
+
         return;
       }
 

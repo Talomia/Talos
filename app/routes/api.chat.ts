@@ -165,12 +165,12 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     let lastChunk: string | undefined = undefined;
 
     /*
-     * Fix 2: Create a 5-minute timeout signal for LLM API calls.
-     * This prevents indefinite hangs when the provider is unresponsive.
+     * 5-minute absolute timeout for LLM API calls.
+     * Also reuses the streamAbortController so the StreamRecoveryManager
+     * can abort stalled streams (it calls streamAbortController.abort()).
      */
     const timeoutMs = 300000; // 5 minutes
-    const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+    const timeoutId = setTimeout(() => streamAbortController.abort(), timeoutMs);
 
     const dataStream = createDataStream({
       async execute(dataStream) {
@@ -402,7 +402,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             const result = await streamText({
               messages: [...processedMessages],
               env: context.cloudflare?.env,
-              options: { ...options, abortSignal: abortController.signal },
+              options: { ...options, abortSignal: streamAbortController.signal },
               apiKeys,
               files,
               providerSettings,
@@ -462,7 +462,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         const result = await streamText({
           messages: [...processedMessages],
           env: context.cloudflare?.env,
-          options: { ...options, abortSignal: abortController.signal },
+          options: { ...options, abortSignal: streamAbortController.signal },
           apiKeys,
           files,
           providerSettings,

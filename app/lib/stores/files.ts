@@ -611,10 +611,6 @@ export class FilesStore {
 
       const oldContent = this.getFile(filePath)?.content;
 
-      if (oldContent === undefined && oldContent !== '') {
-        // New file — no previous content to diff against; just proceed with the save
-      }
-
       await engine.fs.writeFile(relativePath, content);
 
       if (!this.#modifiedFiles.has(filePath)) {
