@@ -148,18 +148,43 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
 
 // Your existing method for non-Cloudflare environments
 async function fetchRepoContentsZip(repo: string, githubToken?: string) {
-  const baseUrl = 'https://api.github.com';
-  const zipballUrl = `${baseUrl}/repos/${repo}/zipball`;
+  let zipResponse;
+  let errorMsg = '';
 
-  // Fetch the zipball directly (works for all repos, with or without releases)
-  const zipResponse = await fetchWithTimeout(zipballUrl, {
-    headers: {
-      'User-Agent': 'app',
-      Accept: 'application/vnd.github.v3+json',
-      ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
-    },
-    timeoutMs: 30000,
-  });
+  // Try API first if token is available
+  if (githubToken) {
+    try {
+      const apiZipballUrl = `https://api.github.com/repos/${repo}/zipball`;
+      zipResponse = await fetchWithTimeout(apiZipballUrl, {
+        headers: {
+          'User-Agent': 'app',
+          Accept: 'application/vnd.github.v3+json',
+          Authorization: `Bearer ${githubToken}`,
+        },
+        timeoutMs: 30000,
+      });
+    } catch (e) {
+      errorMsg = e instanceof Error ? e.message : String(e);
+      logger.warn(`API zipball fetch failed: ${errorMsg}. Falling back to public zipball.`);
+    }
+  }
+
+  // Fallback/direct public download if no token, or if API failed
+  if (!zipResponse || !zipResponse.ok) {
+    const publicZipballUrl = `https://github.com/${repo}/zipball/HEAD`;
+    logger.info(`Fetching public zipball from ${publicZipballUrl}`);
+
+    try {
+      zipResponse = await fetchWithTimeout(publicZipballUrl, {
+        headers: {
+          'User-Agent': 'app',
+        },
+        timeoutMs: 30000,
+      });
+    } catch (e) {
+      throw new Error(`Failed to fetch public repository zipball: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
 
   if (!zipResponse.ok) {
     throw new Error(`Failed to fetch repository zipball: ${zipResponse.status} - ${zipResponse.statusText}`);

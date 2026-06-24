@@ -58,6 +58,53 @@ function sanitizeText(text: string): string {
   return sanitized.trim();
 }
 
+function truncateMessage(msg: Omit<Message, 'id'>, maxTokens: number): Omit<Message, 'id'> {
+  const maxLength = maxTokens * 4;
+
+  if (typeof msg.content === 'string') {
+    if (msg.content.length > maxLength) {
+      logger.warn(`Truncating message content from ${msg.content.length} to ${maxLength} characters`);
+
+      const prefix = msg.content.slice(0, 2000);
+      const suffix = msg.content.slice(-Math.max(1000, maxLength - 3000));
+
+      return {
+        ...msg,
+        content: `${prefix}\n\n... [Content truncated due to context limit] ...\n\n${suffix}`,
+      };
+    }
+  } else if (Array.isArray(msg.content)) {
+    let currentLen = 0;
+    const truncatedContent = msg.content.map((part) => {
+      if (part.type === 'text' && part.text) {
+        if (currentLen + part.text.length > maxLength) {
+          const allowed = Math.max(0, maxLength - currentLen);
+          currentLen += allowed;
+
+          const prefix = part.text.slice(0, Math.min(2000, allowed));
+          const suffix = part.text.slice(-Math.max(1000, allowed - 3000));
+
+          return {
+            ...part,
+            text: `${prefix}\n\n... [Content truncated due to context limit] ...\n\n${suffix}`,
+          };
+        }
+
+        currentLen += part.text.length;
+      }
+
+      return part;
+    });
+
+    return {
+      ...msg,
+      content: truncatedContent,
+    } as any;
+  }
+
+  return msg;
+}
+
 export async function streamText(props: {
   messages: Omit<Message, 'id'>[];
   env?: Env;
@@ -189,10 +236,8 @@ export async function streamText(props: {
     if (msg.role === 'assistant') {
       if (typeof msg.content === 'string') {
         msg.content = simplifyActions(msg.content);
-      }
-
-      if (Array.isArray(msg.parts)) {
-        msg.parts = msg.parts.map((part) =>
+      } else if (Array.isArray(msg.content)) {
+        msg.content = msg.content.map((part) =>
           part.type === 'text' ? { ...part, text: simplifyActions(part.text) } : part,
         );
       }
@@ -231,7 +276,23 @@ export async function streamText(props: {
 
   const lastMessage = processedMessages[processedMessages.length - 1];
   const keptMessages: typeof processedMessages = [];
-  let currentHistoryTokens = lastMessage ? estimateMessageTokens(lastMessage) : 0;
+  let currentHistoryTokens = 0;
+
+  let finalLastMessage = lastMessage;
+
+  if (lastMessage) {
+    const lastMsgTokens = estimateMessageTokens(lastMessage);
+
+    if (lastMsgTokens > maxInputTokens - 1000) {
+      // 1000 safety buffer
+      logger.info(
+        `Truncating last message as its size (${lastMsgTokens} tokens) exceeds maxInputTokens (${maxInputTokens})`,
+      );
+      finalLastMessage = truncateMessage(lastMessage, maxInputTokens - 1000) as any;
+    }
+
+    currentHistoryTokens = estimateMessageTokens(finalLastMessage);
+  }
 
   for (let i = processedMessages.length - 2; i >= 0; i--) {
     const msg = processedMessages[i];
@@ -248,8 +309,8 @@ export async function streamText(props: {
     currentHistoryTokens += msgTokens;
   }
 
-  if (lastMessage) {
-    keptMessages.push(lastMessage);
+  if (finalLastMessage) {
+    keptMessages.push(finalLastMessage);
   }
 
   processedMessages = keptMessages;
