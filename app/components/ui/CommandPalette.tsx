@@ -214,6 +214,16 @@ export function CommandPalette() {
             window.dispatchEvent(new CustomEvent('talos:export-markdown'));
           }),
       },
+      {
+        id: 'export-json',
+        group: 'Tools',
+        icon: 'i-ph:file-js',
+        label: 'Export Chat as JSON',
+        action: () =>
+          runAndClose(() => {
+            window.dispatchEvent(new CustomEvent('talos:export-json'));
+          }),
+      },
     ],
     [theme, navigate, runAndClose],
   );

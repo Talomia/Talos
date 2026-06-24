@@ -8,6 +8,7 @@ import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
 import { useDocumentTitle } from '~/lib/hooks/useDocumentTitle';
 import { useNotificationOnComplete } from '~/lib/hooks/useNotificationOnComplete';
 import { downloadChatAsMarkdown } from '~/lib/export/chatToMarkdown';
+import { downloadChatAsJSON } from '~/lib/export/chatToJSON';
 import { description, useChatHistory } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
@@ -304,9 +305,24 @@ export const ChatImpl = memo(
         toast.success('Chat exported as Markdown');
       };
 
-      window.addEventListener('talos:export-markdown', handleExportMarkdown);
+      const handleExportJSON = () => {
+        if (messages.length === 0) {
+          toast.info('No messages to export');
 
-      return () => window.removeEventListener('talos:export-markdown', handleExportMarkdown);
+          return;
+        }
+
+        downloadChatAsJSON(messages, description.get());
+        toast.success('Chat exported as JSON');
+      };
+
+      window.addEventListener('talos:export-markdown', handleExportMarkdown);
+      window.addEventListener('talos:export-json', handleExportJSON);
+
+      return () => {
+        window.removeEventListener('talos:export-markdown', handleExportMarkdown);
+        window.removeEventListener('talos:export-json', handleExportJSON);
+      };
     }, [messages]);
 
     // Listen for manual context commit (Cmd+Shift+G)
