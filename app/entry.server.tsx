@@ -31,18 +31,10 @@ export default async function handleRequest(
   responseHeaders.set('Content-Type', 'text/html');
 
   /*
-   * Cross-origin isolation headers — required for SharedArrayBuffer
-   * which the WebContainer runtime depends on.
-   *
-   * These are set here (at the Remix SSR layer) rather than only in
-   * Express middleware so they work on EVERY deployment path:
-   *   - Cloudflare Pages (no Express)
-   *   - Docker/Node.js (Express may be behind a proxy that strips headers)
-   *   - Vite dev server
-   *   - Electron
+   * Cross-origin isolation headers (COOP/COEP) are set in Express middleware
+   * (server.production.mjs) and Vite dev server config (vite.config.ts).
+   * Do NOT set them here — it causes duplicate headers that confuse browsers.
    */
-  responseHeaders.set('Cross-Origin-Embedder-Policy', 'credentialless');
-  responseHeaders.set('Cross-Origin-Opener-Policy', 'same-origin');
 
   return new Response(html, {
     headers: responseHeaders,
