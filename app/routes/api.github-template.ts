@@ -149,34 +149,20 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
 // Your existing method for non-Cloudflare environments
 async function fetchRepoContentsZip(repo: string, githubToken?: string) {
   const baseUrl = 'https://api.github.com';
+  const zipballUrl = `${baseUrl}/repos/${repo}/zipball`;
 
-  // Get the latest release
-  const releaseResponse = await fetchWithTimeout(`${baseUrl}/repos/${repo}/releases/latest`, {
-    headers: {
-      Accept: 'application/vnd.github.v3+json',
-      'User-Agent': 'app',
-      ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
-    },
-    timeoutMs: 15000,
-  });
-
-  if (!releaseResponse.ok) {
-    throw new Error(`GitHub API error: ${releaseResponse.status} - ${releaseResponse.statusText}`);
-  }
-
-  const releaseData = (await releaseResponse.json()) as { zipball_url: string };
-  const zipballUrl = releaseData.zipball_url;
-
-  // Fetch the zipball
+  // Fetch the zipball directly (works for all repos, with or without releases)
   const zipResponse = await fetchWithTimeout(zipballUrl, {
     headers: {
+      'User-Agent': 'app',
+      Accept: 'application/vnd.github.v3+json',
       ...(githubToken ? { Authorization: `Bearer ${githubToken}` } : {}),
     },
     timeoutMs: 30000,
   });
 
   if (!zipResponse.ok) {
-    throw new Error(`Failed to fetch release zipball: ${zipResponse.status}`);
+    throw new Error(`Failed to fetch repository zipball: ${zipResponse.status} - ${zipResponse.statusText}`);
   }
 
   // Get the zip content as ArrayBuffer
