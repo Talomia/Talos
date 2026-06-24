@@ -1,5 +1,3 @@
-import type { Tool } from 'ai';
-
 type ParameterProperty = {
   type?: string;
   description?: string;
@@ -14,7 +12,7 @@ type ToolParameters = {
 
 type McpToolProps = {
   toolName: string;
-  toolSchema: Tool;
+  toolSchema: any;
 };
 
 export default function McpServerListItem({ toolName, toolSchema }: McpToolProps) {

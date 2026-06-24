@@ -184,6 +184,10 @@ export default class OpenAIProvider extends BaseProvider {
       return openai.responses(model);
     }
 
+    if (typeof openai.chat === 'function') {
+      return openai.chat(model);
+    }
+
     return openai(model);
   }
 }

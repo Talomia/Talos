@@ -1,7 +1,7 @@
 import { type ActionFunctionArgs, json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
 import { readVault } from '~/lib/.server/api-key-vault';
-import { createDataStream, generateId } from 'ai';
+import { createUIMessageStream, createUIMessageStreamResponse, generateId, stepCountIs, type UIMessageChunk } from 'ai';
 import { MAX_RESPONSE_SEGMENTS, MAX_TOKENS, type FileMap } from '~/lib/.server/llm/constants';
 import { CONTINUE_PROMPT } from '~/lib/common/prompts/prompts';
 import { streamText, type Messages, type StreamingOptions } from '~/lib/.server/llm/stream-text';
@@ -153,15 +153,12 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     promptTokens: 0,
     totalTokens: 0,
   };
-  const encoder: TextEncoder = new TextEncoder();
   let progressCounter: number = 1;
   const stepTimers: Record<string, number> = {};
 
   try {
     const mcpService = MCPService.getInstance();
     logger.debug(`Chat request: ${messages.length} messages`);
-
-    let lastChunk: string | undefined = undefined;
 
     /*
      * 5-minute absolute timeout for LLM API calls.
@@ -171,8 +168,29 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     const timeoutMs = parseInt(process.env.CHAT_TIMEOUT_MS || '300000', 10); // default: 5 minutes
     const timeoutId = setTimeout(() => streamAbortController.abort(), timeoutMs);
 
-    const dataStream = createDataStream({
-      async execute(dataStream) {
+    const dataStream = createUIMessageStream({
+      async execute({ writer }) {
+        const dataStream: any = {
+          write(chunk: any) {
+            writer.write(chunk);
+          },
+          writeData(value: any) {
+            writer.write({
+              type: 'message-metadata',
+              messageMetadata: [value],
+            });
+          },
+          writeMessageAnnotation(value: any) {
+            writer.write({
+              type: 'message-metadata',
+              messageMetadata: [value],
+            });
+          },
+          merge(stream: any) {
+            writer.merge(stream);
+          },
+        };
+
         streamRecovery.startMonitoring();
 
         const filePaths = getFilePaths(files || {});
@@ -247,8 +265,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             onFinish(resp) {
               if (resp.usage) {
                 logger.debug('createSummary token usage', JSON.stringify(resp.usage));
-                cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
-                cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
+                cumulativeUsage.completionTokens += resp.usage.outputTokens || 0;
+                cumulativeUsage.promptTokens += resp.usage.inputTokens || 0;
                 cumulativeUsage.totalTokens += resp.usage.totalTokens || 0;
               }
             },
@@ -297,8 +315,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             onFinish(resp) {
               if (resp.usage) {
                 logger.debug('selectContext token usage', JSON.stringify(resp.usage));
-                cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
-                cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
+                cumulativeUsage.completionTokens += resp.usage.outputTokens || 0;
+                cumulativeUsage.promptTokens += resp.usage.inputTokens || 0;
                 cumulativeUsage.totalTokens += resp.usage.totalTokens || 0;
               }
             },
@@ -339,19 +357,19 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           supabaseConnection: supabase,
           toolChoice: 'auto',
           tools: mcpService.toolsWithoutExecute,
-          maxSteps: maxLLMSteps,
+          stopWhen: stepCountIs(maxLLMSteps),
           onStepFinish: ({ toolCalls }) => {
             // add tool call annotations for frontend processing
             toolCalls.forEach((toolCall) => {
-              mcpService.processToolCall(toolCall, dataStream);
+              mcpService.processToolCall(toolCall as any, dataStream as any);
             });
           },
           onFinish: async ({ text: content, finishReason, usage }) => {
             logger.debug('usage', JSON.stringify(usage));
 
             if (usage) {
-              cumulativeUsage.completionTokens += usage.completionTokens || 0;
-              cumulativeUsage.promptTokens += usage.promptTokens || 0;
+              cumulativeUsage.completionTokens += usage.outputTokens || 0;
+              cumulativeUsage.promptTokens += usage.inputTokens || 0;
               cumulativeUsage.totalTokens += usage.totalTokens || 0;
             }
 
@@ -416,7 +434,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               projectRules,
             });
 
-            result.mergeIntoDataStream(dataStream);
+            dataStream.merge(result.toUIMessageStream());
 
             (async () => {
               try {
@@ -533,7 +551,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             clearTimeout(timeoutId);
           }
         })();
-        result.mergeIntoDataStream(dataStream);
+        dataStream.merge(result.toUIMessageStream());
       },
       onError: (error: unknown): string => {
         // Provide more specific error messages for common issues
@@ -569,45 +587,109 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
         return `Custom error: ${errorMessage}`;
       },
-    }).pipeThrough(
-      new TransformStream({
-        transform: (chunk, controller) => {
-          if (!lastChunk) {
-            lastChunk = ' ';
+    });
+
+    let isThinking = false;
+
+    const transformedStream = dataStream.pipeThrough(
+      new TransformStream<UIMessageChunk, UIMessageChunk>({
+        transform(chunk, controller) {
+          if (chunk.type === 'reasoning-start') {
+            isThinking = true;
+            controller.enqueue({
+              type: 'text-start',
+              id: chunk.id,
+            });
+            controller.enqueue({
+              type: 'text-delta',
+              id: chunk.id,
+              delta: `<div class="${CSS_CLASS_THOUGHT}">\n`,
+            });
+
+            return;
           }
 
-          if (typeof chunk === 'string') {
-            if (chunk.startsWith('g') && !lastChunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "<div class=\"${CSS_CLASS_THOUGHT}\">"\n`));
+          if (chunk.type === 'reasoning-delta') {
+            if (!isThinking) {
+              isThinking = true;
+              controller.enqueue({
+                type: 'text-start',
+                id: chunk.id,
+              });
+              controller.enqueue({
+                type: 'text-delta',
+                id: chunk.id,
+                delta: `<div class="${CSS_CLASS_THOUGHT}">\n`,
+              });
             }
 
-            if (lastChunk.startsWith('g') && !chunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "</div>\n"\n`));
-            }
+            controller.enqueue({
+              type: 'text-delta',
+              id: chunk.id,
+              delta: chunk.delta,
+            });
+
+            return;
           }
 
-          lastChunk = chunk;
-
-          let transformedChunk = chunk;
-
-          if (typeof chunk === 'string' && chunk.startsWith('g')) {
-            let content = chunk.split(':').slice(1).join(':');
-
-            if (content.endsWith('\n')) {
-              content = content.slice(0, content.length - 1);
+          if (chunk.type === 'reasoning-end') {
+            if (isThinking) {
+              controller.enqueue({
+                type: 'text-delta',
+                id: chunk.id,
+                delta: '\n</div>\n',
+              });
+              controller.enqueue({
+                type: 'text-end',
+                id: chunk.id,
+              });
+              isThinking = false;
             }
 
-            transformedChunk = `0:${content}\n`;
+            return;
           }
 
-          // Convert the string stream to a byte stream
-          const str = typeof transformedChunk === 'string' ? transformedChunk : JSON.stringify(transformedChunk);
-          controller.enqueue(encoder.encode(str));
+          // If we encounter a text chunk or tool chunk but we were still in thinking state, close it
+          if (
+            isThinking &&
+            (chunk.type === 'text-start' ||
+              chunk.type === 'text-delta' ||
+              chunk.type === 'tool-input-available' ||
+              chunk.type === 'finish')
+          ) {
+            controller.enqueue({
+              type: 'text-delta',
+              id: 'thinking-end',
+              delta: '\n</div>\n',
+            });
+            controller.enqueue({
+              type: 'text-end',
+              id: 'thinking-end',
+            });
+            isThinking = false;
+          }
+
+          controller.enqueue(chunk);
+        },
+        flush(controller) {
+          if (isThinking) {
+            controller.enqueue({
+              type: 'text-delta',
+              id: 'thinking-end',
+              delta: '\n</div>\n',
+            });
+            controller.enqueue({
+              type: 'text-end',
+              id: 'thinking-end',
+            });
+            isThinking = false;
+          }
         },
       }),
     );
 
-    return new Response(dataStream, {
+    return createUIMessageStreamResponse({
+      stream: transformedStream,
       status: 200,
       headers: {
         'Content-Type': 'text/event-stream; charset=utf-8',

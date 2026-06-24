@@ -170,7 +170,12 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         providerSettings,
         serverEnv: context.cloudflare?.env,
       });
-      const modelDetails = models.find((m: ModelInfo) => m.name === model);
+      let modelDetails = models.find((m: ModelInfo) => m.name === model);
+
+      if (!modelDetails) {
+        logger.warn(`Model "${model}" not found in provider. Falling back to first available model.`);
+        modelDetails = models[0];
+      }
 
       if (!modelDetails) {
         throw new Error('Model not found');

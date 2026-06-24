@@ -73,9 +73,9 @@ function truncateMessage(msg: Omit<Message, 'id'>, maxTokens: number): Omit<Mess
         content: `${prefix}\n\n... [Content truncated due to context limit] ...\n\n${suffix}`,
       };
     }
-  } else if (Array.isArray(msg.content)) {
+  } else if (Array.isArray(msg.content as any)) {
     let currentLen = 0;
-    const truncatedContent = msg.content.map((part) => {
+    const truncatedContent = (msg.content as any[]).map((part) => {
       if (part.type === 'text' && part.text) {
         if (currentLen + part.text.length > maxLength) {
           const allowed = Math.max(0, maxLength - currentLen);
@@ -236,10 +236,10 @@ export async function streamText(props: {
     if (msg.role === 'assistant') {
       if (typeof msg.content === 'string') {
         msg.content = simplifyActions(msg.content);
-      } else if (Array.isArray(msg.content)) {
-        msg.content = msg.content.map((part) =>
+      } else if (Array.isArray(msg.content as any)) {
+        msg.content = (msg.content as any[]).map((part) =>
           part.type === 'text' ? { ...part, text: simplifyActions(part.text) } : part,
-        );
+        ) as any;
       }
     }
   }
@@ -441,7 +441,7 @@ export async function streamText(props: {
     }),
     system: chatMode === 'build' ? systemPrompt : discussPrompt(),
     ...tokenParams,
-    messages: convertToModelMessages(processedMessages as any),
+    messages: await convertToModelMessages(processedMessages as any),
     ...filteredOptions,
 
     // Set temperature to 1 for reasoning models (required by OpenAI API)
@@ -453,5 +453,5 @@ export async function streamText(props: {
     Object.keys(streamParams).filter((key) => !['model', 'messages', 'system'].includes(key)),
   );
 
-  return await _streamText(streamParams);
+  return await _streamText(streamParams as any);
 }

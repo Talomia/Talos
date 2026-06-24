@@ -1,4 +1,4 @@
-import { type ToolSet, type Message, type DataStreamWriter, convertToModelMessages, formatDataStreamPart } from 'ai';
+import { type ToolSet, type Message, type UIMessageStreamWriter, convertToModelMessages } from 'ai';
 import { experimental_createMCPClient } from '@ai-sdk/mcp';
 import { Experimental_StdioMCPTransport } from '@ai-sdk/mcp/mcp-stdio';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
@@ -349,7 +349,7 @@ export class MCPService {
     return toolName in this._tools;
   }
 
-  processToolCall(toolCall: ToolCall, dataStream: DataStreamWriter): void {
+  processToolCall(toolCall: ToolCall, dataStream: UIMessageStreamWriter): void {
     const { toolCallId, toolName } = toolCall;
 
     if (this.isValidToolName(toolName)) {
@@ -357,18 +357,23 @@ export class MCPService {
       const serverName = this._toolNamesToServerNames.get(toolName);
 
       if (serverName) {
-        dataStream.writeMessageAnnotation({
-          type: 'toolCall',
-          toolCallId,
-          serverName,
-          toolName,
-          toolDescription: description,
-        } satisfies ToolCallAnnotation);
+        dataStream.write({
+          type: 'message-metadata',
+          messageMetadata: [
+            {
+              type: 'toolCall',
+              toolCallId,
+              serverName,
+              toolName,
+              toolDescription: description,
+            } satisfies ToolCallAnnotation,
+          ],
+        });
       }
     }
   }
 
-  async processToolInvocations(messages: Message[], dataStream: DataStreamWriter): Promise<Message[]> {
+  async processToolInvocations(messages: Message[], dataStream: UIMessageStreamWriter): Promise<Message[]> {
     if (!messages.length) {
       return messages;
     }
@@ -381,7 +386,7 @@ export class MCPService {
     }
 
     const processedParts = await Promise.all(
-      parts.map(async (part) => {
+      parts.map(async (part: any) => {
         // Only process tool invocations parts
         if (part.type !== 'tool-invocation') {
           return part;
@@ -405,7 +410,14 @@ export class MCPService {
 
             try {
               result = await toolInstance.execute(toolInvocation.args, {
-                messages: convertToModelMessages(messages),
+                messages: await convertToModelMessages(
+                  messages.map((m: any) => ({
+                    id: m.id || '',
+                    role: m.role,
+                    parts: [{ type: 'text', text: m.content || '' }],
+                    metadata: m.annotations,
+                  })),
+                ),
                 toolCallId,
               });
             } catch (error) {
@@ -423,12 +435,11 @@ export class MCPService {
         }
 
         // Forward updated tool result to the client.
-        dataStream.write(
-          formatDataStreamPart('tool_result', {
-            toolCallId,
-            result,
-          }),
-        );
+        dataStream.write({
+          type: 'tool-output-available',
+          toolCallId,
+          output: result,
+        });
 
         // Return updated toolInvocation with the actual result.
         return {

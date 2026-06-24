@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/react';
 import type { Message } from 'ai';
-import { useChat } from '@ai-sdk/react';
+import { useChat } from '~/lib/hooks/useChatCompat';
 import { useAnimate } from 'framer-motion';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
