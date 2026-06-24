@@ -207,7 +207,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
 
     const deploy = (await deployResponse.json()) as NetlifyDeployResponse;
     let retryCount = 0;
-    const maxRetries = 60;
+    const maxRetries = 30;
     let filesUploaded = false;
 
     // Poll until deploy is ready for file uploads
@@ -218,7 +218,7 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          timeoutMs: 30000,
+          timeoutMs: 15000,
         },
       );
 
@@ -303,7 +303,19 @@ async function netlifyDeployAction({ request }: ActionFunctionArgs) {
     }
 
     if (retryCount >= maxRetries) {
-      return json({ error: 'Deploy preparation timed out' }, { status: 500 });
+      // Deployment is still in progress — return what we have so far
+      logger.info(`Netlify deploy ${deploy.id} still in progress after polling timeout`);
+
+      return json({
+        success: true,
+        deploy: {
+          id: deploy.id,
+          state: 'building',
+          url: siteInfo?.url || `https://app.netlify.com/deploys/${deploy.id}`,
+        },
+        site: siteInfo,
+        note: 'Deployment is still in progress. Check your Netlify dashboard for the final status.',
+      });
     }
 
     // Make sure we're returning the deploy ID and site info

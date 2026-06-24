@@ -455,9 +455,9 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
 
     const deployData = (await deployResponse.json()) as VercelDeployResponse;
 
-    // Poll for deployment status
+    // Poll for deployment status (max ~60s to stay within serverless time limits)
     let retryCount = 0;
-    const maxRetries = 60;
+    const maxRetries = 30;
     let deploymentUrl = '';
     let deploymentState = '';
 
@@ -466,7 +466,7 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        timeoutMs: 30000,
+        timeoutMs: 15000,
       });
 
       if (statusResponse.ok) {
@@ -488,7 +488,19 @@ async function vercelDeployAction({ request }: ActionFunctionArgs) {
     }
 
     if (retryCount >= maxRetries) {
-      return json({ error: 'Deployment timed out' }, { status: 500 });
+      // Deployment is still in progress — return what we have so far
+      logger.info(`Deployment ${deployData.id} still in progress after polling timeout (state: ${deploymentState})`);
+
+      return json({
+        success: true,
+        deploy: {
+          id: deployData.id,
+          state: deploymentState || 'BUILDING',
+          url: projectInfo.url || deploymentUrl || `https://vercel.com/deployments/${deployData.id}`,
+        },
+        project: projectInfo,
+        note: 'Deployment is still in progress. Check your Vercel dashboard for the final status.',
+      });
     }
 
     return json({
