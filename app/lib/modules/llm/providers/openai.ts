@@ -170,6 +170,16 @@ export default class OpenAIProvider extends BaseProvider {
       apiKey,
     });
 
+    /*
+     * Check if the model requires the new OpenAI Responses API (v1/responses)
+     * o1, o3, and gpt-5 models require v1/responses endpoint
+     */
+    const useResponses = model.startsWith('gpt-5') || model.startsWith('o1') || model.startsWith('o3');
+
+    if (useResponses && typeof openai.responses === 'function') {
+      return openai.responses(model);
+    }
+
     return openai(model);
   }
 }
