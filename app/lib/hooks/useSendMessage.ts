@@ -157,6 +157,7 @@ export function useSendMessage(deps: UseSendMessageDeps) {
 
       if (!chatStarted) {
         setFakeLoading(true);
+        logger.info('New chat flow: chatStarted=false, autoSelectTemplate=', autoSelectTemplate);
 
         if (autoSelectTemplate) {
           try {
@@ -257,6 +258,8 @@ export function useSendMessage(deps: UseSendMessageDeps) {
         const attachmentOptions =
           uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
 
+        logger.info('Non-template path: calling append() with', userMessageText.substring(0, 80) + '...');
+
         try {
           await append(
             {
@@ -266,8 +269,14 @@ export function useSendMessage(deps: UseSendMessageDeps) {
             },
             attachmentOptions,
           );
+          logger.info('Non-template path: append() completed successfully');
         } catch (appendError) {
           logger.error('Chat initiation failed:', appendError);
+          logger.error('Chat initiation error details:', {
+            name: (appendError as Error)?.name,
+            message: (appendError as Error)?.message,
+            stack: (appendError as Error)?.stack?.substring(0, 300),
+          });
           toast.error('Failed to start chat. Please try again.');
         }
 

@@ -158,6 +158,7 @@ export const ChatImpl = memo(
       },
       sendExtraMessageFields: true,
       onError: (e) => {
+        console.error('[Chat] onError fired:', e?.message, e);
         setFakeLoading(false);
         handleError(e, 'chat');
       },
