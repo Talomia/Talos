@@ -253,7 +253,7 @@ ${value.content}
                  */
                 ...filteredMessages,
               ];
-              restoreSnapshot(mixedId);
+              restoreSnapshot(mixedId).catch((err) => logger.error('Failed to restore snapshot:', err));
             }
 
             setInitialMessages(filteredMessages);
@@ -307,48 +307,52 @@ ${value.content}
   );
 
   const restoreSnapshot = useCallback(async (id: string, snapshot?: Snapshot) => {
-    const container = await runtime;
+    try {
+      const container = await runtime;
 
-    const validSnapshot = snapshot || { chatIndex: '', files: {} };
+      const validSnapshot = snapshot || { chatIndex: '', files: {} };
 
-    if (!validSnapshot?.files) {
-      return;
-    }
+      if (!validSnapshot?.files) {
+        return;
+      }
 
-    const entries = Object.entries(validSnapshot.files);
+      const entries = Object.entries(validSnapshot.files);
 
-    // Create directories first (sequentially to ensure parent dirs exist)
-    for (const [rawKey, value] of entries) {
-      if (value?.type === 'folder') {
-        let key = rawKey;
+      // Create directories first (sequentially to ensure parent dirs exist)
+      for (const [rawKey, value] of entries) {
+        if (value?.type === 'folder') {
+          let key = rawKey;
 
-        if (key.startsWith(container.workdir)) {
-          key = key.replace(container.workdir, '');
-        }
+          if (key.startsWith(container.workdir)) {
+            key = key.replace(container.workdir, '');
+          }
 
-        try {
-          await container.fs.mkdir(key, { recursive: true });
-        } catch (error) {
-          logger.error(`Failed to create directory ${key}:`, error);
+          try {
+            await container.fs.mkdir(key, { recursive: true });
+          } catch (error) {
+            logger.error(`Failed to create directory ${key}:`, error);
+          }
         }
       }
-    }
 
-    // Then write files
-    for (const [rawKey, value] of entries) {
-      if (value?.type === 'file') {
-        let key = rawKey;
+      // Then write files
+      for (const [rawKey, value] of entries) {
+        if (value?.type === 'file') {
+          let key = rawKey;
 
-        if (key.startsWith(container.workdir)) {
-          key = key.replace(container.workdir, '');
-        }
+          if (key.startsWith(container.workdir)) {
+            key = key.replace(container.workdir, '');
+          }
 
-        try {
-          await container.fs.writeFile(key, value.content, value.isBinary ? undefined : 'utf8');
-        } catch (error) {
-          logger.error(`Failed to write file ${key}:`, error);
+          try {
+            await container.fs.writeFile(key, value.content, value.isBinary ? undefined : 'utf8');
+          } catch (error) {
+            logger.error(`Failed to write file ${key}:`, error);
+          }
         }
       }
+    } catch (error) {
+      logger.error('Failed to restore snapshot:', error);
     }
   }, []);
 

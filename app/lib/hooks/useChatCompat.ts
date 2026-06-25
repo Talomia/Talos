@@ -256,6 +256,8 @@ export function useChat(options: UseChatOptions = {}) {
       role: m.role,
       content,
       annotations: m.metadata as any,
+      parts: m.parts as any,
+      createdAt: (m as any).createdAt,
     };
   });
 
@@ -279,7 +281,14 @@ export function useChat(options: UseChatOptions = {}) {
             content = (m as any).content;
           }
 
-          return { id: m.id, role: m.role, content, annotations: m.metadata as any };
+          return {
+            id: m.id,
+            role: m.role,
+            content,
+            annotations: m.metadata as any,
+            parts: m.parts as any,
+            createdAt: (m as any).createdAt,
+          };
         });
         const updated = value(mappedMessages);
 
