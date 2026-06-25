@@ -52,6 +52,7 @@ interface SyncableChat {
 
 let _isAuthenticated = false;
 let _isSyncing = false;
+let _initStarted = false;
 
 /*
  * ==========================================
@@ -81,8 +82,18 @@ let _syncScheduled = false;
 /**
  * Initialize cloud persistence.
  * Checks authentication status, pulls cloud projects, and starts any pending sync.
+ *
+ * Guarded against double invocation (e.g., React strict mode or
+ * multiple component mounts triggering init concurrently).
  */
 export async function initCloudPersistence(): Promise<void> {
+  // Prevent double initialization from React strict mode / concurrent mounts
+  if (_initStarted) {
+    return;
+  }
+
+  _initStarted = true;
+
   try {
     const response = await fetch('/api/auth/user');
     const data = (await response.json()) as { user: Record<string, unknown> | null };
@@ -104,6 +115,7 @@ export async function initCloudPersistence(): Promise<void> {
   } catch {
     _isAuthenticated = false;
     cloudEnabled.set(false);
+    _initStarted = false; // Allow retry on failure
     logger.info('Cloud persistence disabled — auth check failed');
   }
 }
@@ -119,6 +131,12 @@ export async function initCloudPersistence(): Promise<void> {
  * a circular sync-to-cloud for data that already lives in the cloud.
  */
 export async function pullFromCloud(): Promise<number> {
+  // Don't attempt pull while rate-limited
+  if (isCircuitBreakerOpen()) {
+    logger.debug('Circuit breaker open — skipping cloud pull');
+    return 0;
+  }
+
   const cloudProjects = await loadProjectsFromCloud();
 
   if (!cloudProjects || cloudProjects.length === 0) {
@@ -370,13 +388,32 @@ export async function loadProjectsFromCloud(): Promise<SyncableChat[] | null> {
     return null;
   }
 
+  // Don't attempt load while rate-limited
+  if (isCircuitBreakerOpen()) {
+    logger.debug('Circuit breaker open — skipping project load');
+    return null;
+  }
+
   try {
     const response = await fetch('/api/projects');
 
     if (!response.ok) {
+      // Track 429s for circuit breaker
+      if (response.status === 429) {
+        _consecutive429Count++;
+
+        if (_consecutive429Count >= CIRCUIT_BREAKER_THRESHOLD) {
+          tripCircuitBreaker();
+        }
+      }
+
       logger.error(`Failed to load projects: ${response.status} ${response.statusText}`);
+
       return null;
     }
+
+    // Success — reset 429 counter
+    _consecutive429Count = 0;
 
     const data = (await response.json()) as { projects?: SyncableChat[]; authenticated?: boolean };
 
