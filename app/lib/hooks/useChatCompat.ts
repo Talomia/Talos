@@ -35,7 +35,6 @@ export function useChat(options: UseChatOptions = {}) {
   onFinishRef.current = options.onFinish;
 
   const v6Options: any = {
-    id: options.id,
     initialMessages: options.initialMessages
       ? options.initialMessages.map((m: any) => ({
           id: m.id || generateId(),
@@ -79,9 +78,17 @@ export function useChat(options: UseChatOptions = {}) {
         }
       }
 
+      if (!content && typeof message.content === 'string') {
+        content = message.content;
+      }
+
       onFinishRef.current({ id: message.id, role: message.role, content }, { usage });
     },
   };
+
+  if (options.id !== undefined) {
+    v6Options.id = options.id;
+  }
 
   const api = options.api || '/api/chat';
   const bodyRef = useRef(options.body);
@@ -116,6 +123,10 @@ export function useChat(options: UseChatOptions = {}) {
               content += part.text;
             }
           }
+        }
+
+        if (!content && typeof m.content === 'string') {
+          content = m.content;
         }
 
         return {
@@ -236,6 +247,10 @@ export function useChat(options: UseChatOptions = {}) {
       }
     }
 
+    if (!content && typeof (m as any).content === 'string') {
+      content = (m as any).content;
+    }
+
     return {
       id: m.id,
       role: m.role,
@@ -258,6 +273,10 @@ export function useChat(options: UseChatOptions = {}) {
                 content += `<div class="__assistantThought__">\n${part.text}\n</div>\n`;
               }
             }
+          }
+
+          if (!content && typeof (m as any).content === 'string') {
+            content = (m as any).content;
           }
 
           return { id: m.id, role: m.role, content, annotations: m.metadata as any };
