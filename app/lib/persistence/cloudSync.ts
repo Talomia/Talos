@@ -438,6 +438,10 @@ export function isCloudEnabled(): boolean {
 /**
  * Schedule a debounced sync flush.
  * Coalesces rapid operations into a single flush.
+ *
+ * Uses a 5-second debounce to prevent overwhelming the server during
+ * active streaming, where storeMessageHistory fires every ~50ms.
+ * Local IndexedDB is the source of truth; cloud sync is background-only.
  */
 function scheduleSyncFlush(): void {
   if (_syncScheduled) {
@@ -446,11 +450,11 @@ function scheduleSyncFlush(): void {
 
   _syncScheduled = true;
 
-  // Debounce: wait 300ms to coalesce rapid saves
+  // Debounce: wait 5s to coalesce rapid saves (especially during streaming)
   setTimeout(() => {
     _syncScheduled = false;
     flushPendingSyncs();
-  }, 300);
+  }, 5_000);
 }
 
 async function flushPendingSyncs(): Promise<void> {
