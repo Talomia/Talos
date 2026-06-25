@@ -38,6 +38,9 @@ const RATE_LIMITS: Record<string, { windowMs: number; maxRequests: number }> = {
   '/api/vercel-*': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 requests/min
   '/api/supabase-*': { windowMs: 60 * 1000, maxRequests: 20 }, // 20 requests/min
 
+  // Cloud sync — frequent background operation, needs more headroom
+  '/api/projects': { windowMs: 60 * 1000, maxRequests: 60 }, // 60 requests/min
+
   // General API fallback — catches everything else
   '/api/*': { windowMs: 15 * 60 * 1000, maxRequests: 100 }, // 100 requests/15min
 };
