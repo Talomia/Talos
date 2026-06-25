@@ -460,6 +460,12 @@ async function flushPendingSyncs(): Promise<void> {
     return;
   }
 
+  // Don't attempt sync while rate-limited
+  if (isCircuitBreakerOpen()) {
+    logger.debug('Circuit breaker open — deferring sync flush');
+    return;
+  }
+
   _isSyncing = true;
   syncStatus.set('syncing');
 
@@ -579,6 +585,11 @@ async function flushDeleteAll(): Promise<void> {
  * =============================================
  * When a sync operation fails (network error, server error),
  * it's added to a retry queue with exponential backoff.
+ *
+ * Rate-limit protection:
+ * - 429 responses trigger a circuit breaker that pauses ALL syncs
+ * - Retry entries are deduplicated by (type + id)
+ * - Queue size is capped to prevent unbounded growth
  */
 
 interface RetryEntry {
@@ -592,30 +603,114 @@ interface RetryEntry {
 
 const _retryQueue: RetryEntry[] = [];
 const MAX_RETRY_ATTEMPTS = 5;
+const MAX_RETRY_QUEUE_SIZE = 20;
 const BASE_RETRY_DELAY_MS = 1000; // 1 second, doubles each attempt
+const RATE_LIMIT_RETRY_DELAY_MS = 5000; // 5 seconds for 429 responses
 let _retryTimerId: ReturnType<typeof setTimeout> | null = null;
 
+/*
+ * Circuit breaker: after repeated 429s, stop all sync attempts
+ * for a cooldown period to let the server recover.
+ */
+let _consecutive429Count = 0;
+const CIRCUIT_BREAKER_THRESHOLD = 3; // consecutive 429s before tripping
+const CIRCUIT_BREAKER_COOLDOWN_MS = 60_000; // 60 seconds cooldown
+let _circuitBreakerUntil = 0; // timestamp when circuit breaker resets
+
+function isCircuitBreakerOpen(): boolean {
+  if (_circuitBreakerUntil > Date.now()) {
+    return true;
+  }
+
+  // Circuit breaker has expired — reset
+  if (_circuitBreakerUntil > 0) {
+    _circuitBreakerUntil = 0;
+    _consecutive429Count = 0;
+    logger.info('Circuit breaker reset — resuming cloud sync');
+  }
+
+  return false;
+}
+
+function tripCircuitBreaker(): void {
+  _circuitBreakerUntil = Date.now() + CIRCUIT_BREAKER_COOLDOWN_MS;
+  syncStatus.set('error');
+
+  // Clear retry queue — all pending retries would just hit 429 too
+  _retryQueue.length = 0;
+
+  if (_retryTimerId) {
+    clearTimeout(_retryTimerId);
+    _retryTimerId = null;
+  }
+
+  logger.warn(
+    `Circuit breaker tripped after ${_consecutive429Count} consecutive 429s — ` +
+      `pausing cloud sync for ${CIRCUIT_BREAKER_COOLDOWN_MS / 1000}s`,
+  );
+}
+
 async function executeSyncOperation(operation: () => Promise<void>, type: string, id: string): Promise<void> {
+  // Check circuit breaker before attempting
+  if (isCircuitBreakerOpen()) {
+    logger.debug(`Circuit breaker open — skipping ${type} (${id}) sync`);
+    return;
+  }
+
   try {
     await operation();
+
+    // Success — reset 429 counter
+    _consecutive429Count = 0;
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+
     logger.error(`Failed to sync ${type} (${id}) to cloud:`, error);
 
     // Don't retry auth errors — they won't succeed
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
     if (errorMessage.includes('401') || errorMessage.includes('403')) {
       return;
     }
 
-    // Add to retry queue
+    // Handle 429 rate limiting
+    if (errorMessage.includes('429')) {
+      _consecutive429Count++;
+
+      if (_consecutive429Count >= CIRCUIT_BREAKER_THRESHOLD) {
+        tripCircuitBreaker();
+        return;
+      }
+    }
+
+    // Deduplicate: replace existing retry for the same (type + id)
+    const existingIndex = _retryQueue.findIndex((e) => e.type === type && e.id === id);
+
+    if (existingIndex >= 0) {
+      // Replace the operation but keep the attempt count to avoid resetting backoff
+      const existing = _retryQueue[existingIndex];
+      existing.operation = operation;
+
+      // Don't reset nextRetryAt — respect the existing backoff schedule
+      return;
+    }
+
+    // Cap queue size — drop oldest entries if full
+    if (_retryQueue.length >= MAX_RETRY_QUEUE_SIZE) {
+      const dropped = _retryQueue.shift();
+      logger.warn(`Retry queue full — dropped oldest entry: ${dropped?.type} (${dropped?.id})`);
+    }
+
+    // Add to retry queue with appropriate delay
+    const isRateLimit = errorMessage.includes('429');
+    const baseDelay = isRateLimit ? RATE_LIMIT_RETRY_DELAY_MS : BASE_RETRY_DELAY_MS;
+
     _retryQueue.push({
       operation,
       type,
       id,
       attempt: 0,
       maxAttempts: MAX_RETRY_ATTEMPTS,
-      nextRetryAt: Date.now() + BASE_RETRY_DELAY_MS,
+      nextRetryAt: Date.now() + baseDelay,
     });
 
     scheduleRetryFlush();
@@ -628,6 +723,11 @@ function scheduleRetryFlush(): void {
   }
 
   if (_retryQueue.length === 0) {
+    return;
+  }
+
+  // Don't schedule if circuit breaker is open
+  if (isCircuitBreakerOpen()) {
     return;
   }
 
@@ -648,24 +748,47 @@ async function processRetryQueue(): Promise<void> {
     return;
   }
 
+  // Check circuit breaker before processing
+  if (isCircuitBreakerOpen()) {
+    return;
+  }
+
   const now = Date.now();
   const ready = _retryQueue.filter((e) => e.nextRetryAt <= now);
 
   for (const entry of ready) {
+    // Re-check circuit breaker between operations
+    if (isCircuitBreakerOpen()) {
+      break;
+    }
+
     entry.attempt++;
 
     try {
       await entry.operation();
 
-      // Success — remove from queue
+      // Success — remove from queue and reset 429 counter
       const index = _retryQueue.indexOf(entry);
 
       if (index >= 0) {
         _retryQueue.splice(index, 1);
       }
 
+      _consecutive429Count = 0;
       logger.info(`Retry succeeded for ${entry.type} (${entry.id}) on attempt ${entry.attempt}`);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+
+      // Check for 429 in retry
+      if (errorMessage.includes('429')) {
+        _consecutive429Count++;
+
+        if (_consecutive429Count >= CIRCUIT_BREAKER_THRESHOLD) {
+          tripCircuitBreaker();
+          return;
+        }
+      }
+
       if (entry.attempt >= entry.maxAttempts) {
         // Give up
         const index = _retryQueue.indexOf(entry);
@@ -679,8 +802,10 @@ async function processRetryQueue(): Promise<void> {
           error,
         );
       } else {
-        // Exponential backoff
-        const delay = BASE_RETRY_DELAY_MS * Math.pow(2, entry.attempt);
+        // Exponential backoff (longer for 429s)
+        const isRateLimit = errorMessage.includes('429');
+        const base = isRateLimit ? RATE_LIMIT_RETRY_DELAY_MS : BASE_RETRY_DELAY_MS;
+        const delay = base * Math.pow(2, entry.attempt);
         entry.nextRetryAt = Date.now() + delay;
         logger.warn(
           `Retry queue: ${entry.type} (${entry.id}) attempt ${entry.attempt}/${entry.maxAttempts} failed, ` +
