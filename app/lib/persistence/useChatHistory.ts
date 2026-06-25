@@ -380,7 +380,7 @@ ${value.content}
       }
 
       const { firstArtifact } = workbenchStore;
-      messages = messages.filter((m) => !m.annotations?.includes('no-store'));
+      messages = messages.filter((m) => !(Array.isArray(m.annotations) && m.annotations.includes('no-store')));
 
       let _urlId = urlId;
 
@@ -395,11 +395,15 @@ ${value.content}
       const lastMessage = messages[messages.length - 1];
 
       if (lastMessage.role === 'assistant') {
-        const annotations = lastMessage.annotations as JSONValue[];
-        const filteredAnnotations = (annotations?.filter(
-          (annotation: JSONValue) =>
-            annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
-        ) || []) as { type: string; value: any } & { [key: string]: any }[];
+        const annotations = lastMessage.annotations;
+        const filteredAnnotations = (
+          Array.isArray(annotations)
+            ? annotations.filter(
+                (annotation: JSONValue) =>
+                  annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
+              )
+            : []
+        ) as { type: string; value: any } & { [key: string]: any }[];
 
         if (filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')) {
           chatSummary = filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')?.summary;

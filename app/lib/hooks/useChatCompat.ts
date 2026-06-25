@@ -166,16 +166,7 @@ export function useChat(options: UseChatOptions = {}) {
       sendArgs.files = fileParts;
     }
 
-    console.log(
-      '[useChatCompat] append: calling sendMessage, text length:',
-      text.length,
-      'status:',
-      chatRef.current.status,
-    );
-
     const res = await chatRef.current.sendMessage(sendArgs, requestOptions);
-
-    console.log('[useChatCompat] append: sendMessage completed, messages count:', chatRef.current.messages.length);
 
     return res as any;
   }, []);
@@ -331,8 +322,6 @@ export function useChat(options: UseChatOptions = {}) {
       output: args.result,
     });
   }, []);
-
-  console.log('[useChatCompat] render - chat.messages:', chat.messages?.length, 'mapped messages:', messages?.length);
 
   return {
     ...chat,

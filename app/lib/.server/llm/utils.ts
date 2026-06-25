@@ -104,7 +104,7 @@ export function extractCurrentContext(messages: Message[]) {
   let summary: ContextAnnotation | undefined;
   let codeContext: ContextAnnotation | undefined;
 
-  if (!lastAssistantMessage.annotations?.length) {
+  if (!Array.isArray(lastAssistantMessage.annotations) || !lastAssistantMessage.annotations.length) {
     return { summary: undefined, codeContext: undefined };
   }
 

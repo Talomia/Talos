@@ -143,10 +143,14 @@ export const AssistantMessage = memo(
       }, 2000);
     }, [content, copied]);
 
-    const filteredAnnotations = (annotations?.filter(
-      (annotation: JSONValue) =>
-        annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
-    ) || []) as { type: string; value: any } & { [key: string]: any }[];
+    const filteredAnnotations = (
+      Array.isArray(annotations)
+        ? annotations.filter(
+            (annotation: JSONValue) =>
+              annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
+          )
+        : []
+    ) as { type: string; value: any } & { [key: string]: any }[];
 
     let chatSummary: string | undefined = undefined;
 
