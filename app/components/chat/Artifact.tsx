@@ -1,6 +1,6 @@
 import { useStore } from '@nanostores/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { computed } from 'nanostores';
+import { atom, computed } from 'nanostores';
 import { memo, useEffect, useRef, useState } from 'react';
 import { createHighlighter, type BundledLanguage, type BundledTheme, type HighlighterGeneric } from 'shiki';
 import type { ActionState } from '~/lib/runtime/action-runner';
@@ -47,7 +47,7 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
   const artifact = artifacts[artifactId];
 
   const actions = useStore(
-    computed(artifact.runner.actions, (actions) => {
+    computed(artifact?.runner?.actions ?? atom({}), (actions) => {
       // Filter out Supabase actions except for migrations
       return Object.values(actions).filter((action) => {
         // Exclude actions with type 'supabase' or actions that contain 'supabase' in their content
@@ -66,7 +66,7 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
       setShowActions(true);
     }
 
-    if (actions.length !== 0 && artifact.type === 'bundled') {
+    if (actions.length !== 0 && artifact?.type === 'bundled') {
       const finished = !actions.find(
         (action) => action.status !== 'complete' && !(action.type === 'start' && action.status === 'running'),
       );
@@ -75,7 +75,7 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
         setAllActionFinished(finished);
       }
     }
-  }, [actions, artifact.type, allActionFinished]);
+  }, [actions, artifact?.type, allActionFinished]);
 
   // Determine the dynamic title based on state for bundled artifacts
   const dynamicTitle =
@@ -88,6 +88,17 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
           ? 'Restoring Project...' // Title during restore
           : 'Creating Project...' // Title during initial creation
       : artifact?.title; // Fallback to original title for non-bundled or if artifact is missing
+
+  // Guard: if artifact ID is stale or not yet loaded, render a placeholder
+  if (!artifact) {
+    return (
+      <div className="artifact border border-ui-borderColor flex flex-col overflow-hidden rounded-lg w-full transition-border duration-150">
+        <div className="px-5 p-3.5 w-full text-left">
+          <div className="w-full text-ui-textSecondary text-sm">Loading artifact…</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

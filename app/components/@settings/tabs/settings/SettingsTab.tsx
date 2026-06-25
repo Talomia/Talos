@@ -27,14 +27,22 @@ const logger = createScopedLogger('SettingsTab');
 export default function SettingsTab() {
   const [currentTimezone, setCurrentTimezone] = useState('');
   const [settings, setSettings] = useState<UserProfile>(() => {
-    const saved = localStorage.getItem(STORAGE_KEYS.userProfile);
-    return saved
-      ? JSON.parse(saved)
-      : {
-          notifications: true,
-          language: 'en',
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        };
+    try {
+      const saved = localStorage.getItem(STORAGE_KEYS.userProfile);
+      return saved
+        ? JSON.parse(saved)
+        : {
+            notifications: true,
+            language: 'en',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          };
+    } catch {
+      return {
+        notifications: true,
+        language: 'en',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      };
+    }
   });
 
   useEffect(() => {

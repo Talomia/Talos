@@ -107,6 +107,7 @@ export const Markdown = memo(
             firstChild &&
             firstChild.type === 'element' &&
             firstChild.tagName === 'code' &&
+            firstChild.children.length > 0 &&
             firstChild.children[0].type === 'text'
           ) {
             const { className, ...rest } = firstChild.properties;
