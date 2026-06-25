@@ -17,7 +17,7 @@ export function chatToMarkdown(messages: Message[], title?: string): string {
   lines.push('');
 
   for (const message of messages) {
-    if (message.annotations?.includes('hidden')) {
+    if (Array.isArray(message.annotations) && message.annotations.includes('hidden')) {
       continue;
     }
 

@@ -40,7 +40,7 @@ export function chatToJSON(messages: Message[], title?: string): ChatExportData 
   const exportedMessages: ExportedMessage[] = [];
 
   for (const message of messages) {
-    if (message.annotations?.includes('hidden')) {
+    if (Array.isArray(message.annotations) && message.annotations.includes('hidden')) {
       continue;
     }
 

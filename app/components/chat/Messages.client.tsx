@@ -104,7 +104,7 @@ export const Messages = memo(
               const { role, content, id: messageId, annotations, parts } = message;
               const isUserMessage = role === 'user';
               const isFirst = index === 0;
-              const isHidden = annotations?.includes('hidden');
+              const isHidden = Array.isArray(annotations) && annotations.includes('hidden');
               const previousMessage = index > 0 ? messages[index - 1] : undefined;
               const showSeparator = shouldShowTimeSeparator(message, previousMessage);
 
