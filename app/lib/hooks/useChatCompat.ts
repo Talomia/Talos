@@ -323,6 +323,8 @@ export function useChat(options: UseChatOptions = {}) {
     });
   }, []);
 
+  console.log('[useChatCompat] render - chat.messages:', chat.messages?.length, 'mapped messages:', messages?.length);
+
   return {
     ...chat,
     isLoading,
