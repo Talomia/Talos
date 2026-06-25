@@ -27,10 +27,11 @@ export function UserMessage({ content, parts, messageId, onFork, onRewind }: Use
   const [copied, setCopied] = useState(false);
 
   // Extract images from parts - look for file parts with image mime types
-  const images =
-    parts?.filter(
-      (part): part is FileUIPart => part.type === 'file' && 'mimeType' in part && part.mimeType.startsWith('image/'),
-    ) || [];
+  const images = Array.isArray(parts)
+    ? parts.filter(
+        (part): part is FileUIPart => part.type === 'file' && 'mimeType' in part && part.mimeType.startsWith('image/'),
+      )
+    : [];
 
   const textContent = Array.isArray(content)
     ? stripMetadata(content.find((item) => item.type === 'text')?.text || '')

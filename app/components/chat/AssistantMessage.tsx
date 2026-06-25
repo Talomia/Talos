@@ -170,7 +170,7 @@ export const AssistantMessage = memo(
       totalTokens: number;
     } = filteredAnnotations.find((annotation) => annotation.type === 'usage')?.value;
 
-    const toolInvocations = parts?.filter((part) => part.type === 'tool-invocation');
+    const toolInvocations = Array.isArray(parts) ? parts.filter((part) => part.type === 'tool-invocation') : [];
     const toolCallAnnotations = filteredAnnotations.filter(
       (annotation) => annotation.type === 'toolCall',
     ) as ToolCallAnnotation[];
