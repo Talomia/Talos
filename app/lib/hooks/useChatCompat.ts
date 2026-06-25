@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import { useChat as useChatV6 } from '@ai-sdk/react';
 import { DefaultChatTransport, generateId } from 'ai';
 
@@ -97,50 +97,54 @@ export function useChat(options: UseChatOptions = {}) {
   const headersRef = useRef(options.headers);
   headersRef.current = options.headers;
 
-  v6Options.transport = new DefaultChatTransport({
-    api,
-    body: () => {
-      const currentBody = bodyRef.current;
-      return typeof currentBody === 'function' ? currentBody() : currentBody || {};
-    },
-    headers: () => {
-      const currentHeaders = headersRef.current;
-      return typeof currentHeaders === 'function' ? currentHeaders() : currentHeaders || {};
-    },
+  v6Options.transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api,
+        body: () => {
+          const currentBody = bodyRef.current;
+          return typeof currentBody === 'function' ? currentBody() : currentBody || {};
+        },
+        headers: () => {
+          const currentHeaders = headersRef.current;
+          return typeof currentHeaders === 'function' ? currentHeaders() : currentHeaders || {};
+        },
 
-    /*
-     * Convert v6 UIMessages (parts array) → old-style messages (content string)
-     * before sending to the server. The server's extractPropertiesFromMessage()
-     * and sanitizeText() expect message.content to be a string.
-     */
-    prepareSendMessagesRequest: ({ messages, body, ...rest }) => {
-      const convertedMessages = messages.map((m: any) => {
-        let content = '';
+        /*
+         * Convert v6 UIMessages (parts array) → old-style messages (content string)
+         * before sending to the server. The server's extractPropertiesFromMessage()
+         * and sanitizeText() expect message.content to be a string.
+         */
+        prepareSendMessagesRequest: ({ messages, body, ...rest }) => {
+          const convertedMessages = messages.map((m: any) => {
+            let content = '';
 
-        if (Array.isArray(m.parts)) {
-          for (const part of m.parts) {
-            if (part.type === 'text') {
-              content += part.text;
+            if (Array.isArray(m.parts)) {
+              for (const part of m.parts) {
+                if (part.type === 'text') {
+                  content += part.text;
+                }
+              }
             }
-          }
-        }
 
-        if (!content && typeof m.content === 'string') {
-          content = m.content;
-        }
+            if (!content && typeof m.content === 'string') {
+              content = m.content;
+            }
 
-        return {
-          id: m.id,
-          role: m.role,
-          content,
-          parts: m.parts, // Keep parts for convertToModelMessages
-          annotations: m.metadata,
-        };
-      });
+            return {
+              id: m.id,
+              role: m.role,
+              content,
+              parts: m.parts, // Keep parts for convertToModelMessages
+              annotations: m.metadata,
+            };
+          });
 
-      return { ...rest, messages: convertedMessages, body: { ...body, messages: convertedMessages } };
-    },
-  });
+          return { ...rest, messages: convertedMessages, body: { ...body, messages: convertedMessages } };
+        },
+      }),
+    [api],
+  );
 
   const chat = useChatV6(v6Options);
   const chatRef = useRef(chat);

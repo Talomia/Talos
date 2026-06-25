@@ -43,77 +43,83 @@ export function usePromptEnhancer() {
     const abortController = new AbortController();
     abortControllerRef.current = abortController;
 
-    const response = await fetch('/api/enhancer', {
-      method: 'POST',
-      body: JSON.stringify(requestBody),
-      signal: abortController.signal,
-    });
+    try {
+      const response = await fetch('/api/enhancer', {
+        method: 'POST',
+        body: JSON.stringify(requestBody),
+        signal: abortController.signal,
+      });
 
-    if (!response.ok) {
-      setEnhancingPrompt(false);
-      logger.error(`Enhancer API failed: ${response.status} ${response.statusText}`);
+      if (!response.ok) {
+        logger.error(`Enhancer API failed: ${response.status} ${response.statusText}`);
 
-      return;
-    }
+        return;
+      }
 
-    const reader = response.body?.getReader();
+      const reader = response.body?.getReader();
 
-    const originalInput = input;
+      const originalInput = input;
 
-    if (reader) {
-      const decoder = new TextDecoder();
+      if (reader) {
+        const decoder = new TextDecoder();
 
-      let _input = '';
-      let _error;
+        let _input = '';
+        let _error;
 
-      try {
-        setInput('');
+        try {
+          setInput('');
 
-        while (true) {
-          if (abortController.signal.aborted) {
-            await reader.cancel();
-            break;
-          }
+          while (true) {
+            if (abortController.signal.aborted) {
+              await reader.cancel();
+              break;
+            }
 
-          const { value, done } = await reader.read();
+            const { value, done } = await reader.read();
 
-          if (done) {
-            break;
-          }
+            if (done) {
+              break;
+            }
 
-          _input += decoder.decode(value, { stream: true });
+            _input += decoder.decode(value, { stream: true });
 
-          logger.trace('Set input', _input);
+            logger.trace('Set input', _input);
 
-          setInput(_input);
-        }
-      } catch (error) {
-        if ((error as DOMException)?.name === 'AbortError') {
-          // eslint-disable-next-line @typescript-eslint/no-empty-function -- stream may already be closed
-          await reader.cancel().catch(() => {});
-          return;
-        }
-
-        _error = error;
-        setInput(originalInput);
-      } finally {
-        if (abortControllerRef.current === abortController) {
-          abortControllerRef.current = null;
-        }
-
-        if (_error) {
-          logger.error(_error);
-        }
-
-        setEnhancingPrompt(false);
-        setPromptEnhanced(!_error);
-
-        if (!_error) {
-          setTimeout(() => {
             setInput(_input);
-          });
+          }
+        } catch (error) {
+          if ((error as DOMException)?.name === 'AbortError') {
+            // eslint-disable-next-line @typescript-eslint/no-empty-function -- stream may already be closed
+            await reader.cancel().catch(() => {});
+            return;
+          }
+
+          _error = error;
+          setInput(originalInput);
+        } finally {
+          if (_error) {
+            logger.error(_error);
+          }
+
+          setPromptEnhanced(!_error);
+
+          if (!_error) {
+            setTimeout(() => {
+              setInput(_input);
+            });
+          }
         }
       }
+    } catch (error) {
+      if ((error as DOMException)?.name !== 'AbortError') {
+        logger.error('Prompt enhancer failed:', error);
+      }
+    } finally {
+      if (abortControllerRef.current === abortController) {
+        abortControllerRef.current = null;
+      }
+
+      setEnhancingPrompt(false);
     }
   };
 
