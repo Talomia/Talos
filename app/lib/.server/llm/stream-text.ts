@@ -116,7 +116,6 @@ export async function streamText(props: {
   contextOptimization?: boolean;
   contextFiles?: FileMap;
   summary?: string;
-  messageSliceId?: number;
   chatMode?: 'discuss' | 'build';
   designScheme?: DesignScheme;
   customInstructions?: string;

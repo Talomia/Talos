@@ -1,5 +1,4 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/cloudflare';
-import { parseCookies } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('Security');
@@ -334,10 +333,25 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
 
     // Enforce authentication if required (checked BEFORE rate limiting)
     if (options.requireAuth) {
-      const cookieHeader = request.headers.get('Cookie') || '';
-      const cookies = parseCookies(cookieHeader);
+      try {
+        /*
+         * Validate the session against the Supabase Auth server (JWT verification).
+         * This calls supabase.auth.getUser() which makes a server-side request,
+         * unlike getSession() which only decodes the JWT locally.
+         */
+        const { getAuthenticatedUser } = await import('~/lib/.server/supabase');
+        const { user } = await getAuthenticatedUser(request, (args as ActionFunctionArgs).context);
 
-      if (!cookies.rc_vault) {
+        if (!user) {
+          return new Response(JSON.stringify({ error: 'Authentication required' }), {
+            status: 401,
+            headers: {
+              ...createSecurityHeaders(),
+              'Content-Type': 'application/json',
+            },
+          });
+        }
+      } catch {
         return new Response(JSON.stringify({ error: 'Authentication required' }), {
           status: 401,
           headers: {

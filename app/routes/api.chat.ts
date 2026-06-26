@@ -196,7 +196,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         const filePaths = getFilePaths(files || {});
         let filteredFiles: FileMap | undefined = undefined;
         let summary: string | undefined = undefined;
-        let messageSliceId = 0;
 
         let processedMessages = await mcpService.processToolInvocations(messages, dataStream);
 
@@ -233,10 +232,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
           processedMessages = [...systemMessages, ...contextMessages, ...recentConversation];
           logger.info(`Trimmed to ${processedMessages.length} messages`);
-        }
-
-        if (processedMessages.length > 3) {
-          messageSliceId = processedMessages.length - 3;
         }
 
         if (filePaths.length > 0 && contextOptimization) {
@@ -429,7 +424,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               chatMode,
               designScheme,
               summary,
-              messageSliceId,
               customInstructions,
               projectRules,
             });
@@ -489,7 +483,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           chatMode,
           designScheme,
           summary,
-          messageSliceId,
           customInstructions,
           projectRules,
         });

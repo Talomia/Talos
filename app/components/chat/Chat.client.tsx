@@ -460,9 +460,18 @@ export const ChatImpl = memo(
     const wrappedSendMessage = useCallback(
       async (event: React.UIEvent, messageInput?: string) => {
         resetAutoFix();
+
+        /*
+         * Enable auto-fix in build mode — the error detection pipeline
+         * will automatically send fix requests for auto-fixable errors
+         */
+        if (chatMode === 'build') {
+          autoFixEnabled.set(true);
+        }
+
         return sendMessage(event, messageInput);
       },
-      [sendMessage],
+      [sendMessage, chatMode],
     );
 
     // Auto-fix loop: subscribe to detected errors and auto-send fix requests
