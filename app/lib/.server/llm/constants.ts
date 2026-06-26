@@ -54,8 +54,11 @@ export function isReasoningModel(modelName: string): boolean {
   );
 }
 
-// limits the number of model responses that can be returned in a single request
-export const MAX_RESPONSE_SEGMENTS = 2;
+/*
+ * Limits the number of model responses that can be returned in a single request.
+ * Set to 5 to support large, complete applications that span many files.
+ */
+export const MAX_RESPONSE_SEGMENTS = 5;
 
 export interface File {
   type: 'file';
