@@ -243,10 +243,15 @@ export const ChatImpl = memo(
             const previews = workbenchStore.previews.get();
             const errors = detectedErrors.get();
 
+            // Extract preview-specific errors for the quality gate
+            const previewErrors = errors.filter((e) => e.source === 'preview');
+            const previewErrorMessage =
+              previewErrors.length > 0 ? previewErrors.map((e) => e.message).join('; ') : null;
+
             runQualityGate({
               actions,
               previewReady: previews.length > 0 && previews.some((p) => p.ready),
-              previewError: null,
+              previewError: previewErrorMessage,
               terminalErrors: errors,
             }).then((report) => {
               if (report.status === 'failed') {

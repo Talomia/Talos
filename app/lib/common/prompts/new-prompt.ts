@@ -1,7 +1,6 @@
 import type { DesignScheme } from '~/types/design-scheme';
 import { WORK_DIR } from '~/utils/constants';
 import { allowedHTMLElements } from '~/utils/markdown';
-import { stripIndents } from '~/utils/stripIndent';
 
 export const getFineTunedPrompt = (
   cwd: string = WORK_DIR,
@@ -542,14 +541,5 @@ The development server is now running. Ready for your next instructions.</assist
   </example>
 </examples>`;
 
-export const CONTINUE_PROMPT = stripIndents`
-  Continue your prior response. IMPORTANT: Immediately begin from where you left off without any interruptions.
-  Do not repeat any content, including artifact and action tags.
-
-  CRITICAL COMPLETENESS CHECK before continuing:
-  - Review what you have already output — is anything broken or incomplete?
-  - If you left a file mid-way, complete it fully before moving to the next file
-  - If you referenced components/imports that don't exist yet, create them NOW
-  - Every file you write must be COMPLETE — no truncated functions or missing closing tags
-  - After finishing all remaining code, verify the app would build and run without errors
-`;
+// Re-export CONTINUE_PROMPT from prompts.ts — single source of truth
+export { CONTINUE_PROMPT } from './prompts';
