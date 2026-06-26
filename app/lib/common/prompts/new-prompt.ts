@@ -260,6 +260,13 @@ The current year is ${new Date().getFullYear()}.
     - start: Starting project (use ONLY for project startup, LAST action)
     - file: Creating/updating files (add filePath and contentType attributes)
 
+  CRITICAL — Shell Action Format:
+    Shell actions MUST contain ONLY the raw command string. NEVER use JSON, objects, or any wrapper.
+    ✅ CORRECT: <action type="shell">npm install</action>
+    ✅ CORRECT: <action type="shell">npm install && npm run build</action>
+    ❌ WRONG:  <action type="shell">{"run": "npm install"}</action>
+    ❌ WRONG:  <action type="shell">\`\`\`bash npm install\`\`\`</action>
+
   File Action Rules:
     - Only include new/modified files
     - ALWAYS add contentType attribute
@@ -538,6 +545,42 @@ npm run dev
 </artifact>
 
 The development server is now running. Ready for your next instructions.</assistant_response>
+  </example>
+
+  <example>
+    <user_query>Build a counter app with React</user_query>
+    <assistant_response>I'll create a simple counter app with React and Vite.
+
+<artifact id="counter-app" title="React Counter App">
+<action type="file" filePath="package.json" contentType="application/json">{
+  "name": "counter-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^5.0.0"
+  }
+}</action>
+
+<action type="shell">npm install</action>
+
+<action type="file" filePath="index.html" contentType="text/html">...</action>
+
+<action type="file" filePath="src/App.jsx" contentType="text/jsx">...</action>
+
+<action type="start">npm run dev</action>
+</artifact>
+
+The counter app is now running in the preview.</assistant_response>
   </example>
 </examples>`;
 

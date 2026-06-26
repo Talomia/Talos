@@ -395,6 +395,9 @@ The current year is ${new Date().getFullYear()}.
         - When running multiple shell commands, use \`&&\` to run them sequentially.
         - Avoid installing individual dependencies for each command. Instead, include all dependencies in the package.json and then run the install command.
         - ULTRA IMPORTANT: Do NOT run a dev command with shell action use start action to run dev commands
+        - CRITICAL: Shell action content MUST be the raw command only. NEVER wrap in JSON, objects, or code blocks.
+          CORRECT: <action type="shell">npm install</action>
+          WRONG:   <action type="shell">{"run": "npm install"}</action>
 
       - file: For writing new files or updating existing files. For each file add a \`filePath\` attribute to the opening \`<action>\` tag to specify the file path. The content of the file artifact is the file contents. All file paths MUST BE relative to the current working directory.
 

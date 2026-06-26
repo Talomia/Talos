@@ -699,6 +699,26 @@ export class ActionRunner {
   }> {
     const trimmedCommand = command.trim();
 
+    // Safety net: AI sometimes wraps commands in JSON like {"run": "npm install"}
+    if (trimmedCommand.startsWith('{') && trimmedCommand.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmedCommand);
+        const extractedCommand = parsed.run || parsed.command || parsed.cmd || parsed.script;
+
+        if (typeof extractedCommand === 'string' && extractedCommand.length > 0) {
+          logger.warn(`Shell action contained JSON-wrapped command, extracting: ${extractedCommand}`);
+
+          return {
+            shouldModify: true,
+            modifiedCommand: extractedCommand.trim(),
+            warning: 'Extracted command from JSON wrapper',
+          };
+        }
+      } catch {
+        // Not valid JSON — let it pass through as a regular command
+      }
+    }
+
     // Handle rm commands that might fail due to missing files
     if (trimmedCommand.startsWith('rm ') && !trimmedCommand.includes(' -f')) {
       const rmMatch = trimmedCommand.match(/^rm\s+(.+)$/);
