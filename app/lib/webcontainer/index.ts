@@ -88,10 +88,19 @@ if (!import.meta.env.SSR) {
         runtimeContext.loaded = true;
         logger.info('Runtime engine booted');
 
-        // Load and inject the inspector script into previews
-        const response = await fetch('/inspector-script.js');
-        const inspectorScript = await response.text();
-        await engine.setPreviewScript(inspectorScript);
+        // Load and inject the inspector script into previews (non-critical)
+        try {
+          const response = await fetch('/inspector-script.js');
+
+          if (response.ok) {
+            const inspectorScript = await response.text();
+            await engine.setPreviewScript(inspectorScript);
+          } else {
+            logger.warn('Inspector script not found — preview error detection disabled');
+          }
+        } catch (inspectorError) {
+          logger.warn('Failed to load inspector script:', inspectorError);
+        }
 
         // Listen for preview errors and surface them in the workbench
         engine.on('preview-message', (message) => {

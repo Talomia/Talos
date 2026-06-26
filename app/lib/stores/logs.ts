@@ -355,6 +355,23 @@ class LogStore {
 
   markAsRead(logId: string) {
     this._readLogs.add(logId);
+
+    // Cap the read-logs set to prevent unbounded growth and localStorage quota overflow
+    const MAX_READ_LOGS = 1000;
+
+    if (this._readLogs.size > MAX_READ_LOGS) {
+      const excess = this._readLogs.size - MAX_READ_LOGS;
+      const iterator = this._readLogs.values();
+
+      for (let i = 0; i < excess; i++) {
+        const oldest = iterator.next().value;
+
+        if (oldest) {
+          this._readLogs.delete(oldest);
+        }
+      }
+    }
+
     this._saveReadLogs();
   }
 

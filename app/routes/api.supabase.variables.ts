@@ -35,9 +35,19 @@ async function supabaseVariablesAction({ request }: ActionFunctionArgs) {
       return json({ error: `Failed to fetch API keys: ${response.statusText}` }, { status: response.status });
     }
 
-    const apiKeys = await response.json();
+    const apiKeys = (await response.json()) as Array<{ name?: string; api_key?: string; [key: string]: unknown }>;
 
-    return json({ apiKeys });
+    /*
+     * SECURITY: Filter out admin-level keys that bypass RLS.
+     * Only return safe client-side keys (typically 'anon' / 'public').
+     * The service_role key grants FULL unrestricted database access.
+     */
+    const DANGEROUS_KEY_NAMES = new Set(['service_role', 'service-role', 'secret', 'admin']);
+    const safeKeys = Array.isArray(apiKeys)
+      ? apiKeys.filter((key) => !DANGEROUS_KEY_NAMES.has((key.name || '').toLowerCase()))
+      : [];
+
+    return json({ apiKeys: safeKeys });
   } catch (error) {
     logger.error('Error fetching project API keys:', error);
     return json({ error: error instanceof Error ? error.message : 'Unknown error occurred' }, { status: 500 });

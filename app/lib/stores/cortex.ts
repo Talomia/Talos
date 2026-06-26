@@ -154,13 +154,25 @@ let _lastCommittedFiles: string | null = null;
  */
 
 let _db: IDBDatabase | undefined;
+let _dbInitPromise: Promise<IDBDatabase | undefined> | null = null;
 
 async function getDB(): Promise<IDBDatabase | undefined> {
-  if (!_db) {
-    _db = await openContextGraphDB();
+  if (_db) {
+    return _db;
   }
 
-  return _db;
+  if (_dbInitPromise) {
+    return _dbInitPromise;
+  }
+
+  _dbInitPromise = openContextGraphDB().then((db) => {
+    _db = db;
+    _dbInitPromise = null;
+
+    return db;
+  });
+
+  return _dbInitPromise;
 }
 
 /*
@@ -602,4 +614,8 @@ export function cleanupCortex(): void {
   cortexLoading.set(false);
   cortexError.set(null);
   cortexDirty.set({ files: false, messages: false });
+
+  // Reset dirty-detection fingerprints to prevent cross-chat contamination
+  _lastCommittedMessages = null;
+  _lastCommittedFiles = null;
 }

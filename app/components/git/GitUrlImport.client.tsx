@@ -83,7 +83,7 @@ export function GitUrlImport() {
   const [loading, setLoading] = useState(true);
 
   const importRepo = async (repoUrl?: string) => {
-    if (!gitReady && !historyReady) {
+    if (!gitReady || !historyReady) {
       return;
     }
 
@@ -185,13 +185,18 @@ ${ARTIFACT_TAG_CLOSE}`,
       return;
     }
 
-    importRepo(url).catch((error) => {
-      logger.error('Error importing repo:', error);
-      toast.error('Failed to import repository');
-      setLoading(false);
-      navigate('/');
-    });
     setImported(true);
+
+    importRepo(url)
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((error) => {
+        logger.error('Error importing repo:', error);
+        toast.error('Failed to import repository');
+        setLoading(false);
+        navigate('/');
+      });
   }, [searchParams, historyReady, gitReady, imported]);
 
   return (

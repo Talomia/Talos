@@ -592,16 +592,22 @@ export class FilesStore {
         logger.error(`Queued write failed for ${filePath}:`, error);
         throw error;
       });
-    this.#writeQueue.set(
-      filePath,
 
-      /*
-       * Swallow the rejection in the queue so future writes aren't blocked.
-       * The actual error is already logged and re-thrown in the .catch() above.
-       */
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      newWrite.catch(() => {}),
-    );
+    /*
+     * Swallow the rejection in the queue so future writes aren't blocked.
+     * The actual error is already logged and re-thrown in the .catch() above.
+     */
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    const queued = newWrite.catch(() => {});
+    this.#writeQueue.set(filePath, queued);
+
+    // Clean up completed queue entries to prevent memory leak
+    queued.then(() => {
+      if (this.#writeQueue.get(filePath) === queued) {
+        this.#writeQueue.delete(filePath);
+      }
+    });
+
     await newWrite;
   }
 

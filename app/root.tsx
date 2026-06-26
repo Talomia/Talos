@@ -123,10 +123,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Initialize all services in parallel (each gracefully degrades if not configured)
-    import('~/lib/stores/auth').then(({ initAuth }) => initAuth());
+    let authCleanup: (() => void) | undefined;
+
+    import('~/lib/stores/auth').then(({ initAuth }) =>
+      initAuth().then((cleanup) => {
+        authCleanup = cleanup;
+      }),
+    );
     import('~/lib/stores/profile').then(({ initProfile }) => initProfile());
     import('~/lib/persistence/cloudSync').then(({ initCloudPersistence }) => initCloudPersistence());
     import('~/lib/monitoring').then(({ initMonitoring }) => initMonitoring());
+
+    return () => {
+      authCleanup?.();
+    };
   }, []);
 
   return (
