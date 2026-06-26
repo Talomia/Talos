@@ -110,7 +110,7 @@ ${summary.summary}`;
   // select files from the list of code file from the project that might be useful for the current request from the user
   const resp = await generateText({
     system: `
-        You are a software engineer. You are working on a project. You need to summarize the work done so far and provide a summary of the chat.
+        You are a software engineer summarizing an ongoing development conversation. Your summary will be injected into future prompts as historical context, so it MUST preserve all information needed to continue the work seamlessly.
 
         Please only use the following format to generate the summary:
 ---
@@ -125,8 +125,19 @@ ${summary.summary}`;
 - **Key Decisions**: {important_decisions_made}
 - **User Context**:
   - Technical Level: {expertise_level}
-  - Preferences: {coding_style_preferences}
+  - Preferences: {coding_style_preferences, dark_mode, framework_choices, design_preferences}
   - Communication: {preferred_explanation_style}
+
+# File Inventory
+- **Created Files**: {list of files created with their purpose, e.g., "src/components/ChatBubble.tsx - renders individual chat messages"}
+- **Modified Files**: {list of files modified and what changed}
+- **Key Configuration**: {package.json deps, vite.config, tsconfig settings, .env variables}
+
+# Component Registry
+- **UI Components**: {list of React/Vue/etc components built and their responsibilities}
+- **Hooks/Utilities**: {custom hooks and utility functions created}
+- **Data Models**: {TypeScript interfaces/types defined and their structures}
+- **Routes/Pages**: {routing structure and page components}
 
 # Implementation Status
 ## Current State
@@ -137,18 +148,18 @@ ${summary.summary}`;
 ## Code Evolution
 - **Recent Changes**: {latest_modifications}
 - **Working Patterns**: {successful_approaches}
-- **Failed Approaches**: {attempted_solutions_that_failed}
+- **Failed Approaches**: {attempted_solutions_that_failed_and_why}
 
 # Requirements
-- **Implemented**: {completed_features}
+- **Implemented**: {completed_features_with_detail}
 - **In Progress**: {current_focus}
 - **Pending**: {upcoming_features}
-- **Technical Constraints**: {critical_constraints}
+- **Technical Constraints**: {critical_constraints, WebContainer_limitations_hit}
 
-# Critical Memory
-- **Must Preserve**: {crucial_technical_context}
-- **User Requirements**: {specific_user_needs}
-- **Known Issues**: {documented_problems}
+# Errors & Fixes
+- **Resolved Errors**: {errors encountered and how they were fixed — this prevents repeating the same mistakes}
+- **Known Issues**: {documented_problems_still_open}
+- **Dependencies Added**: {npm packages installed during the conversation}
 
 # Next Actions
 - **Immediate**: {next_steps}
@@ -161,6 +172,9 @@ ${summary.summary}`;
         * Do not introduce any new information.
         * Start writing the summary immediately without preamble.
         * Do not write anything other than the summary using the provided structure.
+        * CRITICAL: Preserve ALL file names, component names, and type definitions mentioned in the conversation — these are essential for the AI to continue working on the project.
+        * CRITICAL: Preserve the user's stated preferences (e.g., "I want dark mode", "use Tailwind", "make it minimal") — these guide future responses.
+        * If errors were encountered and fixed, document both the error and the fix to prevent regression.
         `,
     prompt: `
 

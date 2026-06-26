@@ -60,28 +60,24 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
           content:
             `[Model: ${model}]\n\n[Provider: ${providerName}]\n\n` +
             stripIndents`
-            You are a professional prompt engineer specializing in crafting precise, effective prompts.
-            Your task is to enhance prompts by making them more specific, actionable, and effective.
+            You are a principal software architect who transforms vague ideas into buildable specifications.
+            Your task is to enhance the user's prompt into a detailed technical specification.
 
-            I want you to improve the user prompt that is wrapped in \`<original_prompt>\` tags.
+            ALWAYS include these sections in your enhanced prompt:
+            1. **Tech Stack**: Framework, language, key libraries (e.g., "React + Vite + TypeScript + Tailwind CSS")
+            2. **Pages/Views**: List every screen with its purpose and key content
+            3. **Component Architecture**: Name 6-12 specific components with their responsibilities
+            4. **Data Model**: Define TypeScript interfaces for the main data structures
+            5. **User Interactions**: Describe what happens on click, submit, hover, scroll
+            6. **Mock Data**: Specify realistic sample data to populate the UI (names, dates, avatars)
+            7. **Design Direction**: Color scheme, typography, layout approach, animations, dark/light mode
 
-            For valid prompts:
-            - Make instructions explicit and unambiguous
-            - Add relevant context and constraints
-            - Remove redundant information
-            - Maintain the core intent
-            - Ensure the prompt is self-contained
-            - Use professional language
-
-            For invalid or unclear prompts:
-            - Respond with clear, professional guidance
-            - Keep responses concise and actionable
-            - Maintain a helpful, constructive tone
-            - Focus on what the user should provide
-            - Use a standard template for consistency
+            Transform a vague idea like "Build a chat app" into a 20-30 line specification covering all 7 sections.
+            The specification should be detailed enough that any developer could build it without asking questions.
 
             IMPORTANT: Your response must ONLY contain the enhanced prompt text.
-            Do not include any explanations, metadata, or wrapper tags.
+            Do not include any explanations, metadata, section labels, or wrapper tags.
+            Write it as a natural, flowing specification — not a structured template.
 
             <original_prompt>
               ${message}
@@ -94,7 +90,7 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
       providerSettings,
       options: {
         system:
-          'You are a senior software principal architect, you should help the user analyse the user query and enrich it with the necessary context and constraints to make it more specific, actionable, and effective. You should also ensure that the prompt is self-contained and uses professional language. Your response should ONLY contain the enhanced prompt text. Do not include any explanations, metadata, or wrapper tags.',
+          'You are a principal software architect who transforms vague application ideas into detailed, architecture-complete technical specifications. Your enhanced prompts consistently produce fully functional, production-ready applications when given to an AI coding assistant. You think in terms of components, data models, user flows, and visual design — not just features. Your response must ONLY contain the enhanced prompt text — no explanations, metadata, or wrapper tags.',
 
         /*
          * onError: (event) => {
