@@ -5,9 +5,10 @@ import { classNames } from '~/utils/classNames';
 interface Props {
   alert: LlmErrorAlertType;
   clearAlert: () => void;
+  onRetry?: () => void;
 }
 
-export default function LlmErrorAlert({ alert, clearAlert }: Props) {
+export default function LlmErrorAlert({ alert, clearAlert, onRetry }: Props) {
   const { title, description, provider, errorType } = alert;
 
   const getErrorIcon = () => {
@@ -18,6 +19,8 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
         return 'i-ph:clock-duotone';
       case 'quota':
         return 'i-ph:warning-circle-duotone';
+      case 'network':
+        return 'i-ph:wifi-slash-duotone';
       default:
         return 'i-ph:warning-duotone';
     }
@@ -28,13 +31,17 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
       case 'authentication':
         return `Authentication failed with ${provider}. Please check your API key.`;
       case 'rate_limit':
-        return `Rate limit exceeded for ${provider}. Please wait before retrying.`;
+        return `Rate limit exceeded for ${provider}. Please wait a moment before retrying.`;
       case 'quota':
         return `Quota exceeded for ${provider}. Please check your account limits.`;
+      case 'network':
+        return `Network error while communicating with ${provider}. Check your connection and try again.`;
       default:
-        return 'I ran into an error while processing your request.';
+        return 'An error occurred while processing your request.';
     }
   };
+
+  const canRetry = errorType !== 'authentication' && errorType !== 'quota';
 
   return (
     <AnimatePresence>
@@ -87,6 +94,26 @@ export default function LlmErrorAlert({ alert, clearAlert }: Props) {
               transition={{ delay: 0.3 }}
             >
               <div className="flex gap-2">
+                {canRetry && onRetry && (
+                  <button
+                    onClick={() => {
+                      clearAlert();
+                      onRetry();
+                    }}
+                    className={classNames(
+                      'px-3 py-1.5 rounded-md text-sm font-medium',
+                      'bg-ui-button-primary-background',
+                      'hover:bg-ui-button-primary-backgroundHover',
+                      'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ui-button-primary-background',
+                      'text-ui-button-primary-text',
+                    )}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <div className="i-ph:arrow-clockwise text-sm" />
+                      Retry
+                    </span>
+                  </button>
+                )}
                 <button
                   onClick={clearAlert}
                   className={classNames(

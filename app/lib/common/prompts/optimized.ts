@@ -258,6 +258,16 @@ The current year is ${new Date().getFullYear()}.
   - Use coding best practices: modular, clean, readable code
 </artifact_info>
 
+<completeness_requirements>
+  CRITICAL: Every app MUST be complete and production-ready:
+  - ALL navigation links must work — no dead-end pages
+  - ALL buttons/forms must have working state and handlers — no empty functions
+  - Populate lists/tables with 5-10 realistic mock data items — never leave empty
+  - Include error states, loading spinners, and responsive layouts (mobile/tablet/desktop)
+  - NEVER leave TODOs, placeholder text, or console.log-only error handling
+  - Deliver the COMPLETE feature set — a "chat app" needs login, rooms, messaging, typing indicators, not just one screen
+</completeness_requirements>
+
 
 # CRITICAL RULES - NEVER IGNORE
 

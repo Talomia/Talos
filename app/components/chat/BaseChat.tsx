@@ -460,7 +460,20 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
                       }}
                     />
                   )}
-                  {llmErrorAlert && <LlmErrorAlert alert={llmErrorAlert} clearAlert={() => clearLlmErrorAlert?.()} />}
+                  {llmErrorAlert && (
+                    <LlmErrorAlert
+                      alert={llmErrorAlert}
+                      clearAlert={() => clearLlmErrorAlert?.()}
+                      onRetry={() => {
+                        const lastMsg = [...messages].reverse().find((m) => m.role === 'user');
+                        const text = typeof lastMsg?.content === 'string' ? lastMsg.content : '';
+
+                        if (text) {
+                          sendMessage?.({} as React.UIEvent, text);
+                        }
+                      }}
+                    />
+                  )}
                 </div>
                 {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
                 <ChatBox
