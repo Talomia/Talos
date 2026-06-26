@@ -6,24 +6,25 @@
 export const MAX_TOKENS = 128000;
 
 /*
- * Provider-specific default completion token limits
- * Used as fallbacks when model doesn't specify maxCompletionTokens
+ * Provider-specific default completion token limits.
+ * Used as fallbacks when model doesn't specify maxCompletionTokens.
+ * Set to practical maximums for complete app generation (not the API minimum).
  */
 export const PROVIDER_COMPLETION_LIMITS: Record<string, number> = {
-  OpenAI: 4096, // Standard GPT models (o1 models have much higher limits)
-  Github: 4096, // GitHub Models use OpenAI-compatible limits
-  Anthropic: 64000, // Conservative limit for Claude 4 models (Opus: 32k, Sonnet: 64k)
-  Google: 8192, // Gemini 1.5 Pro/Flash standard limit
+  OpenAI: 16384, // GPT-4o supports 16k output; o1/o3 set via model config
+  Github: 16384, // GitHub Models mirror OpenAI capabilities
+  Anthropic: 64000, // Claude 4 Sonnet: 64k, Opus: 32k (use higher)
+  Google: 65536, // Gemini 2.5 Pro/Flash support up to 65k output
   Cohere: 4000,
   DeepSeek: 8192,
   Groq: 8192,
-  HuggingFace: 4096,
+  HuggingFace: 8192, // Varies by model; 8k is a safe middle ground
   Mistral: 8192,
   Ollama: 8192,
-  OpenRouter: 8192,
+  OpenRouter: 16384, // Routes to many models; 16k covers most
   Perplexity: 8192,
   Together: 8192,
-  xAI: 8192,
+  xAI: 16384, // Grok supports 16k+ output
   LMStudio: 8192,
   OpenAILike: 8192,
   AmazonBedrock: 8192,

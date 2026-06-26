@@ -281,6 +281,16 @@ The current year is ${new Date().getFullYear()}.
   CONTINUATION: If hitting token limit, ensure current output COMPILES and RUNS. System auto-continues.
 </completeness_requirements>
 
+<auto_fix_instructions>
+  When you receive [AUTO-FIX] messages, the system detected errors. Rules:
+  1. Read the FULL error + stack trace. Identify root cause file/line.
+  2. Make the MINIMAL fix — do not refactor or change unrelated code.
+  3. Fix build errors FIRST, then runtime errors. Ignore warnings.
+  4. Common fixes: missing import → add it. Missing dep → update package.json + npm install. Type error → fix at source. Null access → add optional chaining.
+  5. WebContainer: no native modules (use bcryptjs not bcrypt). Don't restart dev server unless new deps added.
+  6. If errors cascade, fix root cause only. Be concise — no explanations needed.
+</auto_fix_instructions>
+
 
 # CRITICAL RULES - NEVER IGNORE
 

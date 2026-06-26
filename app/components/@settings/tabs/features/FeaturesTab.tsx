@@ -1,11 +1,12 @@
 // Remove unused imports
-import React, { memo, useCallback } from 'react';
+import React, { memo, useCallback, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Switch } from '~/components/ui/Switch';
 import { useSettings } from '~/lib/hooks/useSettings';
 import { classNames } from '~/utils/classNames';
 import { toast } from 'react-toastify';
 import { PromptLibrary } from '~/lib/common/prompt-library';
+import { qualityGateEnabled } from '~/lib/stores/quality-gate';
 
 interface FeatureToggle {
   id: string;
@@ -119,6 +120,8 @@ export default function FeaturesTab() {
     promptId,
   } = useSettings();
 
+  const [qualityGateOn, setQualityGateOn] = useState(() => qualityGateEnabled.get());
+
   // Enable features by default on first load
   React.useEffect(() => {
     // Only set defaults if values are undefined
@@ -170,6 +173,13 @@ export default function FeaturesTab() {
           break;
         }
 
+        case 'qualityGate': {
+          qualityGateEnabled.set(enabled);
+          setQualityGateOn(enabled);
+          toast.success(`Quality gate ${enabled ? 'enabled' : 'disabled'}`);
+          break;
+        }
+
         default:
           break;
       }
@@ -210,6 +220,15 @@ export default function FeaturesTab() {
         icon: 'i-ph:list-bullets',
         enabled: eventLogs,
         tooltip: 'Enabled by default to record detailed logs of system events and user actions',
+      },
+      {
+        id: 'qualityGate',
+        title: 'Quality Gate',
+        description: 'Automated checks for build, preview, and runtime stability after each generation',
+        icon: 'i-ph:shield-check',
+        enabled: qualityGateOn,
+        tooltip:
+          'Runs automated quality checks after code generation to verify build success, preview load, and runtime stability',
       },
     ],
     beta: [],

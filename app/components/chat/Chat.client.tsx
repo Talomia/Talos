@@ -233,6 +233,12 @@ export const ChatImpl = memo(
          */
         if (chatMode === 'build' && qualityGateEnabled.get()) {
           setTimeout(() => {
+            // Skip quality gate if auto-fix is currently running — errors are being resolved
+            if (autoFixInProgress.get()) {
+              logger.debug('Skipping quality gate — auto-fix in progress');
+              return;
+            }
+
             const artifact = workbenchStore.firstArtifact;
 
             if (!artifact) {
