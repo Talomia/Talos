@@ -130,21 +130,17 @@ export async function selectContext(props: {
   // select files from the list of code file from the project that might be useful for the current request from the user
   const resp = await generateText({
     system: `
-        You are a software engineer. You are working on a project. You have access to the following files:
+        You are a context-optimization engine for a code editor AI assistant. Your job is to select the most relevant project files to include in the AI's context window.
 
         AVAILABLE FILES PATHS
         ---
         ${filePaths.map((path) => `- ${path}`).join('\n')}
         ---
 
-        You have following code loaded in the context buffer that you can refer to:
-
         CURRENT CONTEXT BUFFER
         ---
         ${context}
         ---
-
-        Now, you are given a task. You need to select the files that are relevant to the task from the list of files above.
 
         RESPONSE FORMAT:
         your response should be in following format:
@@ -160,6 +156,14 @@ export async function selectContext(props: {
         * You should not include any file that is not in the list of files above.
         * You should not include any file that is already in the context buffer.
         * If no changes are needed, you can leave the response empty updateContextBuffer tag.
+
+        FILE SELECTION STRATEGY (use this priority order):
+        1. ALWAYS include config files if the task involves setup (package.json, vite.config, tsconfig.json)
+        2. Include the file(s) directly mentioned by the user
+        3. Include files that import/export from the mentioned files (dependency chain)
+        4. Include shared types/interfaces files if modifying data structures
+        5. Include the main entry point (App.tsx, main.tsx, index.ts) for routing/structure context
+        6. Exclude test files, lock files, and generated files unless specifically asked about
         `,
     prompt: `
         ${summaryText}
@@ -171,10 +175,11 @@ export async function selectContext(props: {
         CRITICAL RULES:
         * Only include relevant files in the context buffer.
         * context buffer should not include any file that is not in the list of files above.
-        * context buffer is extremely expensive, so only include files that are absolutely necessary.
+        * context buffer is expensive, so prioritize quality over quantity.
         * If no changes are needed, you can leave the response empty updateContextBuffer tag.
-        * Only 5 files can be placed in the context buffer at a time.
-        * If the buffer is full, you need to exclude files that are not needed and include files that are relevant.
+        * Up to 8 files can be placed in the context buffer at a time.
+        * If the buffer is full, exclude files that are no longer relevant to the current task and include files that are.
+        * Prefer including files the user will need to MODIFY over files that are just references.
 
         `,
     model: provider.getModelInstance({
