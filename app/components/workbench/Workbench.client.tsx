@@ -26,6 +26,7 @@ import useViewport from '~/lib/hooks';
 import { chatStore } from '~/lib/stores/chat';
 import { detectedErrors } from '~/lib/stores/errors';
 import type { ElementInfo } from './Inspector';
+import { QualityGateIndicator } from './QualityGateIndicator';
 import { ExportChatButton } from '~/components/chat/chatExportAndImport/ExportChatButton';
 import { useChatHistory } from '~/lib/persistence';
 import { streamingState } from '~/lib/stores/streaming';
@@ -204,6 +205,7 @@ export const Workbench = memo(
                       </span>
                     )}
                   </div>
+                  <QualityGateIndicator />
                   <div className="ml-auto" />
                   {selectedView === 'code' && (
                     <div className="flex overflow-y-auto">

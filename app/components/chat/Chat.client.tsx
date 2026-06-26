@@ -40,6 +40,7 @@ import {
   resetAutoFix,
 } from '~/lib/stores/errors';
 import { formatErrorsForAI } from '~/lib/runtime/error-detector';
+import { runQualityGate, resetQualityGate, qualityGateEnabled } from '~/lib/stores/quality-gate';
 
 const logger = createScopedLogger('Chat');
 
@@ -225,6 +226,43 @@ export const ChatImpl = memo(
 
         autoFixInProgress.set(false);
         logger.debug('Finished streaming');
+
+        /*
+         * Quality Gate: run automated checks after a delay to allow actions to complete.
+         * The delay gives file writes, shell commands, and the dev server time to settle.
+         */
+        if (chatMode === 'build' && qualityGateEnabled.get()) {
+          setTimeout(() => {
+            const artifact = workbenchStore.firstArtifact;
+
+            if (!artifact) {
+              return;
+            }
+
+            const actions = artifact.runner.actions.get();
+            const previews = workbenchStore.previews.get();
+            const errors = detectedErrors.get();
+
+            runQualityGate({
+              actions,
+              previewReady: previews.length > 0 && previews.some((p) => p.ready),
+              previewError: null,
+              terminalErrors: errors,
+            }).then((report) => {
+              if (report.status === 'failed') {
+                logger.warn('Quality gate failed:', report.overallMessage);
+
+                logStore.logProvider('Quality gate failed', {
+                  component: 'QualityGate',
+                  action: 'check',
+                  details: report,
+                });
+              } else if (report.status === 'passed') {
+                logger.info('Quality gate passed');
+              }
+            });
+          }, 5000);
+        }
       },
       initialMessages,
       initialInput: Cookies.get(PROMPT_COOKIE_KEY) || '',
@@ -460,6 +498,7 @@ export const ChatImpl = memo(
     const wrappedSendMessage = useCallback(
       async (event: React.UIEvent, messageInput?: string) => {
         resetAutoFix();
+        resetQualityGate();
 
         /*
          * Enable auto-fix in build mode — the error detection pipeline
