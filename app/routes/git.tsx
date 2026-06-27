@@ -1,4 +1,3 @@
-import type { LoaderFunctionArgs } from '@remix-run/cloudflare';
 import { json, type MetaFunction } from '@remix-run/cloudflare';
 import { ClientOnly } from 'remix-utils/client-only';
 import { BaseChat } from '~/components/chat/BaseChat';
@@ -11,9 +10,7 @@ export const meta: MetaFunction = () => {
   return [{ title: 'Talos' }, { name: 'description', content: 'AI-native full-stack application platform' }];
 };
 
-export async function loader(args: LoaderFunctionArgs) {
-  return json({ url: args.params.url });
-}
+export const loader = () => json({});
 
 export default function Index() {
   return (

@@ -4,6 +4,7 @@ import { classNames } from '~/utils/classNames';
 import { AssistantMessage } from './AssistantMessage';
 import { UserMessage } from './UserMessage';
 import { useLocation, useNavigate } from '@remix-run/react';
+import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 import { getDb, chatId } from '~/lib/persistence/useChatHistory';
 import { forkChat } from '~/lib/persistence/db';
 import { toast } from 'react-toastify';
@@ -131,30 +132,32 @@ export const Messages = memo(
                     aria-label={isUserMessage ? 'User message' : 'Assistant message'}
                   >
                     <div className="grid grid-col-1 w-full">
-                      {isUserMessage ? (
-                        <UserMessage
-                          content={content}
-                          parts={parts}
-                          messageId={messageId}
-                          onFork={handleFork}
-                          onRewind={handleRewind}
-                        />
-                      ) : (
-                        <AssistantMessage
-                          content={content}
-                          annotations={message.annotations}
-                          messageId={messageId}
-                          onRewind={handleRewind}
-                          onFork={handleFork}
-                          append={props.append}
-                          chatMode={props.chatMode}
-                          setChatMode={props.setChatMode}
-                          model={props.model}
-                          provider={props.provider}
-                          parts={parts}
-                          addToolResult={props.addToolResult}
-                        />
-                      )}
+                      <ErrorBoundary panelName={isUserMessage ? 'a user message' : 'an assistant message'}>
+                        {isUserMessage ? (
+                          <UserMessage
+                            content={content}
+                            parts={parts}
+                            messageId={messageId}
+                            onFork={handleFork}
+                            onRewind={handleRewind}
+                          />
+                        ) : (
+                          <AssistantMessage
+                            content={content}
+                            annotations={message.annotations}
+                            messageId={messageId}
+                            onRewind={handleRewind}
+                            onFork={handleFork}
+                            append={props.append}
+                            chatMode={props.chatMode}
+                            setChatMode={props.setChatMode}
+                            model={props.model}
+                            provider={props.provider}
+                            parts={parts}
+                            addToolResult={props.addToolResult}
+                          />
+                        )}
+                      </ErrorBoundary>
                     </div>
 
                     {/* Timestamp — visible on hover */}

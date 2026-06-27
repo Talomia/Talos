@@ -189,6 +189,7 @@ export const Workbench = memo(
               <div className="h-full flex flex-col bg-ui-background-depth-2 border border-ui-borderColor shadow-sm rounded-lg overflow-hidden">
                 <div className="flex items-center px-3 py-2 border-b border-ui-borderColor gap-1.5">
                   <button
+                    aria-label={showChat ? 'Hide chat sidebar' : 'Show chat sidebar'}
                     className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-ui-textSecondary mr-1`}
                     disabled={!canHideChat || isSmallViewport}
                     onClick={() => {
@@ -216,6 +217,7 @@ export const Workbench = memo(
                       <div className="flex border border-ui-borderColor rounded-md overflow-hidden ml-1">
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger
+                            aria-label="Sync files"
                             disabled={isSyncing || streaming}
                             className="rounded-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-ui-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-ui-button-primary-backgroundHover outline-accent-500 flex gap-1.7"
                           >
@@ -257,6 +259,7 @@ export const Workbench = memo(
                       {/* Toggle Terminal Button */}
                       <div className="flex border border-ui-borderColor rounded-md overflow-hidden ml-1">
                         <button
+                          aria-label="Toggle terminal"
                           onClick={() => {
                             workbenchStore.toggleTerminal(!workbenchStore.showTerminal.get());
                           }}
@@ -273,6 +276,7 @@ export const Workbench = memo(
                     <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
                   )}
                   <IconButton
+                    aria-label="Close workbench"
                     icon="i-ph:x-circle"
                     className="-mr-1"
                     size="xl"

@@ -349,7 +349,7 @@ export async function streamText(props: {
     const codeContext = createFilesContext(prunedContextFiles, true);
     systemPrompt = `${systemPrompt}
 
-    Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fullfill current user request.
+    Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fulfill current user request.
     CONTEXT BUFFER:
     ---
     ${codeContext}

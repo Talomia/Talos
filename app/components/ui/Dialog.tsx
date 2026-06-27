@@ -126,6 +126,7 @@ export const Dialog = memo(({ children, className, showCloseButton = true, onClo
             {showCloseButton && (
               <RadixDialog.Close asChild onClick={onClose}>
                 <IconButton
+                  aria-label="Close dialog"
                   icon="i-ph:x"
                   className="absolute top-3 right-3 text-ui-textTertiary hover:text-ui-textSecondary"
                 />

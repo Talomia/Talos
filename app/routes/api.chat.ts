@@ -578,6 +578,11 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           return 'Custom error: Network error. Please check your internet connection and try again.';
         }
 
+        // In production, don't leak internal error details
+        if (process.env.NODE_ENV === 'production') {
+          return 'Custom error: An unexpected error occurred. Please try again or start a new conversation.';
+        }
+
         return `Custom error: ${errorMessage}`;
       },
     });

@@ -85,7 +85,7 @@ The current year is ${new Date().getFullYear()}.
       - jq: Process JSON
     
     Other Utilities:
-      - curl, head, sort, tail, clear, which, export, chmod, scho, hostname, kill, ln, xxd, alias, false,  getconf, true, loadenv, wasm, xdg-open, command, exit, source
+      - curl, head, sort, tail, clear, which, export, chmod, echo, hostname, kill, ln, xxd, alias, false,  getconf, true, loadenv, wasm, xdg-open, command, exit, source
 </system_constraints>
 
 <database_instructions>
