@@ -8,6 +8,7 @@ import type { ActionCallbackData } from './message-parser';
 import type { AppShell } from '~/utils/shell';
 import { parseTerminalOutput } from '~/lib/runtime/error-detector';
 import { addErrors } from '~/lib/stores/errors';
+import { isDiffContent, parseUnifiedDiff, applyDiff } from './diff-apply';
 
 const logger = createScopedLogger('ActionRunner');
 
@@ -436,8 +437,54 @@ export class ActionRunner {
       }
     }
 
+    // Resolve the content to write — apply diff if the content is a unified diff
+    let contentToWrite = action.content;
+
     try {
-      await engine.fs.writeFile(relativePath, action.content);
+      if (isDiffContent(action.content)) {
+        logger.debug(`Detected diff content for ${relativePath}, attempting to apply`);
+
+        // Read the original file content
+        let originalContent = '';
+
+        try {
+          originalContent = await engine.fs.readFile(relativePath, 'utf-8');
+        } catch {
+          /*
+           * File doesn't exist yet — the diff may be for a new file, or
+           * we fall through and write the raw content as-is
+           */
+          logger.debug(`Original file not found for diff: ${relativePath}`);
+        }
+
+        const diffs = parseUnifiedDiff(action.content);
+
+        if (diffs.length > 0) {
+          // Apply the first diff that targets this file (or the only diff)
+          const diff = diffs[0];
+          const result = applyDiff(originalContent, diff);
+
+          if (result.success) {
+            contentToWrite = result.content;
+            logger.debug(`Diff applied to ${relativePath}: ${result.hunksApplied} hunk(s) applied`);
+          } else {
+            /*
+             * Partial failure — some hunks applied, some didn't.
+             * Fall back to writing the raw content (which may be the full file).
+             */
+            logger.warn(
+              `Diff partially failed for ${relativePath}: ${result.hunksApplied} applied, ${result.hunksFailed} failed. Falling back to raw content.`,
+            );
+          }
+        }
+      }
+    } catch (error) {
+      // Diff processing failed entirely — fall back to raw content write
+      logger.warn('Diff application failed, falling back to raw content write', error);
+    }
+
+    try {
+      await engine.fs.writeFile(relativePath, contentToWrite);
       logger.debug(`File written ${relativePath}`);
     } catch (error) {
       logger.error('Failed to write file\n\n', error);

@@ -42,6 +42,7 @@ import {
 import { formatErrorsForAI } from '~/lib/runtime/error-detector';
 import { classifyRootCause, generateFixPrompt } from '~/lib/runtime/fix-strategy';
 import { runQualityGate, resetQualityGate, qualityGateEnabled } from '~/lib/stores/quality-gate';
+import { capturePreviewScreenshot, validateVisualOutput } from '~/lib/runtime/visual-validator';
 
 const logger = createScopedLogger('Chat');
 
@@ -233,7 +234,7 @@ export const ChatImpl = memo(
          * The delay gives file writes, shell commands, and the dev server time to settle.
          */
         if (chatMode === 'build' && qualityGateEnabled.get()) {
-          setTimeout(() => {
+          setTimeout(async () => {
             // Skip quality gate if auto-fix is currently running — errors are being resolved
             if (autoFixInProgress.get()) {
               logger.debug('Skipping quality gate — auto-fix in progress');
@@ -255,11 +256,26 @@ export const ChatImpl = memo(
             const previewErrorMessage =
               previewErrors.length > 0 ? previewErrors.map((e) => e.message).join('; ') : null;
 
+            // Attempt visual validation if preview is ready
+            let visualValidation;
+
+            if (previews.length > 0 && previews.some((p) => p.ready)) {
+              try {
+                const screenshot = await capturePreviewScreenshot();
+                const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user');
+                const userRequestText = typeof lastUserMsg?.content === 'string' ? lastUserMsg.content : '';
+                visualValidation = await validateVisualOutput(screenshot, userRequestText);
+              } catch (err) {
+                logger.debug('Visual validation skipped:', err);
+              }
+            }
+
             runQualityGate({
               actions,
               previewReady: previews.length > 0 && previews.some((p) => p.ready),
               previewError: previewErrorMessage,
               terminalErrors: errors,
+              visualValidation,
             }).then((report) => {
               if (report.status === 'failed') {
                 logger.warn('Quality gate failed:', report.overallMessage);
@@ -576,10 +592,12 @@ export const ChatImpl = memo(
           let fixPrompt = `[AUTO-FIX] The application encountered errors:\n\n${errorSummary}\n\nPlease fix these errors. Only modify the files that need changes.`;
 
           try {
-            const rootCauses = fixable.map((err) => classifyRootCause(err, {}));
+            // Pass actual workbench files for content-based root cause analysis
+            const currentFiles = workbenchStore.files.get();
+            const rootCauses = fixable.map((err) => classifyRootCause(err, currentFiles));
             const targetedPrompts = rootCauses
               .filter((rc) => rc.confidence !== 'low')
-              .map((rc) => generateFixPrompt(rc, fixable[0], {}))
+              .map((rc) => generateFixPrompt(rc, fixable[0], currentFiles))
               .filter(Boolean);
 
             if (targetedPrompts.length > 0) {

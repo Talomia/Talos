@@ -473,6 +473,26 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
             logger.info(`Reached max token limit (${MAX_TOKENS}): Continuing message (${switchesLeft} switches left)`);
 
+            // Sync task tracker with completed work from this segment
+            if (taskTracker.getStats().total > 0) {
+              // Extract file paths mentioned in the response (file_path attributes from boltAction tags)
+              const filePathMatches = content.matchAll(/filePath="([^"]+)"/g);
+              const createdFiles = [...filePathMatches].map((m) => m[1]);
+
+              // Extract shell commands executed
+              const commandMatches = content.matchAll(/<boltAction[^>]*type="shell"[^>]*>([\s\S]*?)<\/boltAction>/g);
+              const executedCommands = [...commandMatches].map((m) => m[1].trim());
+
+              taskTracker.syncWithActions(createdFiles, executedCommands);
+              taskTracker.nextSegment();
+              taskTracker.addTokensUsed(cumulativeUsage.totalTokens);
+
+              const stats = taskTracker.getStats();
+              logger.info(
+                `Task progress: ${stats.completed}/${stats.total} (${stats.percentComplete}%) — segment ${stats.currentSegment}`,
+              );
+            }
+
             const lastUserMessage = processedMessages.filter((x) => x.role === 'user').slice(-1)[0];
             const { model, provider } = extractPropertiesFromMessage(lastUserMessage);
             processedMessages.push({ id: generateId(), role: 'assistant', content });
