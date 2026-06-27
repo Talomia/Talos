@@ -1,5 +1,7 @@
 import { atom, computed } from 'nanostores';
 import { createScopedLogger } from '~/utils/logger';
+import type { VisualValidationResult } from '~/lib/runtime/visual-validator';
+import type { TestResults } from '~/lib/runtime/test-generator';
 
 const logger = createScopedLogger('QualityGate');
 
@@ -63,6 +65,8 @@ export async function runQualityGate(context: {
   previewReady: boolean;
   previewError: string | null;
   terminalErrors: Array<{ message: string; severity: string; autoFixable: boolean }>;
+  visualValidation?: VisualValidationResult;
+  testExecution?: TestResults;
 }): Promise<QualityReport> {
   if (!qualityGateEnabled.get()) {
     return {
@@ -198,6 +202,72 @@ export async function runQualityGate(context: {
       name: 'Runtime Stability',
       status: 'passed',
       message: 'No runtime errors detected',
+      timestamp: now,
+    });
+  }
+
+  // Check 5: Visual Validation — does the UI match the user's request?
+  if (context.visualValidation) {
+    const vv = context.visualValidation;
+
+    if (vv.passed) {
+      checks.push({
+        name: 'Visual Validation',
+        status: 'passed',
+        message: 'Visual output matches expectations',
+        details: vv.suggestions.length > 0 ? `Suggestions:\n${vv.suggestions.join('\n')}` : undefined,
+        timestamp: now,
+      });
+    } else {
+      checks.push({
+        name: 'Visual Validation',
+        status: 'failed',
+        message: `${vv.issues.length} visual issue(s) detected`,
+        details: [...vv.issues.map((i) => `Issue: ${i}`), ...vv.suggestions.map((s) => `Suggestion: ${s}`)].join('\n'),
+        timestamp: now,
+      });
+    }
+  } else {
+    checks.push({
+      name: 'Visual Validation',
+      status: 'skipped',
+      message: 'Visual validation was not performed',
+      timestamp: now,
+    });
+  }
+
+  // Check 6: Test Execution — did the generated tests pass?
+  if (context.testExecution) {
+    const te = context.testExecution;
+
+    if (te.failed > 0) {
+      checks.push({
+        name: 'Test Execution',
+        status: 'failed',
+        message: `${te.failed} of ${te.total} test(s) failed`,
+        details: te.errors.length > 0 ? te.errors.slice(0, 5).join('\n') : undefined,
+        timestamp: now,
+      });
+    } else if (te.total > 0) {
+      checks.push({
+        name: 'Test Execution',
+        status: 'passed',
+        message: `${te.passed} of ${te.total} test(s) passed`,
+        timestamp: now,
+      });
+    } else {
+      checks.push({
+        name: 'Test Execution',
+        status: 'skipped',
+        message: 'No tests were found or executed',
+        timestamp: now,
+      });
+    }
+  } else {
+    checks.push({
+      name: 'Test Execution',
+      status: 'skipped',
+      message: 'Test execution was not performed',
       timestamp: now,
     });
   }

@@ -11,6 +11,7 @@ import { createFilesContext, extractPropertiesFromMessage, simplifyActions } fro
 import { discussPrompt } from '~/lib/common/prompts/discuss-prompt';
 import type { DesignScheme } from '~/types/design-scheme';
 import { CSS_CLASS_THOUGHT, ACTION_TAG_OPEN, ACTION_TAG_CLOSE } from '~/lib/app-config';
+import { extractPackageNames, retrieveDocs, formatDocsForPrompt } from './doc-retriever';
 
 export type Messages = Message[];
 
@@ -120,6 +121,7 @@ export async function streamText(props: {
   designScheme?: DesignScheme;
   customInstructions?: string;
   projectRules?: string;
+  planContext?: string;
 }) {
   const {
     messages,
@@ -136,6 +138,7 @@ export async function streamText(props: {
     designScheme,
     customInstructions,
     projectRules,
+    planContext,
   } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
@@ -211,7 +214,31 @@ export async function streamText(props: {
   const completionBudget = safeMaxTokens;
   const maxInputTokens = maxTokenAllowed - completionBudget;
 
-  const estimateTokens = (text: string) => Math.ceil((text || '').length / 4);
+  /**
+   * Estimate token count from text length.
+   * Uses a more accurate heuristic than len/4:
+   * - Code averages ~3.3 chars/token (more symbols/operators than prose)
+   * - Prose averages ~4.0 chars/token
+   * - Whitespace-heavy content averages ~4.5 chars/token
+   * We use a blended ratio that leans toward code since this is a coding platform.
+   */
+  const estimateTokens = (text: string) => {
+    if (!text) {
+      return 0;
+    }
+
+    const len = text.length;
+
+    // Count code-like characters (symbols, operators) to adjust ratio
+    const codeCharCount = (text.match(/[{}()\[\];:.,<>!=+\-*/&|^~@#$%]/g) || []).length;
+    const codeRatio = len > 0 ? codeCharCount / len : 0;
+
+    // Blend between code ratio (3.3) and prose ratio (4.0) based on content
+    const charsPerToken = codeRatio > 0.05 ? 3.3 : 4.0;
+
+    // Add overhead for message framing tokens (~4 tokens per message)
+    return Math.ceil(len / charsPerToken) + 4;
+  };
   const estimateMessageTokens = (m: Omit<Message, 'id'>) => {
     let len = 0;
 
@@ -359,6 +386,35 @@ export async function streamText(props: {
 
   if (summary) {
     systemPrompt = `${systemPrompt}\n\n${summaryPrompt}`;
+  }
+
+  // Inject the implementation plan into the system prompt
+  if (planContext) {
+    systemPrompt = `${systemPrompt}\n\n${planContext}`;
+  }
+
+  // Inject relevant API documentation
+  if (chatMode === 'build' && Object.keys(prunedContextFiles).length > 0) {
+    try {
+      const allContent = Object.values(prunedContextFiles)
+        .filter((f): f is { type: 'file'; content: string; isBinary: boolean } => f?.type === 'file')
+        .map((f) => f.content)
+        .join('\n');
+      const packages = extractPackageNames(allContent);
+
+      if (packages.length > 0) {
+        const lastMsg = processedMessages[processedMessages.length - 1];
+        const queryText = typeof lastMsg?.content === 'string' ? lastMsg.content : '';
+        const docResult = retrieveDocs(packages, queryText, 1500);
+        const docPrompt = formatDocsForPrompt(docResult);
+
+        if (docPrompt) {
+          systemPrompt = `${systemPrompt}\n\n${docPrompt}`;
+        }
+      }
+    } catch (docError) {
+      logger.debug('Documentation retrieval failed (non-critical):', docError);
+    }
   }
 
   const effectiveLockedFilePaths = new Set<string>();

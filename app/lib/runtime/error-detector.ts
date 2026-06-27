@@ -347,3 +347,153 @@ export function deduplicateErrors(errors: DetectedError[]): DetectedError[] {
 
   return Array.from(seen.values());
 }
+
+/*
+ * ---------------------------------------------------------------------------
+ * Error Chain Analysis
+ * ---------------------------------------------------------------------------
+ */
+
+export interface ErrorChain {
+  /** The root-cause error that likely triggered downstream failures. */
+  root: DetectedError;
+
+  /** Errors that are downstream consequences of the root error. */
+  related: DetectedError[];
+}
+
+/**
+ * Dependency weight used to sort categories so root causes surface first.
+ * Lower values represent errors that are more likely to be root causes.
+ */
+const CATEGORY_PRIORITY: Record<DetectedError['category'], number> = {
+  dependency: 0,
+  import: 1,
+  syntax: 2,
+  type: 3,
+  runtime: 4,
+  network: 5,
+  unknown: 6,
+};
+
+/**
+ * Severity weight — fatal / error errors should be addressed before warnings.
+ */
+const SEVERITY_PRIORITY: Record<DetectedError['severity'], number> = {
+  fatal: 0,
+  error: 1,
+  warning: 2,
+};
+
+/**
+ * Check whether `cause` could plausibly trigger `effect`.
+ * The heuristic is intentionally conservative — it links errors that share a
+ * file or module name *and* follow a logical category ordering (e.g., an
+ * import error in a file can cause type / runtime errors in the same file).
+ */
+function couldCause(cause: DetectedError, effect: DetectedError): boolean {
+  // Same error can't cause itself
+  if (cause.id === effect.id) {
+    return false;
+  }
+
+  // A lower-priority category can cause a higher-priority one
+  if (CATEGORY_PRIORITY[cause.category] >= CATEGORY_PRIORITY[effect.category]) {
+    return false;
+  }
+
+  // Same file — very likely related
+  if (cause.file && effect.file && cause.file === effect.file) {
+    return true;
+  }
+
+  // Module reference in the effect's message matches the cause's file
+  if (cause.file && effect.message.includes(cause.file)) {
+    return true;
+  }
+
+  // Dependency errors cause import errors for any module
+  if (cause.category === 'dependency' && effect.category === 'import') {
+    return true;
+  }
+
+  // Import errors cause type/runtime errors when module is missing
+  if (cause.category === 'import' && (effect.category === 'type' || effect.category === 'runtime')) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Group related errors into chains. Each chain has a single root-cause error
+ * and zero or more downstream errors that are consequences of that root cause.
+ *
+ * Errors that don't relate to any other error appear as standalone chains with
+ * an empty `related` array.
+ */
+export function analyzeErrorChain(errors: DetectedError[]): ErrorChain[] {
+  if (errors.length === 0) {
+    return [];
+  }
+
+  // Sort so likely root causes come first
+  const sorted = [...errors].sort((a, b) => {
+    const catDiff = CATEGORY_PRIORITY[a.category] - CATEGORY_PRIORITY[b.category];
+
+    if (catDiff !== 0) {
+      return catDiff;
+    }
+
+    return SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity];
+  });
+
+  const assigned = new Set<string>();
+  const chains: ErrorChain[] = [];
+
+  for (const candidate of sorted) {
+    if (assigned.has(candidate.id)) {
+      continue;
+    }
+
+    const related: DetectedError[] = [];
+
+    for (const other of sorted) {
+      if (assigned.has(other.id) || other.id === candidate.id) {
+        continue;
+      }
+
+      if (couldCause(candidate, other)) {
+        related.push(other);
+        assigned.add(other.id);
+      }
+    }
+
+    assigned.add(candidate.id);
+
+    chains.push({ root: candidate, related });
+  }
+
+  return chains;
+}
+
+/**
+ * Order errors by dependency so that root causes appear first.
+ *
+ * This is the recommended order in which to attempt auto-fixes: addressing a
+ * root cause often resolves its downstream effects automatically.
+ */
+export function suggestFixOrder(errors: DetectedError[]): DetectedError[] {
+  const chains = analyzeErrorChain(errors);
+  const ordered: DetectedError[] = [];
+
+  for (const chain of chains) {
+    ordered.push(chain.root);
+
+    for (const related of chain.related) {
+      ordered.push(related);
+    }
+  }
+
+  return ordered;
+}

@@ -18,6 +18,8 @@ import { MCPService } from '~/lib/services/mcpService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { CSS_CLASS_THOUGHT } from '~/lib/app-config';
+import { generatePlan, planToPromptContext } from '~/lib/.server/llm/planning-agent';
+import { TaskTracker } from '~/lib/.server/llm/task-tracker';
 
 export async function action(args: ActionFunctionArgs) {
   return withSecurity(chatAction, { allowedMethods: ['POST'] })(args);
@@ -348,6 +350,75 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           // logger.debug('Code Files Selected');
         }
 
+        /*
+         * ─── Planning Phase ──────────────────────────────────────
+         * For build-mode requests, generate a structured implementation plan
+         * before code generation. The plan guides the AI to think before coding.
+         */
+        let planContext = '';
+        const taskTracker = new TaskTracker();
+
+        if (chatMode === 'build' && filePaths.length > 0) {
+          try {
+            stepTimers.planning = Date.now();
+            dataStream.writeData({
+              type: 'progress',
+              label: 'planning',
+              status: 'in-progress',
+              order: progressCounter++,
+              message: 'Planning implementation…',
+              icon: '\uD83D\uDCCB',
+              startedAt: stepTimers.planning,
+            } satisfies ProgressAnnotation);
+
+            const planResult = await generatePlan({
+              messages: [...processedMessages],
+              files: files ?? ({} as FileMap),
+              env: context.cloudflare?.env,
+              apiKeys,
+              providerSettings,
+              summary,
+              contextFiles: filteredFiles,
+            });
+
+            // Initialize task tracker from plan
+            taskTracker.initFromPlan(planResult.plan.steps);
+
+            // Convert plan to prompt context injection
+            planContext = planToPromptContext(planResult.plan);
+
+            // Track planning token usage
+            cumulativeUsage.totalTokens += planResult.planningTokensUsed;
+
+            dataStream.writeData({
+              type: 'progress',
+              label: 'planning',
+              status: 'complete',
+              order: progressCounter++,
+              message: `Plan ready: ${planResult.plan.steps.length} steps`,
+              icon: '\uD83D\uDCCB',
+              completedAt: Date.now(),
+              duration: Date.now() - stepTimers.planning,
+            } satisfies ProgressAnnotation);
+
+            logger.info(
+              `Planning complete: ${planResult.plan.steps.length} steps, ${planResult.planningTokensUsed} tokens`,
+            );
+          } catch (planError) {
+            logger.warn('Planning phase failed — proceeding without plan:', planError);
+            dataStream.writeData({
+              type: 'progress',
+              label: 'planning',
+              status: 'complete',
+              order: progressCounter++,
+              message: 'Planning skipped',
+              icon: '\uD83D\uDCCB',
+              completedAt: Date.now(),
+              duration: Date.now() - (stepTimers.planning || Date.now()),
+            } satisfies ProgressAnnotation);
+          }
+        }
+
         const options: StreamingOptions = {
           supabaseConnection: supabase,
           toolChoice: 'auto',
@@ -408,7 +479,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             processedMessages.push({
               id: generateId(),
               role: 'user',
-              content: `[Model: ${model}]\n\n[Provider: ${provider}]\n\n${CONTINUE_PROMPT}`,
+              content: `[Model: ${model}]\n\n[Provider: ${provider}]\n\n${CONTINUE_PROMPT}${taskTracker.getStats().total > 0 ? '\n' + taskTracker.generateContinuationContext() : ''}`,
             });
 
             const result = await streamText({
@@ -426,6 +497,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               summary,
               customInstructions,
               projectRules,
+              planContext,
             });
 
             dataStream.merge(result.toUIMessageStream());
@@ -485,6 +557,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
           summary,
           customInstructions,
           projectRules,
+          planContext,
         });
 
         (async () => {
