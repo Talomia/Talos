@@ -7,6 +7,7 @@ import { createFilesContext, extractCurrentContext, extractPropertiesFromMessage
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import { CSS_CLASS_THOUGHT } from '~/lib/app-config';
+import { SemanticFileIndex } from './semantic-search';
 
 // Common patterns to ignore, similar to .gitignore
 
@@ -37,6 +38,21 @@ function getContextFileLimit(modelDetails: any): number {
   }
 
   return 8; // Smaller models — original default
+}
+
+/**
+ * Quick check if a file path is a config file (always include in context).
+ */
+function classifyAsConfig(path: string): boolean {
+  const lower = path.toLowerCase();
+
+  return (
+    lower.endsWith('package.json') ||
+    lower.includes('config') ||
+    lower.includes('tsconfig') ||
+    lower.endsWith('.env') ||
+    lower.endsWith('.env.local')
+  );
 }
 
 export async function selectContext(props: {
@@ -118,6 +134,42 @@ export async function selectContext(props: {
     const relPath = x.replace('/home/project/', '');
     return !ig.ignores(relPath);
   });
+
+  /*
+   * For large projects (50+ files), use semantic search to pre-filter candidates
+   * This narrows the file list before the LLM makes final selection
+   */
+  const contextFileLimit = getContextFileLimit(modelDetails);
+
+  if (filePaths.length > 50) {
+    try {
+      const semanticIndex = new SemanticFileIndex();
+      semanticIndex.indexFiles(files);
+
+      // Extract query text from the last user message
+      const lastUserMsg = processedMessages.filter((x) => x.role === 'user').pop();
+      const queryText = lastUserMsg
+        ? Array.isArray(lastUserMsg.content)
+          ? (lastUserMsg.content.find((item: any) => item.type === 'text')?.text as string) || ''
+          : typeof lastUserMsg.content === 'string'
+            ? lastUserMsg.content
+            : ''
+        : '';
+
+      const semanticResults = semanticIndex.search(queryText, contextFileLimit * 3); // 3x the limit for LLM to choose from
+      const semanticPaths = new Set(semanticResults.map((r) => r.path));
+
+      // Keep files that semantic search found relevant, plus config files always
+      filePaths = filePaths.filter((p) => {
+        const rel = p.replace('/home/project/', '');
+        return semanticPaths.has(p) || semanticPaths.has(rel) || classifyAsConfig(rel);
+      });
+
+      logger.debug(`Semantic pre-filter: ${filePaths.length} files from ${semanticIndex.size} total`);
+    } catch (err) {
+      logger.debug('Semantic pre-filter failed (non-critical):', err);
+    }
+  }
 
   let context = '';
   const currentFiles: string[] = [];

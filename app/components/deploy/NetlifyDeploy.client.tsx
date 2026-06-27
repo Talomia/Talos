@@ -11,6 +11,7 @@ import { formatBuildFailureOutput } from './deployUtils';
 import { isBinaryFile } from '~/utils/deployUtils';
 import type { FileContent } from '~/utils/deployUtils';
 import { createScopedLogger } from '~/utils/logger';
+import { validateDeployment } from '~/lib/runtime/deploy-validator';
 
 const logger = createScopedLogger('NetlifyDeploy');
 
@@ -252,8 +253,25 @@ export function useNetlifyDeploy() {
         source: 'netlify',
       });
 
-      // Show success toast notification
-      toast.success(`🚀 Netlify deployment completed successfully!`);
+      // Post-deploy health check — verify the live site actually loads
+      const deployedUrl = deploymentStatus?.ssl_url || deploymentStatus?.url;
+
+      if (deployedUrl) {
+        try {
+          const healthCheck = await validateDeployment(deployedUrl);
+
+          if (healthCheck.healthy) {
+            toast.success(`🚀 Deployment live and healthy at ${deployedUrl}`);
+          } else {
+            toast.warning(`🚀 Deployed but health check found issues: ${healthCheck.issues.join(', ')}`);
+          }
+        } catch {
+          // Health check failure is non-blocking
+          toast.success(`🚀 Netlify deployment completed successfully!`);
+        }
+      } else {
+        toast.success(`🚀 Netlify deployment completed successfully!`);
+      }
 
       return true;
     } catch (error) {

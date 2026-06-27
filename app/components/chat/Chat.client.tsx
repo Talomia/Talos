@@ -40,6 +40,7 @@ import {
   resetAutoFix,
 } from '~/lib/stores/errors';
 import { formatErrorsForAI } from '~/lib/runtime/error-detector';
+import { classifyRootCause, generateFixPrompt } from '~/lib/runtime/fix-strategy';
 import { runQualityGate, resetQualityGate, qualityGateEnabled } from '~/lib/stores/quality-gate';
 
 const logger = createScopedLogger('Chat');
@@ -571,9 +572,26 @@ export const ChatImpl = memo(
 
           const errorSummary = formatErrorsForAI(fixable);
 
+          // Use fix-strategy for targeted fix prompts when possible
+          let fixPrompt = `[AUTO-FIX] The application encountered errors:\n\n${errorSummary}\n\nPlease fix these errors. Only modify the files that need changes.`;
+
+          try {
+            const rootCauses = fixable.map((err) => classifyRootCause(err, {}));
+            const targetedPrompts = rootCauses
+              .filter((rc) => rc.confidence !== 'low')
+              .map((rc) => generateFixPrompt(rc, fixable[0], {}))
+              .filter(Boolean);
+
+            if (targetedPrompts.length > 0) {
+              fixPrompt = `[AUTO-FIX] ${targetedPrompts.join('\n\n')}\n\nOriginal errors:\n${errorSummary}`;
+            }
+          } catch {
+            // Fallback to generic fix prompt
+          }
+
           append({
             role: 'user',
-            content: `[AUTO-FIX] The application encountered errors:\n\n${errorSummary}\n\nPlease fix these errors. Only modify the files that need changes.`,
+            content: fixPrompt,
           });
         }, 2000);
       });
