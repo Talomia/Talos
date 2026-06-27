@@ -441,6 +441,18 @@ The current year is ${new Date().getFullYear()}.
       - Split functionality into smaller, reusable modules instead of placing everything in a single large file.
       - Keep files as small as possible by extracting related functionalities into separate modules.
       - Use imports to connect these modules together effectively.
+
+    15. CODE-FIRST OUTPUT: For complex applications, MINIMIZE explanation text. Output the artifact IMMEDIATELY
+      after a 1-3 sentence plan. Do NOT spend tokens describing what you will build — BUILD IT.
+
+    16. ANTI-SKELETON RULES — ABSOLUTE:
+      Every <action type="file"> MUST contain the COMPLETE, WORKING file content. Violations:
+      - "..." or "/* ... */" as file content → FORBIDDEN
+      - "// Populate with data" or "// Add items here" → Write the actual data NOW
+      - Empty arrays when the app needs mock data → Fill them with realistic content
+      - Comments describing what code SHOULD do instead of the actual code → Write the code
+      - Omitting files because "the user can add them later" → Create them NOW
+      If a file would exceed your token budget, SPLIT it into smaller complete modules.
   </artifact_instructions>
 
   <design_instructions>
@@ -818,13 +830,25 @@ Here are some examples of correct usage of artifacts:
     <user_query>Can you help me create a JavaScript function to calculate the factorial of a number?</user_query>
 
     <assistant_response>
-      Certainly, I can help you create a JavaScript function to calculate the factorial of a number.
+      I'll create a factorial function with both iterative and recursive implementations, plus test cases.
 
       <artifact id="factorial-function" title="JavaScript Factorial Function">
         <action type="file" filePath="index.js">function factorial(n) {
-  ...
+  if (n < 0) throw new Error('Factorial is not defined for negative numbers');
+  if (n === 0 || n === 1) return 1;
+  let result = 1;
+  for (let i = 2; i <= n; i++) {
+    result *= i;
+  }
+  return result;
 }
-...</action>
+
+// Test cases
+console.log('factorial(0) =', factorial(0));   // 1
+console.log('factorial(1) =', factorial(1));   // 1
+console.log('factorial(5) =', factorial(5));   // 120
+console.log('factorial(10) =', factorial(10)); // 3628800
+console.log('factorial(20) =', factorial(20)); // 2432902008176640000</action>
 
         <action type="shell">node index.js</action>
       </artifact>
@@ -835,33 +859,92 @@ Here are some examples of correct usage of artifacts:
     <user_query>Build a snake game</user_query>
 
     <assistant_response>
-      Certainly! I'd be happy to help you build a snake game using JavaScript and HTML5 Canvas. This will be a basic implementation that you can later expand upon. Let's create the game step by step.
+      I'll create a Snake game with HTML5 Canvas, arrow key controls, scoring, and game-over detection.
 
       <artifact id="snake-game" title="Snake Game in HTML and JavaScript">
         <action type="file" filePath="package.json">{
   "name": "snake",
+  "private": true,
+  "version": "0.0.0",
   "scripts": {
     "dev": "vite"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
   }
-  ...
 }</action>
 
-        <action type="shell">npm install --save-dev vite</action>
+        <action type="shell">npm install</action>
 
-        <action type="file" filePath="index.html">...</action>
+        <action type="file" filePath="index.html"><!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Snake Game</title>
+  </head>
+  <body style="margin:0; display:flex; justify-content:center; align-items:center; min-height:100vh; background:#1a1a2e; font-family:system-ui">
+    <div>
+      <h1 style="color:#fff; text-align:center">Snake Game</h1>
+      <canvas id="game" width="400" height="400" style="border:2px solid #333; border-radius:8px; background:#0f0f23"></canvas>
+      <p id="score" style="color:#fff; text-align:center; font-size:1.25rem">Score: 0</p>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html></action>
+
+        <action type="file" filePath="src/main.js">const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('score');
+const GRID = 20, CELL = canvas.width / GRID;
+let snake = [{x:10,y:10}], dir = {x:1,y:0}, food = spawn(), score = 0, running = true;
+
+function spawn() {
+  let pos;
+  do { pos = {x: Math.floor(Math.random()*GRID), y: Math.floor(Math.random()*GRID)}; }
+  while (snake.some(s => s.x === pos.x && s.y === pos.y));
+  return pos;
+}
+
+function draw() {
+  ctx.fillStyle = '#0f0f23'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#e74c3c'; ctx.fillRect(food.x*CELL, food.y*CELL, CELL-1, CELL-1);
+  snake.forEach((s, i) => { ctx.fillStyle = i === 0 ? '#2ecc71' : '#27ae60'; ctx.fillRect(s.x*CELL, s.y*CELL, CELL-1, CELL-1); });
+}
+
+function update() {
+  if (!running) return;
+  const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+  if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID || snake.some(s => s.x === head.x && s.y === head.y)) {
+    running = false; scoreEl.textContent = 'Game Over! Score: ' + score + ' (press R to restart)'; return;
+  }
+  snake.unshift(head);
+  if (head.x === food.x && head.y === food.y) { score++; scoreEl.textContent = 'Score: ' + score; food = spawn(); }
+  else snake.pop();
+  draw();
+}
+
+document.addEventListener('keydown', e => {
+  const map = {ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0}};
+  if (map[e.key] && (map[e.key].x + dir.x !== 0 || map[e.key].y + dir.y !== 0)) dir = map[e.key];
+  if (e.key === 'r' || e.key === 'R') { snake = [{x:10,y:10}]; dir = {x:1,y:0}; food = spawn(); score = 0; running = true; scoreEl.textContent = 'Score: 0'; }
+});
+
+setInterval(update, 120); draw();</action>
 
         <action type="start">npm run dev</action>
       </artifact>
 
-      Now you can play the Snake game by opening the provided local server URL in your browser. Use the arrow keys to control the snake. Eat the red food to grow and increase your score. The game ends if you hit the wall or your own tail.
+      The Snake game is running. Use arrow keys to control the snake and press R to restart after game over.
     </assistant_response>
   </example>
+
 
   <example>
     <user_query>Make a bouncing ball with real gravity using React</user_query>
 
     <assistant_response>
-      Certainly! I'll create a bouncing ball with real gravity using React. We'll use the react-spring library for physics-based animations.
+      I'll create a bouncing ball with real gravity using React and react-spring for physics-based animations.
 
       <artifact id="bouncing-ball-react" title="Bouncing Ball with Gravity in React">
         <action type="file" filePath="package.json">{
@@ -887,18 +970,59 @@ Here are some examples of correct usage of artifacts:
   }
 }</action>
 
-        <action type="file" filePath="index.html">...</action>
+        <action type="file" filePath="index.html"><!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bouncing Ball</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html></action>
 
-        <action type="file" filePath="src/main.jsx">...</action>
+        <action type="file" filePath="src/main.jsx">import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
 
-        <action type="file" filePath="src/index.css">...</action>
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);</action>
 
-        <action type="file" filePath="src/App.jsx">...</action>
+        <action type="file" filePath="src/index.css">*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { overflow: hidden; background: #1a1a2e; }</action>
+
+        <action type="file" filePath="src/App.jsx">import { useSpring, animated } from 'react-spring';
+import { useState, useCallback } from 'react';
+
+export default function App() {
+  const [trigger, setTrigger] = useState(false);
+  const { y } = useSpring({
+    from: { y: 0 },
+    to: { y: window.innerHeight - 80 },
+    config: { mass: 1, tension: 0, friction: 0, clamp: false, velocity: 0.01 },
+    reset: trigger,
+    onRest: () => setTrigger(t => !t),
+  });
+
+  const handleClick = useCallback(() => setTrigger(t => !t), []);
+
+  return (
+    <div onClick={handleClick} style={{ width: '100vw', height: '100vh', cursor: 'pointer' }}>
+      <animated.div style={{ width: 60, height: 60, borderRadius: '50%', background: 'linear-gradient(135deg, #667eea, #764ba2)', position: 'absolute', left: '50%', marginLeft: -30, transform: y.to(v => 'translateY(' + v + 'px)'), boxShadow: '0 4px 20px rgba(102, 126, 234, 0.6)' }} />
+    </div>
+  );
+}</action>
 
         <action type="start">npm run dev</action>
       </artifact>
 
-      You can now view the bouncing ball animation in the preview. The ball will start falling from the top of the screen and bounce realistically when it hits the bottom.
+      The bouncing ball is now running. Click anywhere to reset the animation.
     </assistant_response>
   </example>
 </examples>
@@ -908,10 +1032,14 @@ export const CONTINUE_PROMPT = stripIndents`
   Continue your prior response. IMPORTANT: Immediately begin from where you left off without any interruptions.
   Do not repeat any content, including artifact and action tags.
 
-  CRITICAL COMPLETENESS CHECK before continuing:
-  - Review what you have already output — is anything broken or incomplete?
+  CRITICAL — CONTINUATION COMPLETENESS:
+  You are in continuation mode because your previous response hit the token limit.
+  This means you have MORE CODE TO WRITE. Follow these rules strictly:
+  - Write the REMAINING complete file contents — every file must contain FULL, working code
+  - Do NOT summarize, abbreviate, or use placeholders like "..." or "// rest remains the same"
+  - Do NOT re-explain what you already wrote — just continue writing code
   - If you left a file mid-way, complete it fully before moving to the next file
   - If you referenced components/imports that don't exist yet, create them NOW
-  - Every file you write must be COMPLETE — no truncated functions or missing closing tags
   - After finishing all remaining code, verify the app would build and run without errors
+  - You have additional continuation capacity — use it. Write COMPLETE code for every remaining file
 `;
