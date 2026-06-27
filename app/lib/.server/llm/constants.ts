@@ -15,20 +15,22 @@ export const PROVIDER_COMPLETION_LIMITS: Record<string, number> = {
   Github: 16384, // GitHub Models mirror OpenAI capabilities
   Anthropic: 64000, // Claude 4 Sonnet: 64k, Opus: 32k (use higher)
   Google: 65536, // Gemini 2.5 Pro/Flash support up to 65k output
-  Cohere: 4000,
-  DeepSeek: 8192,
-  Groq: 8192,
-  HuggingFace: 8192, // Varies by model; 8k is a safe middle ground
+  Cohere: 8192, // Command R+ supports 8k output
+  DeepSeek: 16384, // DeepSeek V3 supports 16k output
+  Groq: 32768, // Llama 3.3 70B on Groq supports 32k output
+  HuggingFace: 16384, // Varies by model; 16k covers most modern models
   Mistral: 8192,
-  Ollama: 8192,
-  OpenRouter: 16384, // Routes to many models; 16k covers most
-  Perplexity: 8192,
-  Together: 8192,
-  xAI: 16384, // Grok supports 16k+ output
-  LMStudio: 8192,
-  OpenAILike: 8192,
-  AmazonBedrock: 8192,
-  Hyperbolic: 8192,
+  Ollama: 16384, // Local models benefit from higher ceiling
+  OpenRouter: 64000, // Routes to Claude/GPT/Gemini — use their native limits
+  Perplexity: 16384, // Sonar models support 16k+ output
+  Together: 32768, // Llama/Mixtral on Together support 32k output
+  xAI: 32768, // Grok-2 supports 32k output
+  LMStudio: 16384, // Local models benefit from higher ceiling
+  OpenAILike: 16384, // Conservative default for unknown API-compatible providers
+  AmazonBedrock: 16384, // Nova Pro supports 16k; Claude via Bedrock uses Anthropic limit
+  Hyperbolic: 16384,
+  Fireworks: 16384, // Llama/Mixtral models support 16k+
+  Cerebras: 16384, // Fast inference; 16k covers most models
 };
 
 /*
