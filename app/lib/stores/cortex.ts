@@ -156,6 +156,9 @@ let _lastCommittedFiles: string | null = null;
 let _db: IDBDatabase | undefined;
 let _dbInitPromise: Promise<IDBDatabase | undefined> | null = null;
 
+/** Serialization queue to prevent concurrent commitContext race conditions. */
+let _commitQueue: Promise<void> = Promise.resolve();
+
 async function getDB(): Promise<IDBDatabase | undefined> {
   if (_db) {
     return _db;
@@ -222,8 +225,27 @@ export async function initCortex(chatId: string): Promise<void> {
 /**
  * Commit the current conversation state as a new context node.
  * This is the equivalent of `git commit`.
+ * Serialized to prevent concurrent commits from overwriting each other.
  */
-export async function commitContext(params: {
+export function commitContext(params: {
+  messages: Array<{ role: string; content: string }>;
+  files: Record<string, string>;
+  summary: string;
+  metadata?: Record<string, unknown>;
+}): Promise<NodeId | null> {
+  const promise = _commitQueue.then(() => _commitContextImpl(params));
+
+  // Swallow errors in queue chain so subsequent commits still run
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  _commitQueue = promise.then(
+    () => undefined,
+    () => undefined,
+  );
+
+  return promise;
+}
+
+async function _commitContextImpl(params: {
   messages: Array<{ role: string; content: string }>;
   files: Record<string, string>;
   summary: string;

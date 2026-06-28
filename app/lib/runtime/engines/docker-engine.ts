@@ -67,32 +67,36 @@ interface PendingRequest {
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-function encodeBinaryFrame(opcode: number, processId: string, payload: string): ArrayBuffer {
-  const idBytes = textEncoder.encode(processId);
+/**
+ * Encode a binary frame for sending stdin to the server.
+ * Server format: first 36 bytes = processId UUID (zero-padded), rest = data.
+ */
+function encodeBinaryFrame(_opcode: number, processId: string, payload: string): ArrayBuffer {
   const payloadBytes = textEncoder.encode(payload);
 
-  const buffer = new ArrayBuffer(1 + 4 + idBytes.byteLength + payloadBytes.byteLength);
-  const view = new DataView(buffer);
+  // Server expects exactly 36 bytes for the processId (UUID format)
+  const idBytes = textEncoder.encode(processId.padEnd(36, '\0'));
+  const buffer = new ArrayBuffer(36 + payloadBytes.byteLength);
   const uint8 = new Uint8Array(buffer);
 
-  view.setUint8(0, opcode);
-  view.setUint32(1, idBytes.byteLength, false);
-  uint8.set(idBytes, 5);
-  uint8.set(payloadBytes, 5 + idBytes.byteLength);
+  uint8.set(idBytes.slice(0, 36), 0);
+  uint8.set(payloadBytes, 36);
 
   return buffer;
 }
 
+/**
+ * Decode a binary frame received from the server (stdout/stderr).
+ * Server format: first 36 bytes = processId UUID, rest = data.
+ */
 function decodeBinaryFrame(data: ArrayBuffer): { opcode: number; processId: string; payload: string } {
-  const view = new DataView(data);
   const uint8 = new Uint8Array(data);
 
-  const opcode = view.getUint8(0);
-  const idLen = view.getUint32(1, false);
-  const processId = textDecoder.decode(uint8.slice(5, 5 + idLen));
-  const payload = textDecoder.decode(uint8.slice(5 + idLen));
+  const processId = textDecoder.decode(uint8.slice(0, 36)).replace(/\0+$/, '');
+  const payload = textDecoder.decode(uint8.slice(36));
 
-  return { opcode, processId, payload };
+  // Opcode is always STDOUT since the server doesn't use opcodes
+  return { opcode: BINARY_OPCODE_STDOUT, processId, payload };
 }
 
 // ─── Docker Filesystem ────────────────────────────────────────────────────────
@@ -730,6 +734,17 @@ export class DockerEngine implements RuntimeEngine {
       this.#handleRpcResponse(parsed as JsonRpcResponse);
     } else if ('event' in parsed) {
       this.#handleServerEvent(parsed as JsonRpcEvent);
+    } else if ('method' in parsed && !('id' in parsed)) {
+      /*
+       * JSON-RPC notification from runtime-ws-server:
+       * { jsonrpc: '2.0', method: 'process.exit', params: { ... } }
+       */
+      const notification = parsed as { method: string; params?: Record<string, unknown> };
+      const mappedEvent = this.#mapServerNotification(notification.method, notification.params || {});
+
+      if (mappedEvent) {
+        this.#handleServerEvent(mappedEvent);
+      }
     }
   }
 
@@ -749,6 +764,48 @@ export class DockerEngine implements RuntimeEngine {
     } else {
       pending.resolve(response.result);
     }
+  }
+
+  /**
+   * Maps JSON-RPC notification method names from the server to the client's
+   * event format. The server uses dot-notation method names, while the client
+   * uses hyphenated event names with different payload field names.
+   */
+  #mapServerNotification(method: string, params: Record<string, unknown>): JsonRpcEvent | null {
+    const EVENT_MAP: Record<
+      string,
+      { event: string; mapData?: (p: Record<string, unknown>) => Record<string, unknown> }
+    > = {
+      'process.exit': {
+        event: 'process-exit',
+        mapData: (p) => ({ processId: p.processId, code: p.exitCode ?? p.code }),
+      },
+      'watch.event': {
+        event: 'file-change',
+        mapData: (p) => ({ watchId: p.watchId, events: p.events }),
+      },
+      'textSearch.progress': {
+        event: 'search-progress',
+        mapData: (p) => ({ searchId: p.searchId, results: p.matches ?? p.results }),
+      },
+      'textSearch.complete': {
+        event: 'search-complete',
+        mapData: (p) => ({ searchId: p.searchId }),
+      },
+    };
+
+    // Direct match (server-ready, port, preview-message already use correct names)
+    const mapping = EVENT_MAP[method];
+
+    if (mapping) {
+      return {
+        event: mapping.event,
+        data: mapping.mapData ? mapping.mapData(params) : params,
+      } as JsonRpcEvent;
+    }
+
+    // Pass through unmapped events (e.g., server-ready, port)
+    return { event: method, data: params } as JsonRpcEvent;
   }
 
   #handleServerEvent(event: JsonRpcEvent): void {

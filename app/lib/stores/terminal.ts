@@ -39,6 +39,11 @@ export class TerminalStore {
   }
 
   async attachTerminal(terminal: ITerminal) {
+    // Prevent duplicate attachment (e.g., React StrictMode double-mount)
+    if (this.#terminals.some((t) => t.terminal === terminal)) {
+      return;
+    }
+
     try {
       const shellProcess = await newShellProcess(await this.#engine, terminal);
       this.#terminals.push({ terminal, process: shellProcess });

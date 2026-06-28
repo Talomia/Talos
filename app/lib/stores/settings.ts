@@ -476,7 +476,7 @@ export const tabConfigurationStore = map<TabWindowConfig>(getInitialTabConfigura
 
 // Auto-persist tab configuration changes to localStorage
 if (isBrowser) {
-  const unsubscribeTabConfig = tabConfigurationStore.subscribe((config) => {
+  const unsubscribeTabConfig = tabConfigurationStore.listen((config) => {
     try {
       safeSetItem(STORAGE_KEYS.tabConfiguration, JSON.stringify(config));
       import('~/lib/persistence/settingsSync').then(({ notifySettingChanged }) => notifySettingChanged());

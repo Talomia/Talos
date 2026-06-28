@@ -103,33 +103,27 @@ import { DockerEngine } from './docker-engine';
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
-/** Encode a binary frame matching the protocol: [opcode(1)][idLen(4)][processId][payload] */
-function encodeBinaryFrame(opcode: number, processId: string, payload: string): ArrayBuffer {
-  const idBytes = textEncoder.encode(processId);
+/** Encode a binary frame matching the server protocol: [36-byte UUID][payload] */
+function encodeBinaryFrame(_opcode: number, processId: string, payload: string): ArrayBuffer {
   const payloadBytes = textEncoder.encode(payload);
-  const buffer = new ArrayBuffer(1 + 4 + idBytes.byteLength + payloadBytes.byteLength);
-  const view = new DataView(buffer);
+  const idBytes = textEncoder.encode(processId.padEnd(36, '\0'));
+  const buffer = new ArrayBuffer(36 + payloadBytes.byteLength);
   const uint8 = new Uint8Array(buffer);
 
-  view.setUint8(0, opcode);
-  view.setUint32(1, idBytes.byteLength, false);
-  uint8.set(idBytes, 5);
-  uint8.set(payloadBytes, 5 + idBytes.byteLength);
+  uint8.set(idBytes.slice(0, 36), 0);
+  uint8.set(payloadBytes, 36);
 
   return buffer;
 }
 
-/** Decode a binary frame sent by the engine */
-function decodeBinaryFrame(data: ArrayBuffer): { opcode: number; processId: string; payload: string } {
-  const view = new DataView(data);
+/** Decode a binary frame sent by the engine: [36-byte UUID][payload] */
+function decodeBinaryFrame(data: ArrayBuffer): { processId: string; payload: string } {
   const uint8 = new Uint8Array(data);
 
-  const opcode = view.getUint8(0);
-  const idLen = view.getUint32(1, false);
-  const processId = textDecoder.decode(uint8.slice(5, 5 + idLen));
-  const payload = textDecoder.decode(uint8.slice(5 + idLen));
+  const processId = textDecoder.decode(uint8.slice(0, 36)).replace(/\0+$/, '');
+  const payload = textDecoder.decode(uint8.slice(36));
 
-  return { opcode, processId, payload };
+  return { processId, payload };
 }
 
 /**
@@ -513,7 +507,6 @@ describe('DockerEngine', () => {
       expect(binaryFrames.length).toBeGreaterThanOrEqual(1);
 
       const decoded = decodeBinaryFrame(binaryFrames[binaryFrames.length - 1] as ArrayBuffer);
-      expect(decoded.opcode).toBe(0x02); // BINARY_OPCODE_STDIN
       expect(decoded.processId).toBe('proc-stdin');
       expect(decoded.payload).toBe('echo hello\n');
     });
@@ -898,9 +891,9 @@ describe('DockerEngine', () => {
 
   describe('binary frame protocol', () => {
     it('should round-trip encode/decode correctly', () => {
-      const original = { opcode: 0x01, processId: 'proc-abc', payload: 'hello world' };
+      const original = { processId: 'proc-abc', payload: 'hello world' };
 
-      const buffer = encodeBinaryFrame(original.opcode, original.processId, original.payload);
+      const buffer = encodeBinaryFrame(0x01, original.processId, original.payload);
       const decoded = decodeBinaryFrame(buffer);
 
       expect(decoded).toEqual(original);
@@ -910,7 +903,6 @@ describe('DockerEngine', () => {
       const buffer = encodeBinaryFrame(0x02, 'proc-1', '');
       const decoded = decodeBinaryFrame(buffer);
 
-      expect(decoded.opcode).toBe(0x02);
       expect(decoded.processId).toBe('proc-1');
       expect(decoded.payload).toBe('');
     });
@@ -923,12 +915,12 @@ describe('DockerEngine', () => {
       expect(decoded.payload).toBe(unicodePayload);
     });
 
-    it('should handle long process IDs', () => {
-      const longId = 'a'.repeat(1000);
-      const buffer = encodeBinaryFrame(0x01, longId, 'data');
+    it('should handle 36-char UUID process IDs', () => {
+      const uuid = '550e8400-e29b-41d4-a716-446655440000';
+      const buffer = encodeBinaryFrame(0x01, uuid, 'data');
       const decoded = decodeBinaryFrame(buffer);
 
-      expect(decoded.processId).toBe(longId);
+      expect(decoded.processId).toBe(uuid);
       expect(decoded.payload).toBe('data');
     });
   });

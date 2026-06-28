@@ -95,7 +95,9 @@ class LogStore {
     if (savedReadLogs) {
       try {
         const parsedReadLogs = JSON.parse(savedReadLogs);
-        this._readLogs = new Set(parsedReadLogs);
+        const MAX_READ_LOGS = 1000;
+        const capped = Array.isArray(parsedReadLogs) ? parsedReadLogs.slice(-MAX_READ_LOGS) : parsedReadLogs;
+        this._readLogs = new Set(capped);
       } catch (error) {
         logger.error('Failed to parse read logs:', error);
       }
