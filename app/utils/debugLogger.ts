@@ -631,6 +631,24 @@ class DebugLogger {
 
   captureNetworkRequest(request: NetworkEntry): void {
     try {
+      // Sanitize URL to strip sensitive query params before storing
+      if (request.url) {
+        try {
+          const url = new URL(request.url, window.location.origin);
+          const sensitiveParams = ['token', 'key', 'secret', 'password', 'auth', 'api_key', 'apikey', 'access_token'];
+
+          for (const param of sensitiveParams) {
+            if (url.searchParams.has(param)) {
+              url.searchParams.set(param, '[REDACTED]');
+            }
+          }
+
+          request.url = url.toString();
+        } catch {
+          // URL parsing failed — keep original
+        }
+      }
+
       this._networkRequests.push(request);
     } catch (error) {
       console.error('Debug logger failed to capture network request:', error);
