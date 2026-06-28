@@ -56,7 +56,20 @@ async function sha1Hex(content: string | Uint8Array): Promise<string> {
 
 async function netlifyDeployAction({ request }: ActionFunctionArgs) {
   try {
-    const { siteId, files, token, chatId } = (await request.json()) as DeployRequestBody & { token: string };
+    /*
+     * Read the deploy token from the Authorization header to prevent
+     * token exposure in request body logs. Falls back to body for
+     * backwards compatibility with older client versions.
+     */
+    const authHeader = request.headers.get('Authorization') || '';
+    const headerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    const {
+      siteId,
+      files,
+      token: bodyToken,
+      chatId,
+    } = (await request.json()) as DeployRequestBody & { token?: string };
+    const token = headerToken || bodyToken;
 
     if (!token) {
       return json({ error: 'Not connected to Netlify' }, { status: 401 });

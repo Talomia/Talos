@@ -95,7 +95,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
       logger.debug(error);
 
       if (error instanceof Error && error.message?.includes('API key')) {
-        throw new Response('Invalid or missing API key', {
+        return new Response('Invalid or missing API key', {
           status: 401,
           statusText: 'Unauthorized',
         });
@@ -109,7 +109,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
           error.message?.includes('exceeds') ||
           error.message?.includes('maximum'))
       ) {
-        throw new Response(
+        return new Response(
           `Token limit error: ${error.message}. Try reducing your request size or using a model with higher token limits.`,
           {
             status: 400,
@@ -118,7 +118,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         );
       }
 
-      throw new Response(null, {
+      return new Response(null, {
         status: 500,
         statusText: 'Internal Server Error',
       });

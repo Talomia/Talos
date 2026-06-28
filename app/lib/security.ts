@@ -316,6 +316,7 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
     requireAuth?: boolean;
     rateLimit?: boolean;
     allowedMethods?: string[];
+    requireJsonContentType?: boolean;
   } = {},
 ) {
   return async (args: ActionFunctionArgs | LoaderFunctionArgs): Promise<Response> => {
@@ -329,6 +330,32 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
         status: 405,
         headers: createSecurityHeaders(),
       });
+    }
+
+    /*
+     * M18: Validate Content-Type on mutation requests.
+     * POST/PUT/PATCH should declare application/json when the handler
+     * parses the body with request.json(). Skip for GET/DELETE/OPTIONS
+     * which typically don't carry a JSON body, and for multipart/form-data
+     * uploads which legitimately use a different content type.
+     */
+    if (options.requireJsonContentType !== false && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
+      const contentType = request.headers.get('Content-Type') || '';
+
+      if (
+        contentType &&
+        !contentType.includes('application/json') &&
+        !contentType.includes('multipart/form-data') &&
+        !contentType.includes('application/octet-stream')
+      ) {
+        return new Response(JSON.stringify({ error: true, message: 'Content-Type must be application/json' }), {
+          status: 415,
+          headers: {
+            ...createSecurityHeaders(),
+            'Content-Type': 'application/json',
+          },
+        });
+      }
     }
 
     // Enforce authentication if required (checked BEFORE rate limiting)

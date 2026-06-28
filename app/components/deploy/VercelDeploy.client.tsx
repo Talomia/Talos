@@ -195,12 +195,12 @@ export function useVercelDeploy() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${vercelConn.token}`,
         },
         body: JSON.stringify({
           projectId: existingProjectId || undefined,
           files: fileContents,
           sourceFiles: allProjectFiles,
-          token: vercelConn.token,
           chatId: currentChatId,
         }),
       });

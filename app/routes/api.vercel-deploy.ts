@@ -257,9 +257,25 @@ interface DeployRequestBody {
 // Existing action function for POST requests
 async function vercelDeployAction({ request }: ActionFunctionArgs) {
   try {
-    const { projectId, files, sourceFiles, token, chatId, framework } = (await request.json()) as DeployRequestBody & {
-      token: string;
+    /*
+     * Read the deploy token from the Authorization header to prevent
+     * token exposure in request body logs. Falls back to body for
+     * backwards compatibility with older client versions.
+     */
+    const authHeader = request.headers.get('Authorization') || '';
+    const headerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    const {
+      projectId,
+      files,
+      sourceFiles,
+      token: bodyToken,
+      chatId,
+      framework,
+    } = (await request.json()) as DeployRequestBody & {
+      token?: string;
     };
+
+    const token = headerToken || bodyToken;
 
     if (!token) {
       return json({ error: 'Not connected to Vercel' }, { status: 401 });
