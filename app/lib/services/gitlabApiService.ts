@@ -118,10 +118,9 @@ export class GitLabApiService {
   }
 
   private get _headers() {
-    // Log token format for debugging
+    // Log token type for debugging (without exposing token content)
     logger.trace('GitLab API token info:', {
       tokenLength: this._token.length,
-      tokenPrefix: this._token.substring(0, 4) + '...',
       tokenType: this._token.startsWith('glpat-') ? 'personal-access-token' : 'unknown',
     });
 
@@ -197,8 +196,14 @@ export class GitLabApiService {
   }
 
   async getProjects(membership = true, minAccessLevel = 20, perPage = 50): Promise<GitLabProjectInfo[]> {
-    const tokenHash = btoa(this._token).substring(0, 8);
-    const cacheKey = `projects_${tokenHash}_${membership}_${minAccessLevel}`;
+    // Use a simple non-reversible hash for the cache key (NOT btoa which is reversible)
+    let hash = 0;
+
+    for (let i = 0; i < this._token.length; i++) {
+      hash = ((hash << 5) - hash + this._token.charCodeAt(i)) | 0;
+    }
+
+    const cacheKey = `projects_${hash.toString(36)}_${membership}_${minAccessLevel}`;
     const cached = gitlabCache.get<GitLabProjectInfo[]>(cacheKey);
 
     if (cached) {

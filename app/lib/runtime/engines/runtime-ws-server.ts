@@ -588,7 +588,7 @@ class Session {
 
     // Prevent directory traversal
     if (!resolved.startsWith(this.hostMountPath)) {
-      throw new Error(`Path traversal detected: ${containerPath}`);
+      throw new Error('Path traversal detected');
     }
 
     return resolved;
@@ -639,7 +639,8 @@ class Session {
 
   private async handleMkdir(params: Record<string, unknown>): Promise<void> {
     const dirPath = params.path as string;
-    const recursive = (params.recursive as boolean) ?? true;
+    const options = params.options as Record<string, unknown> | undefined;
+    const recursive = (options?.recursive as boolean) ?? (params.recursive as boolean) ?? true;
 
     if (!dirPath) {
       throw new Error('Missing required parameter: path');

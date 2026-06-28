@@ -74,17 +74,24 @@ export async function writeVault(data: VaultData, env?: Record<string, string>):
 
 /**
  * Reads API keys from the encrypted vault cookie, with fallback to legacy plaintext cookie.
- * This is the preferred async method — use this in all new code.
+ * Falls back ONLY when no vault cookie exists (not on decryption failure — that would
+ * allow a downgrade attack via a corrupted vault cookie + injected plaintext apiKeys cookie).
  */
 export async function getApiKeysFromVault(
   cookieHeader: string | null,
   env?: Record<string, string>,
 ): Promise<Record<string, string>> {
-  try {
-    const vault = await readVault(cookieHeader, env);
-    return vault.apiKeys;
-  } catch {
-    // Fallback to legacy plaintext cookie
-    return getApiKeysFromCookie(cookieHeader);
+  // Check if vault cookie exists before attempting decryption
+  if (cookieHeader) {
+    const cookies = parseCookies(cookieHeader);
+
+    if (cookies[COOKIE_NAME]) {
+      // Vault cookie exists — use it exclusively (no plaintext fallback)
+      const vault = await readVault(cookieHeader, env);
+      return vault.apiKeys;
+    }
   }
+
+  // No vault cookie — fall back to legacy plaintext cookie for migration
+  return getApiKeysFromCookie(cookieHeader);
 }

@@ -53,9 +53,33 @@ export function safeSetCookie(key: string, value: unknown): void {
 }
 
 /**
- * Get all localStorage items
- * @returns All localStorage items
+ * Keys that should never be included in settings exports because they
+ * may contain tokens, API keys, or other credentials.
  */
+const SENSITIVE_KEY_PATTERNS = [
+  'token',
+  'secret',
+  'password',
+  'apikey',
+  'api_key',
+  'api-key',
+  'credential',
+  'auth',
+  'session',
+  'supabase',
+  'github_connection',
+  'gitlab_connection',
+  'netlify_connection',
+  'vercel_connection',
+  'sb-',
+  'vault',
+];
+
+function isSensitiveKey(key: string): boolean {
+  const lower = key.toLowerCase();
+  return SENSITIVE_KEY_PATTERNS.some((pattern) => lower.includes(pattern));
+}
+
 export function getAllLocalStorage(): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
@@ -64,6 +88,12 @@ export function getAllLocalStorage(): Record<string, unknown> {
       const key = localStorage.key(i);
 
       if (key) {
+        // Skip keys that may contain credentials
+        if (isSensitiveKey(key)) {
+          result[key] = '[REDACTED]';
+          continue;
+        }
+
         try {
           const value = localStorage.getItem(key);
           result[key] = value ? JSON.parse(value) : null;

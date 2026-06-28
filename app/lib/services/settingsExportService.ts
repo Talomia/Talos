@@ -113,10 +113,27 @@ export async function exportSettings(): Promise<Record<string, unknown>> {
       // Chat snapshots (for chat history)
       chatSnapshots: getChatSnapshots(),
 
-      // Raw data (for debugging and complete backup)
+      /*
+       * Raw data (for debugging and complete backup).
+       * Sensitive cookies are redacted to prevent credential leakage.
+       */
       _raw: {
         localStorage: getAllLocalStorage(),
-        cookies: allCookies,
+        cookies: Object.fromEntries(
+          Object.entries(allCookies).map(([key, value]) => {
+            const lower = key.toLowerCase();
+            const isSensitive =
+              lower.includes('apikey') ||
+              lower.includes('api_key') ||
+              lower.includes('token') ||
+              lower.includes('secret') ||
+              lower.includes('vault') ||
+              lower.includes('auth') ||
+              lower.startsWith('sb-');
+
+            return [key, isSensitive ? '[REDACTED]' : value];
+          }),
+        ),
       },
 
       // Export metadata
