@@ -475,6 +475,19 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                   return true;
                 }
 
+                // Check for data stub comments (e.g., "// Add 7 more posts here")
+                const dataStubs = [
+                  ...content.matchAll(/\/\/\s*(?:Add|Include)\s+\d+\s+more/gi),
+                  ...content.matchAll(/\/\/\s*Array\s+of\s+\d+/gi),
+                ];
+
+                if (dataStubs.length > 0) {
+                  logger.info(
+                    `Incomplete response: ${dataStubs.length} data stub comments found, auto-continuing to populate data`,
+                  );
+                  return true;
+                }
+
                 return false;
               })();
 
