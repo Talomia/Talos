@@ -440,27 +440,69 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
             }
 
             if (finishReason !== 'length') {
-              dataStream.writeMessageAnnotation({
-                type: 'usage',
-                value: {
-                  completionTokens: cumulativeUsage.completionTokens,
-                  promptTokens: cumulativeUsage.promptTokens,
-                  totalTokens: cumulativeUsage.totalTokens,
-                },
-              });
-              dataStream.writeData({
-                type: 'progress',
-                label: 'response',
-                status: 'complete',
-                order: progressCounter++,
-                message: 'Done!',
-                icon: '\u270D\uFE0F',
-                completedAt: Date.now(),
-                duration: Date.now() - stepTimers.response,
-              } satisfies ProgressAnnotation);
-              await new Promise((resolve) => setTimeout(resolve, 0));
+              /*
+               * Even when the model stops naturally, check for incomplete responses.
+               * GPT-4o often generates project structure (App.tsx with routes/imports)
+               * but stops before creating the referenced page components or data files.
+               * Detect this and auto-continue if segments remain.
+               */
+              const isIncomplete = (() => {
+                if (continuationCount >= MAX_RESPONSE_SEGMENTS - 1) {
+                  return false; // No segments left
+                }
 
-              return;
+                // Extract files created in this response
+                const createdFiles = new Set(
+                  [...content.matchAll(/filePath="([^"]+)"/g)].map((m) => m[1].toLowerCase()),
+                );
+
+                // Extract file references from imports/routes that should exist
+                const importRefs = [
+                  ...content.matchAll(/from\s+['"]\.\/([^'"]+)['"]/g),
+                  ...content.matchAll(/import\s+.*?['"]\.\/([^'"]+)['"]/g),
+                ].map((m) => m[1].replace(/^\.\//, '').toLowerCase());
+
+                // Check for referenced files that weren't created
+                const missingFiles = importRefs.filter((ref) => {
+                  const variants = [ref, `${ref}.tsx`, `${ref}.ts`, `${ref}/index.tsx`, `${ref}/index.ts`];
+                  return !variants.some((v) => [...createdFiles].some((f) => f.toLowerCase().endsWith(v)));
+                });
+
+                if (missingFiles.length >= 2) {
+                  logger.info(
+                    `Incomplete response: ${missingFiles.length} referenced files not created: ${missingFiles.slice(0, 5).join(', ')}`,
+                  );
+                  return true;
+                }
+
+                return false;
+              })();
+
+              if (!isIncomplete) {
+                dataStream.writeMessageAnnotation({
+                  type: 'usage',
+                  value: {
+                    completionTokens: cumulativeUsage.completionTokens,
+                    promptTokens: cumulativeUsage.promptTokens,
+                    totalTokens: cumulativeUsage.totalTokens,
+                  },
+                });
+                dataStream.writeData({
+                  type: 'progress',
+                  label: 'response',
+                  status: 'complete',
+                  order: progressCounter++,
+                  message: 'Done!',
+                  icon: '\u270D\uFE0F',
+                  completedAt: Date.now(),
+                  duration: Date.now() - stepTimers.response,
+                } satisfies ProgressAnnotation);
+                await new Promise((resolve) => setTimeout(resolve, 0));
+
+                return;
+              }
+
+              logger.info('Auto-continuing: response has missing file references');
             }
 
             continuationCount++;

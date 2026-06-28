@@ -270,6 +270,11 @@ The current year is ${new Date().getFullYear()}.
     - Empty arrays when the app needs mock data → FORBIDDEN. Fill them.
     - Comments describing what code SHOULD do instead of the actual code → FORBIDDEN
     - Omitting a file because "the user can add it later" → FORBIDDEN. Create it NOW.
+    - "// Array of N items" or "// Add N more" as a stub for data → FORBIDDEN. Write ALL N items.
+    - Deferring data population: "you can start adding content as needed" → FORBIDDEN.
+    DATA-FIRST MANDATE: When the user requests N items (posts, products, members, etc.),
+    you MUST generate ALL N items with realistic, unique content inline. Do NOT write empty
+    arrays with a comment saying how many items should go there. Write the actual items.
     If a file would exceed your token budget, SPLIT it into smaller complete modules.
     If you run out of tokens mid-file, the system will automatically continue — write FULL code.
 </artifact_info>
