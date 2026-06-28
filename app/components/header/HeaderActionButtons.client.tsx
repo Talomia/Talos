@@ -35,7 +35,7 @@ export function HeaderActionButtons({ chatStarted }: HeaderActionButtonsProps) {
       {shouldShowButtons && (
         <div className="flex border border-ui-borderColor rounded-md overflow-hidden text-sm">
           <button
-            onClick={() => window.open('https://github.com/Talomia/Talos/issues/new', '_blank')}
+            onClick={() => window.open('https://github.com/Talomia/Talos/issues/new', '_blank', 'noopener,noreferrer')}
             className="rounded-l-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-ui-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-ui-button-primary-backgroundHover outline-accent-500 flex gap-1.5"
             title="Report Bug"
           >

@@ -99,7 +99,7 @@ export const PreviewToolbar = memo(
 
     const openInNewTab = () => {
       if (activePreview?.baseUrl) {
-        window.open(activePreview?.baseUrl, '_blank');
+        window.open(activePreview?.baseUrl, '_blank', 'noopener,noreferrer');
       }
     };
 

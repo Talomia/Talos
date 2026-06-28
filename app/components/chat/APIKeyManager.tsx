@@ -168,7 +168,7 @@ export const APIKeyManager: React.FC<APIKeyManagerProps> = ({ provider, apiKey, 
             }
             {provider?.getApiKeyLink && !apiKey && (
               <IconButton
-                onClick={() => window.open(provider?.getApiKeyLink)}
+                onClick={() => window.open(provider?.getApiKeyLink, '_blank', 'noopener,noreferrer')}
                 title="Get API Key"
                 className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-500 flex items-center gap-2"
               >

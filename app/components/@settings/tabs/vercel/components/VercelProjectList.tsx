@@ -61,7 +61,9 @@ export function VercelProjectList({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.open(`https://vercel.com/dashboard/${project.id}`, '_blank')}
+                onClick={() =>
+                  window.open(`https://vercel.com/dashboard/${project.id}`, '_blank', 'noopener,noreferrer')
+                }
                 className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
               >
                 <div className="i-ph:arrow-square-out w-3 h-3" />

@@ -48,7 +48,7 @@ const NotificationsTab = () => {
       updateUrl,
       component: 'notifications',
     });
-    window.open(updateUrl, '_blank');
+    window.open(updateUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleFilterChange = (newFilter: FilterType) => {
