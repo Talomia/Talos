@@ -59,9 +59,9 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
       case 'debug':
         return {
           icon: 'i-ph:bug',
-          color: 'text-gray-500 dark:text-gray-400',
+          color: 'text-ui-textTertiary',
           bg: 'hover:bg-gray-500/10 dark:hover:bg-gray-500/20',
-          badge: 'text-gray-500 bg-gray-50 dark:bg-gray-500/10',
+          badge: 'text-ui-textTertiary bg-ui-background-depth-2 dark:bg-gray-500/10',
         };
       default:
         return {
@@ -79,7 +79,7 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
 
       return (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-ui-textTertiary">
             <span>Model: {providerDetails.model}</span>
             <span>•</span>
             <span>Tokens: {providerDetails.totalTokens}</span>
@@ -88,16 +88,16 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
           </div>
           {providerDetails.prompt && (
             <div className="flex flex-col gap-1">
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Prompt:</div>
-              <pre className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded p-2 whitespace-pre-wrap">
+              <div className="text-xs font-medium text-ui-textSecondary">Prompt:</div>
+              <pre className="text-xs text-ui-textSecondary bg-ui-background-depth-2 rounded p-2 whitespace-pre-wrap">
                 {providerDetails.prompt}
               </pre>
             </div>
           )}
           {providerDetails.response && (
             <div className="flex flex-col gap-1">
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Response:</div>
-              <pre className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded p-2 whitespace-pre-wrap">
+              <div className="text-xs font-medium text-ui-textSecondary">Response:</div>
+              <pre className="text-xs text-ui-textSecondary bg-ui-background-depth-2 rounded p-2 whitespace-pre-wrap">
                 {providerDetails.response}
               </pre>
             </div>
@@ -111,7 +111,7 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
 
       return (
         <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-ui-textTertiary">
             <span className={apiDetails.method === 'GET' ? 'text-green-500' : 'text-blue-500'}>
               {String(apiDetails.method)}
             </span>
@@ -120,19 +120,19 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
             <span>•</span>
             <span>Duration: {String(apiDetails.duration)}ms</span>
           </div>
-          <div className="text-xs text-gray-600 dark:text-gray-400 break-all">{String(apiDetails.url)}</div>
+          <div className="text-xs text-ui-textSecondary break-all">{String(apiDetails.url)}</div>
           {apiDetails.request && (
             <div className="flex flex-col gap-1">
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Request:</div>
-              <pre className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded p-2 whitespace-pre-wrap">
+              <div className="text-xs font-medium text-ui-textSecondary">Request:</div>
+              <pre className="text-xs text-ui-textSecondary bg-ui-background-depth-2 rounded p-2 whitespace-pre-wrap">
                 {JSON.stringify(apiDetails.request, null, 2)}
               </pre>
             </div>
           )}
           {apiDetails.response && (
             <div className="flex flex-col gap-1">
-              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Response:</div>
-              <pre className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded p-2 whitespace-pre-wrap">
+              <div className="text-xs font-medium text-ui-textSecondary">Response:</div>
+              <pre className="text-xs text-ui-textSecondary bg-ui-background-depth-2 rounded p-2 whitespace-pre-wrap">
                 {JSON.stringify(apiDetails.response, null, 2)}
               </pre>
             </div>
@@ -150,7 +150,7 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
     }
 
     return (
-      <pre className="text-xs text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-800/50 rounded whitespace-pre-wrap">
+      <pre className="text-xs text-ui-textSecondary bg-ui-background-depth-2 rounded whitespace-pre-wrap">
         {JSON.stringify(details, null, 2)}
       </pre>
     );
@@ -173,12 +173,12 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
         <div className="flex items-start gap-3">
           <span className={classNames('text-lg', style.icon, style.color)} />
           <div className="flex flex-col gap-1">
-            <div className="text-sm font-medium text-gray-900 dark:text-white">{log.message}</div>
+            <div className="text-sm font-medium text-ui-textPrimary">{log.message}</div>
             {log.details && (
               <>
                 <button
                   onClick={() => setLocalExpanded(!localExpanded)}
-                  className="text-xs text-gray-500 dark:text-gray-400 hover:text-purple-500 dark:hover:text-purple-400 transition-colors"
+                  className="text-xs text-ui-textTertiary hover:text-purple-500 dark:hover:text-purple-400 transition-colors"
                 >
                   {localExpanded ? 'Hide' : 'Show'} Details
                 </button>
@@ -190,14 +190,14 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
                 {log.level}
               </div>
               {log.category && (
-                <div className="px-2 py-0.5 rounded-full text-xs bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                <div className="px-2 py-0.5 rounded-full text-xs bg-ui-background-depth-3 text-ui-textTertiary">
                   {log.category}
                 </div>
               )}
             </div>
           </div>
         </div>
-        {showTimestamp && <time className="shrink-0 text-xs text-gray-500 dark:text-gray-400">{timestamp}</time>}
+        {showTimestamp && <time className="shrink-0 text-xs text-ui-textTertiary">{timestamp}</time>}
       </div>
     </motion.div>
   );

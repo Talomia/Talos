@@ -39,32 +39,28 @@ export function CodeBlock({
   return (
     <div
       className={classNames(
-        'rounded-lg overflow-hidden border border-ui-borderColor dark:border-ui-borderColor-dark',
+        'rounded-lg overflow-hidden border border-ui-borderColor',
         'bg-ui-background-depth-2 dark:bg-ui-background-depth-3',
         className,
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-ui-background-depth-3 dark:bg-ui-background-depth-4 border-b border-ui-borderColor dark:border-ui-borderColor-dark">
+      <div className="flex items-center justify-between px-4 py-2 bg-ui-background-depth-3 dark:bg-ui-background-depth-4 border-b border-ui-borderColor">
         <div className="flex items-center gap-2">
           {filename && (
             <>
               <FileIcon filename={filename} size="sm" />
-              <span className="text-xs font-medium text-ui-textSecondary dark:text-ui-textSecondary-dark">
-                {filename}
-              </span>
+              <span className="text-xs font-medium text-ui-textSecondary">{filename}</span>
             </>
           )}
           {language && !filename && (
-            <span className="text-xs font-medium text-ui-textSecondary dark:text-ui-textSecondary-dark uppercase">
-              {language}
-            </span>
+            <span className="text-xs font-medium text-ui-textSecondary uppercase">{language}</span>
           )}
         </div>
         <Tooltip content={copied ? 'Copied!' : 'Copy code'}>
           <motion.button
             onClick={handleCopy}
-            className="p-1.5 rounded-md text-ui-textTertiary hover:text-ui-textSecondary dark:text-ui-textTertiary-dark dark:hover:text-ui-textSecondary-dark hover:bg-ui-background-depth-2 dark:hover:bg-ui-background-depth-3 transition-colors"
+            className="p-1.5 rounded-md text-ui-textTertiary hover:text-ui-textSecondary hover:bg-ui-background-depth-2 dark:hover:bg-ui-background-depth-3 transition-colors"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -86,13 +82,11 @@ export function CodeBlock({
                 )}
               >
                 {showLineNumbers && (
-                  <td className="py-1 pl-4 pr-2 text-right select-none text-ui-textTertiary dark:text-ui-textTertiary-dark border-r border-ui-borderColor dark:border-ui-borderColor-dark">
+                  <td className="py-1 pl-4 pr-2 text-right select-none text-ui-textTertiary border-r border-ui-borderColor">
                     <span className="inline-block min-w-[1.5rem] text-xs">{index + 1}</span>
                   </td>
                 )}
-                <td className="py-1 pl-4 pr-4 text-ui-textPrimary dark:text-ui-textPrimary-dark whitespace-pre">
-                  {line || ' '}
-                </td>
+                <td className="py-1 pl-4 pr-4 text-ui-textPrimary whitespace-pre">{line || ' '}</td>
               </tr>
             ))}
           </tbody>

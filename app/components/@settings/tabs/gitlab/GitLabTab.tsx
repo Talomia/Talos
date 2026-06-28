@@ -130,7 +130,7 @@ export default function GitLabTab() {
       >
         <div className="flex items-center gap-2">
           <GitLabLogo />
-          <h2 className="text-lg font-medium text-ui-textPrimary dark:text-ui-textPrimary">GitLab Integration</h2>
+          <h2 className="text-lg font-medium text-ui-textPrimary">GitLab Integration</h2>
         </div>
         <div className="flex items-center gap-2">
           {connection?.rateLimit && (
@@ -144,7 +144,7 @@ export default function GitLabTab() {
         </div>
       </motion.div>
 
-      <p className="text-sm text-ui-textSecondary dark:text-ui-textSecondary">
+      <p className="text-sm text-ui-textSecondary">
         Manage your GitLab integration with advanced repository features and comprehensive statistics
       </p>
 

@@ -187,7 +187,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
     }
 
     if (['md', 'markdown'].includes(extension)) {
-      return 'text-gray-500';
+      return 'text-ui-textTertiary';
     }
 
     if (['py', 'pyc', 'pyd', 'pyo'].includes(extension)) {
@@ -244,11 +244,11 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
     }
 
     if (['toml'].includes(extension)) {
-      return 'text-gray-500';
+      return 'text-ui-textTertiary';
     }
 
     if (['ini', 'conf', 'config'].includes(extension)) {
-      return 'text-gray-500';
+      return 'text-ui-textTertiary';
     }
 
     if (['env', 'env.local', 'env.development', 'env.production'].includes(extension)) {
@@ -273,7 +273,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
     }
 
     if (['txt'].includes(extension)) {
-      return 'text-gray-500';
+      return 'text-ui-textTertiary';
     }
 
     // Image files
@@ -309,7 +309,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
     }
 
     if (filename === 'LICENSE') {
-      return 'text-gray-500';
+      return 'text-ui-textTertiary';
     }
 
     if (filename === '.gitignore') {
@@ -321,7 +321,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
     }
 
     // Default
-    return 'text-gray-400';
+    return 'text-ui-textTertiary';
   };
 
   const getSizeClass = (size: 'sm' | 'md' | 'lg'): string => {

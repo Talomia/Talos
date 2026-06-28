@@ -64,7 +64,7 @@ export const TabTile: React.FC<TabTileProps> = ({
                     'rounded-xl',
                     'bg-ui-background-depth-3',
                     'ring-1 ring-ui-borderColor',
-                    'group-hover:bg-purple-100 dark:group-hover:bg-gray-700/80',
+                    'group-hover:bg-purple-100 dark:group-hover:bg-ui-background-depth-3',
                     'group-hover:ring-purple-200 dark:group-hover:ring-purple-800/30',
                     'transition-all duration-100 ease-out',
                     isActive ? 'bg-purple-500/10 dark:bg-purple-500/10 ring-purple-500/30 dark:ring-purple-500/20' : '',

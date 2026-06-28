@@ -17,7 +17,7 @@ const badgeVariants = cva(
         danger: 'bg-red-500/10 text-red-600 dark:text-red-400',
         info: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
         subtle:
-          'border border-ui-borderColor/30 dark:border-ui-borderColor-dark/30 bg-white/50 dark:bg-ui-background-depth-4/50 backdrop-blur-sm text-ui-textSecondary dark:text-ui-textSecondary-dark',
+          'border border-ui-borderColor/30 bg-ui-background-depth-1/50 dark:bg-ui-background-depth-4/50 backdrop-blur-sm text-ui-textSecondary',
       },
       size: {
         default: 'rounded-full px-2.5 py-0.5 text-xs font-semibold',

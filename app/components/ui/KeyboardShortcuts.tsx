@@ -91,13 +91,13 @@ export function KeyboardShortcuts() {
     <RadixDialog.Root open={open} onOpenChange={setOpen}>
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-max bg-black/50 backdrop-blur-sm animate-fade-in" />
-        <RadixDialog.Content className="fixed top-[15vh] left-1/2 -translate-x-1/2 z-max w-full max-w-[480px] bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden animate-scale-in">
+        <RadixDialog.Content className="fixed top-[15vh] left-1/2 -translate-x-1/2 z-max w-full max-w-[480px] bg-ui-background-depth-1 rounded-xl border border-ui-borderColor shadow-2xl overflow-hidden animate-scale-in">
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-ui-borderColor">
             <RadixDialog.Title className="text-base font-semibold text-ui-textPrimary">
               Keyboard Shortcuts
             </RadixDialog.Title>
-            <RadixDialog.Close className="p-1 rounded-md text-ui-textTertiary hover:text-ui-textPrimary hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <RadixDialog.Close className="p-1 rounded-md text-ui-textTertiary hover:text-ui-textPrimary hover:bg-ui-background-depth-3 transition-colors">
               <span className="i-ph:x text-lg" />
             </RadixDialog.Close>
           </div>
@@ -110,7 +110,7 @@ export function KeyboardShortcuts() {
           <div className="px-5 py-4 max-h-[60vh] overflow-y-auto space-y-5">
             {groups.map((group) => (
               <div key={group.title}>
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-ui-textTertiary mb-2">
                   {group.title}
                 </h3>
                 <div className="space-y-1.5">
@@ -121,7 +121,7 @@ export function KeyboardShortcuts() {
                         {shortcut.keys.map((key) => (
                           <kbd
                             key={key}
-                            className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                            className="inline-flex items-center justify-center min-w-[24px] px-1.5 py-0.5 rounded text-[11px] font-mono font-medium text-ui-textSecondary bg-ui-background-depth-3 border border-ui-borderColor"
                           >
                             {key}
                           </kbd>
@@ -135,9 +135,9 @@ export function KeyboardShortcuts() {
           </div>
 
           {/* Footer */}
-          <div className="px-5 py-3 border-t border-gray-100 dark:border-gray-800 text-[11px] text-gray-400 dark:text-gray-500 text-center">
+          <div className="px-5 py-3 border-t border-ui-borderColor text-[11px] text-ui-textTertiary text-center">
             Press{' '}
-            <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-mono text-[10px]">
+            <kbd className="px-1 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor font-mono text-[10px]">
               ?
             </kbd>{' '}
             anywhere to toggle this panel

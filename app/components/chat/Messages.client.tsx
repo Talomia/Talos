@@ -118,11 +118,11 @@ export const Messages = memo(
                   {/* Time separator for gaps > 5 minutes */}
                   {showSeparator && message.createdAt && (
                     <div className="flex items-center gap-3 my-4 px-2">
-                      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider shrink-0">
+                      <div className="flex-1 h-px bg-ui-background-depth-3" />
+                      <span className="text-[10px] text-ui-textTertiary font-medium uppercase tracking-wider shrink-0">
                         {formatTimestamp(message.createdAt)}
                       </span>
-                      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-800" />
+                      <div className="flex-1 h-px bg-ui-background-depth-3" />
                     </div>
                   )}
                   <div
@@ -163,7 +163,7 @@ export const Messages = memo(
                     {/* Timestamp — visible on hover */}
                     {message.createdAt && (
                       <div className="absolute -right-1 top-3 opacity-0 group-hover/msg:opacity-100 transition-opacity">
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                        <span className="text-[10px] text-ui-textTertiary whitespace-nowrap">
                           {format(new Date(message.createdAt), 'h:mm a')}
                         </span>
                       </div>
@@ -183,7 +183,7 @@ export const Messages = memo(
               <span className="text-sm font-medium text-ui-textPrimary">Talos</span>
             </div>
             {/* Typing bubble */}
-            <div className="ml-8 flex items-center gap-1.5 px-4 py-3 rounded-lg bg-gray-100/60 dark:bg-gray-800/40 w-fit">
+            <div className="ml-8 flex items-center gap-1.5 px-4 py-3 rounded-lg bg-ui-background-depth-3/50 w-fit">
               <span
                 className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-400"
                 style={{ animation: 'typing-bounce 1.4s ease-in-out infinite', animationDelay: '0ms' }}

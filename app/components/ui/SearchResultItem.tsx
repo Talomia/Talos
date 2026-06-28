@@ -39,7 +39,7 @@ export function SearchResultItem({
   return (
     <motion.div
       className={classNames(
-        'p-5 rounded-xl border border-ui-borderColor dark:border-ui-borderColor-dark hover:border-purple-500/40 transition-all duration-300 shadow-sm hover:shadow-md bg-ui-background-depth-1/50 dark:bg-ui-background-depth-3/50',
+        'p-5 rounded-xl border border-ui-borderColor hover:border-purple-500/40 transition-all duration-300 shadow-sm hover:shadow-md bg-ui-background-depth-1/50 dark:bg-ui-background-depth-3/50',
         onClick ? 'cursor-pointer' : '',
         className,
       )}
@@ -67,12 +67,8 @@ export function SearchResultItem({
             </div>
           )}
           <div>
-            <h3 className="font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark text-base">{title}</h3>
-            {subtitle && (
-              <p className="text-xs text-ui-textTertiary dark:text-ui-textTertiary-dark flex items-center gap-1">
-                {subtitle}
-              </p>
-            )}
+            <h3 className="font-medium text-ui-textPrimary text-base">{title}</h3>
+            {subtitle && <p className="text-xs text-ui-textTertiary flex items-center gap-1">{subtitle}</p>}
           </div>
         </div>
 
@@ -92,8 +88,8 @@ export function SearchResultItem({
       </div>
 
       {description && (
-        <div className="mb-4 bg-ui-background-depth-1/50 dark:bg-ui-background-depth-4/50 backdrop-blur-sm p-3 rounded-lg border border-ui-borderColor/30 dark:border-ui-borderColor-dark/30">
-          <p className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark line-clamp-2">{description}</p>
+        <div className="mb-4 bg-ui-background-depth-1/50 dark:bg-ui-background-depth-4/50 backdrop-blur-sm p-3 rounded-lg border border-ui-borderColor/30">
+          <p className="text-sm text-ui-textSecondary line-clamp-2">{description}</p>
         </div>
       )}
 
@@ -108,16 +104,14 @@ export function SearchResultItem({
       )}
 
       {metadata && metadata.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 text-xs text-ui-textTertiary dark:text-ui-textTertiary-dark">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-ui-textTertiary">
           {metadata.map((item, index) => (
             <div key={index} className="flex items-center gap-1">
               {item.icon && <span className={classNames(item.icon, 'w-3.5 h-3.5')} />}
               <span>
                 {item.label}
                 {item.value !== undefined && ': '}
-                {item.value !== undefined && (
-                  <span className="text-ui-textSecondary dark:text-ui-textSecondary-dark">{item.value}</span>
-                )}
+                {item.value !== undefined && <span className="text-ui-textSecondary">{item.value}</span>}
               </span>
             </div>
           ))}

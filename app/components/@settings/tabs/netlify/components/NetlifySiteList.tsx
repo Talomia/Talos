@@ -31,10 +31,10 @@ export default function NetlifySiteList({
   }
 
   return (
-    <div className="bg-ui-background dark:bg-ui-background-depth-1 border border-ui-borderColor dark:border-ui-borderColor rounded-lg p-4">
+    <div className="bg-ui-background-depth-1 border border-ui-borderColor rounded-lg p-4">
       <div className="flex items-center justify-between mb-4">
-        <h4 className="text-sm font-medium flex items-center gap-2 text-ui-textPrimary dark:text-ui-textPrimary">
-          <div className="i-ph:buildings h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
+        <h4 className="text-sm font-medium flex items-center gap-2 text-ui-textPrimary">
+          <div className="i-ph:buildings h-4 w-4 text-ui-item-contentAccent" />
           Your Sites
         </h4>
         <Button
@@ -42,13 +42,12 @@ export default function NetlifySiteList({
           size="sm"
           onClick={onRefresh}
           disabled={fetchingStats}
-          className="flex items-center gap-2 text-ui-textPrimary dark:text-ui-textPrimary hover:bg-ui-item-backgroundActive/10"
+          className="flex items-center gap-2 text-ui-textPrimary hover:bg-ui-item-backgroundActive/10"
         >
           <div
-            className={classNames(
-              'i-ph:arrows-clockwise h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent',
-              { 'animate-spin': fetchingStats },
-            )}
+            className={classNames('i-ph:arrows-clockwise h-4 w-4 text-ui-item-contentAccent', {
+              'animate-spin': fetchingStats,
+            })}
           />
           {fetchingStats ? 'Refreshing...' : 'Refresh'}
         </Button>
@@ -58,7 +57,7 @@ export default function NetlifySiteList({
           <div
             key={site.id}
             className={classNames(
-              'bg-ui-background dark:bg-ui-background-depth-1 border rounded-lg p-4 transition-all',
+              'bg-ui-background-depth-1 border rounded-lg p-4 transition-all',
               activeSiteIndex === index
                 ? 'border-ui-item-contentAccent bg-ui-item-backgroundActive/10'
                 : 'border-ui-borderColor hover:border-ui-borderColorActive/70',
@@ -69,22 +68,20 @@ export default function NetlifySiteList({
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="i-ph:cloud h-5 w-5 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
-                <span className="font-medium text-ui-textPrimary dark:text-ui-textPrimary">{site.name}</span>
+                <div className="i-ph:cloud h-5 w-5 text-ui-item-contentAccent" />
+                <span className="font-medium text-ui-textPrimary">{site.name}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Badge
                   variant={site.published_deploy?.state === 'ready' ? 'default' : 'destructive'}
-                  className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
+                  className="flex items-center gap-1 text-ui-textPrimary"
                 >
                   {site.published_deploy?.state === 'ready' ? (
                     <div className="i-ph:check-circle h-4 w-4 text-green-500" />
                   ) : (
                     <div className="i-ph:x-circle h-4 w-4 text-red-500" />
                   )}
-                  <span className="text-ui-textPrimary dark:text-ui-textPrimary">
-                    {site.published_deploy?.state || 'Unknown'}
-                  </span>
+                  <span className="text-ui-textPrimary">{site.published_deploy?.state || 'Unknown'}</span>
                 </Badge>
               </div>
             </div>
@@ -97,7 +94,7 @@ export default function NetlifySiteList({
                 className="text-sm flex items-center gap-1 transition-colors text-ui-link-text hover:text-ui-link-textHover dark:text-white dark:hover:text-ui-link-textHover"
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="i-ph:cloud h-3 w-3 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
+                <div className="i-ph:cloud h-3 w-3 text-ui-item-contentAccent" />
                 <span className="underline decoration-1 underline-offset-2">{site.ssl_url || site.url}</span>
               </a>
             </div>
@@ -125,14 +122,9 @@ export default function NetlifySiteList({
                           onActionLoadingChange(false);
                         }}
                         disabled={isActionLoading}
-                        className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
+                        className="flex items-center gap-1 text-ui-textPrimary"
                       >
-                        <div
-                          className={classNames(
-                            action.icon,
-                            'h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent',
-                          )}
-                        />
+                        <div className={classNames(action.icon, 'h-4 w-4 text-ui-item-contentAccent')} />
                         {action.name}
                       </Button>
                     ))}
@@ -141,17 +133,15 @@ export default function NetlifySiteList({
                 {site.published_deploy && (
                   <div className="mt-3 text-sm">
                     <div className="flex items-center gap-1">
-                      <div className="i-ph:clock h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
-                      <span className="text-ui-textSecondary dark:text-ui-textSecondary">
+                      <div className="i-ph:clock h-4 w-4 text-ui-item-contentAccent" />
+                      <span className="text-ui-textSecondary">
                         Published {formatDistanceToNow(new Date(site.published_deploy.published_at))} ago
                       </span>
                     </div>
                     {site.published_deploy.branch && (
                       <div className="flex items-center gap-1 mt-1">
-                        <div className="i-ph:brackets-curly h-4 w-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
-                        <span className="text-ui-textSecondary dark:text-ui-textSecondary">
-                          Branch: {site.published_deploy.branch}
-                        </span>
+                        <div className="i-ph:brackets-curly h-4 w-4 text-ui-item-contentAccent" />
+                        <span className="text-ui-textSecondary">Branch: {site.published_deploy.branch}</span>
                       </div>
                     )}
                   </div>

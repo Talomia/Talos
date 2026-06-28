@@ -139,7 +139,7 @@ export function SupabaseProjectList({
                                 ? 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
                                 : project.status === 'INACTIVE'
                                   ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-                                  : 'bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400',
+                                  : 'bg-ui-background-depth-3 text-ui-textPrimary',
                           )}
                         >
                           <div

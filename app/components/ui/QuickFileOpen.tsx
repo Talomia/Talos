@@ -152,7 +152,7 @@ export function QuickFileOpen() {
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-max bg-black/50 backdrop-blur-sm" />
         <RadixDialog.Content
-          className="fixed top-[12vh] left-1/2 -translate-x-1/2 z-max w-full max-w-[520px] bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden"
+          className="fixed top-[12vh] left-1/2 -translate-x-1/2 z-max w-full max-w-[520px] bg-ui-background-depth-1 rounded-xl border border-ui-borderColor shadow-2xl overflow-hidden"
           onOpenAutoFocus={(e) => {
             e.preventDefault();
             inputRef.current?.focus();
@@ -164,8 +164,8 @@ export function QuickFileOpen() {
           </RadixDialog.Description>
 
           {/* Search input */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100 dark:border-gray-800">
-            <span className="i-ph:file-magnifying-glass text-gray-400 text-lg shrink-0" />
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-ui-borderColor">
+            <span className="i-ph:file-magnifying-glass text-ui-textTertiary text-lg shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -173,11 +173,11 @@ export function QuickFileOpen() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Search files by name..."
-              className="flex-1 bg-transparent text-sm text-ui-textPrimary placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+              className="flex-1 bg-transparent text-sm text-ui-textPrimary placeholder-ui-textTertiary outline-none"
               autoComplete="off"
               spellCheck={false}
             />
-            <kbd className="text-[10px] font-mono text-gray-400 dark:text-gray-500 px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <kbd className="text-[10px] font-mono text-ui-textTertiary px-1.5 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor">
               ⌘P
             </kbd>
           </div>
@@ -185,7 +185,7 @@ export function QuickFileOpen() {
           {/* Results */}
           <div ref={listRef} className="max-h-[40vh] overflow-y-auto py-1" role="listbox">
             {filteredFiles.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-ui-textTertiary">
                 {filePaths.length === 0 ? 'No files in workbench' : 'No matching files'}
               </div>
             ) : (
@@ -201,16 +201,14 @@ export function QuickFileOpen() {
                     className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors ${
                       index === selectedIndex
                         ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300'
-                        : 'text-ui-textPrimary hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                        : 'text-ui-textPrimary hover:bg-ui-background-depth-2'
                     }`}
                     onClick={() => selectFile(path)}
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
                     <span className={`${getFileIcon(path)} text-base shrink-0 opacity-60`} />
                     <span className="truncate font-medium">{fileName}</span>
-                    {dirPath && (
-                      <span className="truncate text-xs text-gray-400 dark:text-gray-500 ml-auto">{dirPath}</span>
-                    )}
+                    {dirPath && <span className="truncate text-xs text-ui-textTertiary ml-auto">{dirPath}</span>}
                   </button>
                 );
               })
@@ -218,21 +216,21 @@ export function QuickFileOpen() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-100 dark:border-gray-800 text-[11px] text-gray-400 dark:text-gray-500">
+          <div className="flex items-center gap-4 px-4 py-2 border-t border-ui-borderColor text-[11px] text-ui-textTertiary">
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-mono">
+              <kbd className="px-1 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor font-mono">
                 ↑↓
               </kbd>
               navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-mono">
+              <kbd className="px-1 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor font-mono">
                 ↵
               </kbd>
               open
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-mono">
+              <kbd className="px-1 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor font-mono">
                 esc
               </kbd>
               close

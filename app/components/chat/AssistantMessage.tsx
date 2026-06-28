@@ -245,7 +245,7 @@ export const AssistantMessage = memo(
               {content}
             </Markdown>
             {collapsed && (
-              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white dark:from-gray-950 to-transparent pointer-events-none" />
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-ui-background-depth-1 to-transparent pointer-events-none" />
             )}
           </div>
           {collapsed && (
@@ -276,7 +276,7 @@ export const AssistantMessage = memo(
                     className={`p-1 rounded transition-colors ${
                       copied
                         ? 'text-green-500'
-                        : 'text-ui-textTertiary hover:text-ui-textPrimary hover:bg-gray-100 dark:hover:bg-gray-800/50'
+                        : 'text-ui-textTertiary hover:text-ui-textPrimary hover:bg-ui-background-depth-3'
                     }`}
                     aria-label="Copy message"
                   >
@@ -287,7 +287,7 @@ export const AssistantMessage = memo(
                   <WithTooltip tooltip="Revert to this message">
                     <button
                       onClick={() => onRewind(messageId)}
-                      className="p-1 rounded text-ui-textTertiary hover:text-ui-textPrimary hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                      className="p-1 rounded text-ui-textTertiary hover:text-ui-textPrimary hover:bg-ui-background-depth-3 transition-colors"
                       aria-label="Revert to this message"
                     >
                       <div className="i-ph:arrow-u-up-left text-lg" />
@@ -298,7 +298,7 @@ export const AssistantMessage = memo(
                   <WithTooltip tooltip="Fork chat from this message">
                     <button
                       onClick={() => onFork(messageId)}
-                      className="p-1 rounded text-ui-textTertiary hover:text-ui-textPrimary hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                      className="p-1 rounded text-ui-textTertiary hover:text-ui-textPrimary hover:bg-ui-background-depth-3 transition-colors"
                       aria-label="Fork chat from this message"
                     >
                       <div className="i-ph:git-fork text-lg" />
@@ -312,7 +312,7 @@ export const AssistantMessage = memo(
                 <WithTooltip tooltip={collapsed ? 'Expand message' : 'Collapse message'}>
                   <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="p-1 rounded text-ui-textTertiary hover:text-ui-textPrimary hover:bg-gray-100 dark:hover:bg-gray-800/50 transition-colors"
+                    className="p-1 rounded text-ui-textTertiary hover:text-ui-textPrimary hover:bg-ui-background-depth-3 transition-colors"
                     aria-label={collapsed ? 'Expand message' : 'Collapse message'}
                   >
                     <div className={collapsed ? 'i-ph:caret-down text-lg' : 'i-ph:caret-up text-lg'} />
@@ -326,7 +326,7 @@ export const AssistantMessage = memo(
                   <WithTooltip tooltip={feedback === 'up' ? 'Remove feedback' : 'Good response'}>
                     <button
                       onClick={() => handleFeedback('up')}
-                      className={`p-1 rounded transition-colors ${feedback === 'up' ? 'text-green-500' : 'text-ui-textTertiary hover:text-green-500 hover:bg-gray-100 dark:hover:bg-gray-800/50'}`}
+                      className={`p-1 rounded transition-colors ${feedback === 'up' ? 'text-green-500' : 'text-ui-textTertiary hover:text-green-500 hover:bg-ui-background-depth-3'}`}
                       aria-label="Good response"
                     >
                       <div className={feedback === 'up' ? 'i-ph:thumbs-up-fill text-lg' : 'i-ph:thumbs-up text-lg'} />
@@ -335,7 +335,7 @@ export const AssistantMessage = memo(
                   <WithTooltip tooltip={feedback === 'down' ? 'Remove feedback' : 'Poor response'}>
                     <button
                       onClick={() => handleFeedback('down')}
-                      className={`p-1 rounded transition-colors ${feedback === 'down' ? 'text-red-500' : 'text-ui-textTertiary hover:text-red-500 hover:bg-gray-100 dark:hover:bg-gray-800/50'}`}
+                      className={`p-1 rounded transition-colors ${feedback === 'down' ? 'text-red-500' : 'text-ui-textTertiary hover:text-red-500 hover:bg-ui-background-depth-3'}`}
                       aria-label="Poor response"
                     >
                       <div
@@ -351,7 +351,7 @@ export const AssistantMessage = memo(
                 <WithTooltip
                   tooltip={`Prompt: ${usage.promptTokens.toLocaleString()} · Completion: ${usage.completionTokens.toLocaleString()}`}
                 >
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800/60 text-[11px] text-ui-textTertiary ml-auto cursor-default">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-ui-background-depth-3 text-[11px] text-ui-textTertiary ml-auto cursor-default">
                     <span className="i-ph:lightning text-xs" />
                     <span>{formatTokenCount(usage.totalTokens)} tokens</span>
                   </div>
