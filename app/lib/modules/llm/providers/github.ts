@@ -21,13 +21,13 @@ export default class GithubProvider extends BaseProvider {
    * Model IDs use the format: publisher/model-name
    */
   staticModels: ModelInfo[] = [
-    { name: 'openai/gpt-4o', label: 'GPT-4o', provider: 'Github', maxTokenAllowed: 131072, maxCompletionTokens: 4096 },
+    { name: 'openai/gpt-4o', label: 'GPT-4o', provider: 'Github', maxTokenAllowed: 131072, maxCompletionTokens: 16384 },
     {
       name: 'openai/gpt-4o-mini',
       label: 'GPT-4o Mini',
       provider: 'Github',
       maxTokenAllowed: 131072,
-      maxCompletionTokens: 4096,
+      maxCompletionTokens: 16384,
     },
     {
       name: 'openai/o1-preview',
@@ -63,7 +63,7 @@ export default class GithubProvider extends BaseProvider {
       label: 'DeepSeek-R1',
       provider: 'Github',
       maxTokenAllowed: 128000,
-      maxCompletionTokens: 4096,
+      maxCompletionTokens: 16384,
     },
   ];
 

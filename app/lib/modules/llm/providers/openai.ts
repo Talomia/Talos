@@ -15,20 +15,20 @@ export default class OpenAIProvider extends BaseProvider {
   staticModels: ModelInfo[] = [
     /*
      * Essential fallback models - only the most stable/reliable ones
-     * GPT-4o: 128k context, 4k standard output (64k with long output mode)
+     * GPT-4o: 128k context, 16k standard output (64k with long output mode)
      */
-    { name: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 4096 },
+    { name: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 16384 },
 
-    // GPT-4o Mini: 128k context, cost-effective alternative
+    // GPT-4o Mini: 128k context, 16k output
     {
       name: 'gpt-4o-mini',
       label: 'GPT-4o Mini',
       provider: 'OpenAI',
       maxTokenAllowed: 128000,
-      maxCompletionTokens: 4096,
+      maxCompletionTokens: 16384,
     },
 
-    // GPT-3.5-turbo: 16k context, fast and cost-effective
+    // GPT-3.5-turbo: 16k context, 4k output
     {
       name: 'gpt-3.5-turbo',
       label: 'GPT-3.5 Turbo',
@@ -122,7 +122,7 @@ export default class OpenAIProvider extends BaseProvider {
       }
 
       // Determine completion token limits based on model type (accurate 2025 limits)
-      let maxCompletionTokens = 4096; // default for most models
+      let maxCompletionTokens = 16384; // default for modern models
 
       if (m.id?.startsWith('o1-preview')) {
         maxCompletionTokens = 32000; // o1-preview: 32K output limit
@@ -132,8 +132,10 @@ export default class OpenAIProvider extends BaseProvider {
         maxCompletionTokens = 32000; // Other o1 models: 32K limit
       } else if (m.id?.includes('o3') || m.id?.includes('o4')) {
         maxCompletionTokens = 100000; // o3/o4 models: 100K output limit
+      } else if (m.id?.includes('gpt-5')) {
+        maxCompletionTokens = 32000; // GPT-5 family: 32K output limit
       } else if (m.id?.includes('gpt-4o')) {
-        maxCompletionTokens = 4096; // GPT-4o standard: 4K (64K with long output mode)
+        maxCompletionTokens = 16384; // GPT-4o: 16K standard output
       } else if (m.id?.includes('gpt-4')) {
         maxCompletionTokens = 8192; // Standard GPT-4: 8K output limit
       } else if (m.id?.includes('gpt-3.5-turbo')) {

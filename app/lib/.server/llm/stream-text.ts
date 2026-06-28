@@ -29,19 +29,21 @@ export interface StreamingOptions extends Omit<Parameters<typeof _streamText>[0]
 const logger = createScopedLogger('stream-text');
 
 function getCompletionTokenLimit(modelDetails: any): number {
-  // 1. If model specifies completion tokens, use that
-  if (modelDetails.maxCompletionTokens && modelDetails.maxCompletionTokens > 0) {
-    return modelDetails.maxCompletionTokens;
+  const modelLimit = modelDetails.maxCompletionTokens > 0 ? modelDetails.maxCompletionTokens : 0;
+  const providerDefault = PROVIDER_COMPLETION_LIMITS[modelDetails.provider] ?? 0;
+
+  /*
+   * Use whichever is larger: model-specific or provider-default limit.
+   * This prevents outdated model configs (e.g., GPT-4o at 4K) from
+   * overriding correctly-set provider limits (e.g., OpenAI at 16K).
+   */
+  const bestLimit = Math.max(modelLimit, providerDefault);
+
+  if (bestLimit > 0) {
+    return bestLimit;
   }
 
-  // 2. Use provider-specific default
-  const providerDefault = PROVIDER_COMPLETION_LIMITS[modelDetails.provider];
-
-  if (providerDefault) {
-    return providerDefault;
-  }
-
-  // 3. Final fallback to MAX_TOKENS, but cap at reasonable limit for safety
+  // Final fallback to MAX_TOKENS, capped for safety
   return Math.min(MAX_TOKENS, 16384);
 }
 
