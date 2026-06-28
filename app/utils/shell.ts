@@ -296,16 +296,12 @@ export class AppShell {
   async waitTillOscCode(waitCode: string) {
     let fullOutput = '';
     let exitCode: number = 0;
-    let buffer = ''; // <-- Add a buffer to accumulate output
 
     if (!this.#outputStream) {
       return { output: fullOutput, exitCode };
     }
 
     const tappedStream = this.#outputStream;
-
-    // Regex for Expo URL
-    const expoUrlRegex = /(exp:\/\/[^\s]+)/;
 
     while (true) {
       const { value, done } = await tappedStream.read();
@@ -316,21 +312,6 @@ export class AppShell {
 
       const text = value || '';
       fullOutput += text;
-      buffer += text; // <-- Accumulate in buffer
-
-      // Extract Expo URL from buffer and set store
-      const expoUrlMatch = buffer.match(expoUrlRegex);
-
-      if (expoUrlMatch) {
-        // Remove any trailing ANSI escape codes or non-printable characters
-        const cleanUrl = expoUrlMatch[1]
-          .replace(/[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g, '')
-          .replace(/[^\x20-\x7E]+$/g, '');
-        expoUrlAtom.set(cleanUrl);
-
-        // Remove everything up to and including the URL from the buffer to avoid duplicate matches
-        buffer = buffer.slice(buffer.indexOf(expoUrlMatch[1]) + expoUrlMatch[1].length);
-      }
 
       // Check if command completion signal with exit code
       const [, osc, , , code] = text.match(/\x1b\]654;([^\x07=]+)=?((-?\d+):(\d+))?\x07/) || [];

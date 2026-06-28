@@ -17,8 +17,8 @@ export default defineConfig((config) => {
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
     },
     server: {
-      // Fixes the blocked host issue on Easypanel subdomains
-      allowedHosts: true,
+      // Allow localhost and common deployment subdomains (Easypanel, *.internal)
+      allowedHosts: ['localhost', '.easypanel.host', '.internal'],
       headers: {
         'Cross-Origin-Embedder-Policy': 'credentialless',
         'Cross-Origin-Opener-Policy': 'same-origin',

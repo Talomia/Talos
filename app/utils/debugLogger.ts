@@ -763,18 +763,21 @@ class DebugLogger {
 
   private async _getLogStoreLogs(): Promise<LogEntry[]> {
     try {
-      const store = getLogStore();
+      let store = getLogStore();
 
       if (!store) {
         // Try to load the store if not already loaded
         try {
           const { logStore: storeModule } = await import('~/lib/stores/logs');
           logStore = storeModule;
-
-          return this._getLogStoreLogs();
+          store = storeModule;
         } catch {
           return [];
         }
+      }
+
+      if (!store) {
+        return [];
       }
 
       const logs = store.getLogs?.() || [];

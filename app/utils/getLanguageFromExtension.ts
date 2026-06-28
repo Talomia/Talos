@@ -17,8 +17,26 @@ export const getLanguageFromExtension = (ext: string): string => {
     rs: 'rust',
     php: 'php',
     swift: 'swift',
-    md: 'plaintext',
+    md: 'markdown',
     sh: 'bash',
+    yaml: 'yaml',
+    yml: 'yaml',
+    toml: 'toml',
+    sql: 'sql',
+    xml: 'xml',
+    svg: 'xml',
+    scss: 'scss',
+    sass: 'sass',
+    less: 'less',
+    graphql: 'graphql',
+    gql: 'graphql',
+    dockerfile: 'dockerfile',
+    makefile: 'makefile',
+    kt: 'kotlin',
+    dart: 'dart',
+    vue: 'vue',
+    svelte: 'svelte',
+    astro: 'astro',
   };
-  return map[ext] || 'typescript';
+  return map[ext] || 'plaintext';
 };

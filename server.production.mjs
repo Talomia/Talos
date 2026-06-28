@@ -75,12 +75,7 @@ app.use(express.static('build/client', { maxAge: '1h' }));
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
-    uptime: process.uptime(),
     timestamp: new Date().toISOString(),
-    memory: {
-      rss: Math.round(process.memoryUsage().rss / 1024 / 1024) + 'MB',
-      heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
-    },
   });
 });
 

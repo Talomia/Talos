@@ -5,17 +5,28 @@ export async function fetchWithTimeout(
   input: RequestInfo | URL,
   init?: RequestInit & { timeoutMs?: number },
 ): Promise<Response> {
-  const { timeoutMs = 30000, ...fetchInit } = init ?? {};
+  const { timeoutMs = 30000, signal: callerSignal, ...fetchInit } = init ?? {};
   const controller = new AbortController();
   const timeoutId = setTimeout(
     () => controller.abort(new DOMException('Request timed out', 'TimeoutError')),
     timeoutMs,
   );
 
+  // Merge caller's signal with timeout signal if both exist
+  const mergedSignal =
+    callerSignal && typeof AbortSignal.any === 'function'
+      ? AbortSignal.any([controller.signal, callerSignal])
+      : controller.signal;
+
+  // If we can't merge signals, at least propagate caller's abort to our controller
+  if (callerSignal && typeof AbortSignal.any !== 'function') {
+    callerSignal.addEventListener('abort', () => controller.abort(callerSignal.reason), { once: true });
+  }
+
   try {
     const response = await fetch(input, {
       ...fetchInit,
-      signal: controller.signal,
+      signal: mergedSignal,
     });
     return response;
   } finally {

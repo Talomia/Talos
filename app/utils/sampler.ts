@@ -60,7 +60,20 @@ export function createSampler<T extends (...args: any[]) => any>(
 
     // If we're outside the interval, execute immediately
     lastTime = now;
-    fn.apply(this, args);
+
+    try {
+      const result = fn.apply(this, args);
+
+      // Catch errors from async functions
+      if (result && typeof result.catch === 'function') {
+        result.catch((err: unknown) => {
+          logger.error('Sampler immediate call error:', err);
+        });
+      }
+    } catch (err) {
+      logger.error('Sampler immediate call error:', err);
+    }
+
     lastArgs = null;
   } as T & { cancel: () => void };
 

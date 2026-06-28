@@ -59,6 +59,10 @@ export const action = withSecurity(
           return json({ error: 'Invalid provider' }, { status: 400 });
         }
 
+        if (body.apiKey !== undefined && body.apiKey !== '' && typeof body.apiKey !== 'string') {
+          return json({ error: 'Invalid API key format' }, { status: 400 });
+        }
+
         const cookieHeader = request.headers.get('Cookie');
         const vault = await readVault(cookieHeader, env);
 
