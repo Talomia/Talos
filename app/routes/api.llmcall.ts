@@ -1,10 +1,10 @@
 import { type ActionFunctionArgs } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
-import { streamText } from '~/lib/.server/llm/stream-text';
+import { streamText, getCompletionTokenLimit } from '~/lib/.server/llm/stream-text';
 import type { IProviderSetting, ProviderInfo } from '~/types/model';
 import { generateText } from 'ai';
 import { PROVIDER_LIST } from '~/utils/constants';
-import { MAX_TOKENS, PROVIDER_COMPLETION_LIMITS, isReasoningModel } from '~/lib/.server/llm/constants';
+import { isReasoningModel } from '~/lib/.server/llm/constants';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
@@ -23,46 +23,6 @@ async function getModelList(options: {
 }
 
 const logger = createScopedLogger('api.llmcall');
-
-function getCompletionTokenLimit(modelDetails: ModelInfo): number {
-  // 1. If model specifies completion tokens, use that
-  if (modelDetails.maxCompletionTokens && modelDetails.maxCompletionTokens > 0) {
-    return modelDetails.maxCompletionTokens;
-  }
-
-  // 2. Use provider-specific default
-  const providerDefault = PROVIDER_COMPLETION_LIMITS[modelDetails.provider];
-
-  if (providerDefault) {
-    return providerDefault;
-  }
-
-  // 3. Final fallback to MAX_TOKENS, but cap at reasonable limit for safety
-  return Math.min(MAX_TOKENS, 16384);
-}
-
-function validateTokenLimits(modelDetails: ModelInfo, requestedTokens: number): { valid: boolean; error?: string } {
-  const modelMaxTokens = modelDetails.maxTokenAllowed || 128000;
-  const maxCompletionTokens = getCompletionTokenLimit(modelDetails);
-
-  // Check against model's context window
-  if (requestedTokens > modelMaxTokens) {
-    return {
-      valid: false,
-      error: `Requested tokens (${requestedTokens}) exceed model's context window (${modelMaxTokens}). Please reduce your request size.`,
-    };
-  }
-
-  // Check against completion token limits
-  if (requestedTokens > maxCompletionTokens) {
-    return {
-      valid: false,
-      error: `Requested tokens (${requestedTokens}) exceed model's completion limit (${maxCompletionTokens}). Consider using a model with higher token limits.`,
-    };
-  }
-
-  return { valid: true };
-}
 
 async function llmCallAction({ context, request }: ActionFunctionArgs) {
   let system: string;
@@ -90,16 +50,16 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
 
   // validate 'model' and 'provider' fields
   if (!model || typeof model !== 'string') {
-    throw new Response('Invalid or missing model', {
+    return new Response(JSON.stringify({ error: true, message: 'Invalid or missing model' }), {
       status: 400,
-      statusText: 'Bad Request',
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
   if (!providerName || typeof providerName !== 'string') {
-    throw new Response('Invalid or missing provider', {
+    return new Response(JSON.stringify({ error: true, message: 'Invalid or missing provider' }), {
       status: 400,
-      statusText: 'Bad Request',
+      headers: { 'Content-Type': 'application/json' },
     });
   }
 
@@ -170,28 +130,20 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         providerSettings,
         serverEnv: context.cloudflare?.env,
       });
-      let modelDetails = models.find((m: ModelInfo) => m.name === model);
+      const modelDetails = models.find((m: ModelInfo) => m.name === model);
 
       if (!modelDetails) {
-        logger.warn(`Model "${model}" not found in provider. Falling back to first available model.`);
-        modelDetails = models[0];
+        return new Response(
+          JSON.stringify({
+            error: true,
+            message: `Model "${model}" not found. Please check the model name and try again.`,
+            statusCode: 400,
+          }),
+          { status: 400, headers: { 'Content-Type': 'application/json' } },
+        );
       }
 
-      if (!modelDetails) {
-        throw new Error('Model not found');
-      }
-
-      const dynamicMaxTokens = modelDetails ? getCompletionTokenLimit(modelDetails) : Math.min(MAX_TOKENS, 16384);
-
-      // Validate token limits before making API request
-      const validation = validateTokenLimits(modelDetails, dynamicMaxTokens);
-
-      if (!validation.valid) {
-        throw new Response(validation.error, {
-          status: 400,
-          statusText: 'Token Limit Exceeded',
-        });
-      }
+      const dynamicMaxTokens = getCompletionTokenLimit(modelDetails);
 
       const providerInfo = PROVIDER_LIST.find((p) => p.name === provider.name);
 

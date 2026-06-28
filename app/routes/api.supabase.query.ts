@@ -35,7 +35,20 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
       return json({ error: 'Multi-statement queries are not allowed' }, { status: 400 });
     }
 
-    const normalizedQuery = query.trim().toUpperCase();
+    // Strip SQL comments before further analysis to prevent bypass via:
+    // 1. Line comments: SELECT 1 -- DROP TABLE users
+    // 2. Block comments: SELECT 1 /* DROP TABLE users */
+    const commentStrippedQuery = query
+      .replace(/--[^\n]*/g, '') // Remove line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '') // Remove block comments
+      .trim();
+
+    // Reject if the query was ONLY comments (empty after stripping)
+    if (commentStrippedQuery.length === 0) {
+      return json({ error: 'Empty query after removing comments' }, { status: 400 });
+    }
+
+    const normalizedQuery = commentStrippedQuery.trim().toUpperCase();
 
     // Statement type allowlist: only SELECT, INSERT, UPDATE
     const ALLOWED_STATEMENTS = ['SELECT', 'INSERT', 'UPDATE'];
@@ -52,25 +65,29 @@ async function supabaseQueryAction({ request }: ActionFunctionArgs) {
     const SET_PATTERN = /^\s*SET\b/i; // Block SET as statement start (allow inside expressions)
     const CTE_MUTATE_PATTERN = /\bWITH\b[\s\S]+\b(DELETE|UPDATE)\b/i;
 
-    if (DDL_PATTERN.test(query)) {
+    if (DDL_PATTERN.test(commentStrippedQuery)) {
       return json({ error: 'DDL statements are not allowed' }, { status: 400 });
     }
 
-    if (DANGEROUS_PATTERN.test(query) || ANON_BLOCK_PATTERN.test(query) || SET_PATTERN.test(query)) {
+    if (
+      DANGEROUS_PATTERN.test(commentStrippedQuery) ||
+      ANON_BLOCK_PATTERN.test(commentStrippedQuery) ||
+      SET_PATTERN.test(commentStrippedQuery)
+    ) {
       return json({ error: 'This statement type is not allowed' }, { status: 400 });
     }
 
-    if (CTE_MUTATE_PATTERN.test(query)) {
+    if (CTE_MUTATE_PATTERN.test(commentStrippedQuery)) {
       return json({ error: 'WITH ... DELETE/UPDATE patterns are not allowed' }, { status: 400 });
     }
 
     // Reject DELETE entirely
-    if (/\bDELETE\b/i.test(query)) {
+    if (/\bDELETE\b/i.test(commentStrippedQuery)) {
       return json({ error: 'DELETE statements are not allowed' }, { status: 400 });
     }
 
     // Require WHERE clause for UPDATE to prevent mass-update of all rows
-    if (/\bUPDATE\b/i.test(query) && !/\bWHERE\b/i.test(query)) {
+    if (/\bUPDATE\b/i.test(commentStrippedQuery) && !/\bWHERE\b/i.test(commentStrippedQuery)) {
       return json({ error: 'UPDATE statements must include a WHERE clause' }, { status: 400 });
     }
 

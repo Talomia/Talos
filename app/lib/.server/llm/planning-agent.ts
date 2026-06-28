@@ -151,7 +151,11 @@ export async function generatePlan(props: {
       })),
     ];
 
-    modelDetails = modelsList.find((m) => m.name === currentModel) || modelsList[0];
+    modelDetails = modelsList.find((m) => m.name === currentModel);
+
+    if (!modelDetails) {
+      throw new Error(`Model "${currentModel}" not found in provider "${provider.name}". Please select a valid model.`);
+    }
   }
 
   // Build context from existing files

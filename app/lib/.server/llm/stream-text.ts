@@ -28,7 +28,7 @@ export interface StreamingOptions extends Omit<Parameters<typeof _streamText>[0]
 
 const logger = createScopedLogger('stream-text');
 
-function getCompletionTokenLimit(modelDetails: any): number {
+export function getCompletionTokenLimit(modelDetails: any): number {
   const modelLimit = modelDetails.maxCompletionTokens > 0 ? modelDetails.maxCompletionTokens : 0;
   const providerDefault = PROVIDER_COMPLETION_LIMITS[modelDetails.provider] ?? 0;
 
@@ -45,6 +45,20 @@ function getCompletionTokenLimit(modelDetails: any): number {
 
   // Final fallback to MAX_TOKENS, capped for safety
   return Math.min(MAX_TOKENS, 16384);
+}
+
+/**
+ * Escapes XML-special characters to prevent prompt injection.
+ * Users could inject `</custom_instructions>` to break out of the XML boundary
+ * and override system-level instructions.
+ */
+function escapeXmlContent(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
 }
 
 function sanitizeText(text: string): string {
@@ -242,19 +256,19 @@ export async function streamText(props: {
     return Math.ceil(len / charsPerToken) + 4;
   };
   const estimateMessageTokens = (m: Omit<Message, 'id'>) => {
-    let len = 0;
+    let text = '';
 
     if (typeof m.content === 'string') {
-      len += m.content.length;
+      text = m.content;
     } else if (Array.isArray(m.content)) {
       (m.content as any).forEach((part: any) => {
         if (part.type === 'text') {
-          len += part.text?.length || 0;
+          text += part.text || '';
         }
       });
     }
 
-    return Math.ceil(len / 4);
+    return estimateTokens(text);
   };
 
   // Simplify older assistant action blocks to save massive amount of tokens
@@ -287,10 +301,10 @@ export async function streamText(props: {
 
   const summaryPrompt = summary ? `Below is the chat history so far\nCHAT SUMMARY:\n---\n${summary}\n---\n` : '';
   const customInstructionsPrompt = customInstructions?.trim()
-    ? `\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${customInstructions}\n</custom_instructions>`
+    ? `\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${escapeXmlContent(customInstructions)}\n</custom_instructions>`
     : '';
   const projectRulesPrompt = projectRules?.trim()
-    ? `\n\n<project_rules>\nThe following project-level rules MUST be followed for this project:\n${projectRules.trim()}\n</project_rules>`
+    ? `\n\n<project_rules>\nThe following project-level rules MUST be followed for this project:\n${escapeXmlContent(projectRules.trim())}\n</project_rules>`
     : '';
 
   const fixedTokens =
@@ -444,12 +458,14 @@ export async function streamText(props: {
   }
 
   if (customInstructions?.trim()) {
-    systemPrompt += `\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${customInstructions}\n</custom_instructions>`;
+    const safeInstructions = escapeXmlContent(customInstructions);
+    systemPrompt += `\n\n<custom_instructions>\nThe user has set the following custom instructions that MUST be followed:\n${safeInstructions}\n</custom_instructions>`;
   }
 
   // Inject project-level rules (.rules file)
   if (projectRules?.trim()) {
-    systemPrompt = `${systemPrompt}\n\n<project_rules>\nThe following project-level rules MUST be followed for this project:\n${projectRules.trim()}\n</project_rules>`;
+    const safeRules = escapeXmlContent(projectRules.trim());
+    systemPrompt = `${systemPrompt}\n\n<project_rules>\nThe following project-level rules MUST be followed for this project:\n${safeRules}\n</project_rules>`;
   }
 
   logger.info(`Sending llm call to ${provider.name} with model ${modelDetails.name}`);

@@ -28,8 +28,8 @@ export async function action(args: ActionFunctionArgs) {
 const logger = createScopedLogger('api.chat');
 
 async function chatAction({ context, request }: ActionFunctionArgs) {
-  // Abort controller for the LLM stream — allows recovery to abort a stalled request
-  const streamAbortController = new AbortController();
+  // Abort controller for the LLM stream — replaced per continuation segment
+  let streamAbortController = new AbortController();
 
   const streamRecovery = new StreamRecoveryManager({
     timeout: 45000,
@@ -63,6 +63,20 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   let designScheme: DesignScheme | undefined;
   let maxLLMSteps: number;
   let customInstructions: string | undefined;
+
+  // H3: Guard against oversized request bodies that could exhaust server memory
+  const MAX_REQUEST_BYTES = 20 * 1024 * 1024; // 20MB
+  const contentLength = parseInt(request.headers.get('Content-Length') || '0', 10);
+
+  if (contentLength > MAX_REQUEST_BYTES) {
+    return json(
+      {
+        error: true,
+        message: `Request body too large (${Math.round(contentLength / 1024 / 1024)}MB). Maximum is 20MB.`,
+      },
+      { status: 413 },
+    );
+  }
 
   try {
     ({
@@ -119,8 +133,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
     return json({ error: true, message: "chatMode must be 'discuss' or 'build'" }, { status: 400 });
   }
 
-  if (maxLLMSteps > 20) {
-    return json({ error: true, message: 'maxLLMSteps must be ≤ 20' }, { status: 400 });
+  if (maxLLMSteps > 10) {
+    return json({ error: true, message: 'maxLLMSteps must be ≤ 10' }, { status: 400 });
   }
 
   // Extract project-level rules from .rules file in the project
@@ -158,6 +172,13 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   let progressCounter: number = 1;
   const stepTimers: Record<string, number> = {};
 
+  /**
+   * Track all files created across ALL continuation segments.
+   * The `isIncomplete` check uses this to avoid false positives
+   * where files created in segment 1 are "missing" in segment 2.
+   */
+  const cumulativeCreatedFiles = new Set<string>();
+
   try {
     const mcpService = MCPService.getInstance();
     logger.debug(`Chat request: ${messages.length} messages`);
@@ -168,7 +189,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
      * can abort stalled streams (it calls streamAbortController.abort()).
      */
     const timeoutMs = parseInt(process.env.CHAT_TIMEOUT_MS || '300000', 10); // default: 5 minutes
-    const timeoutId = setTimeout(() => streamAbortController.abort(), timeoutMs);
+    let timeoutId = setTimeout(() => streamAbortController.abort(), timeoutMs);
 
     const dataStream = createUIMessageStream({
       async execute({ writer }) {
@@ -452,9 +473,14 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                 }
 
                 // Extract files created in this response
-                const createdFiles = new Set(
+                const segmentFiles = new Set(
                   [...content.matchAll(/filePath="([^"]+)"/g)].map((m) => m[1].toLowerCase()),
                 );
+
+                // Add to cumulative tracking
+                for (const f of segmentFiles) {
+                  cumulativeCreatedFiles.add(f);
+                }
 
                 // Extract file references from imports/routes that should exist
                 const importRefs = [
@@ -462,10 +488,10 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                   ...content.matchAll(/import\s+.*?['"]\.\/([^'"]+)['"]/g),
                 ].map((m) => m[1].replace(/^\.\//, '').toLowerCase());
 
-                // Check for referenced files that weren't created
+                // Check for referenced files that weren't created (across ALL segments)
                 const missingFiles = importRefs.filter((ref) => {
                   const variants = [ref, `${ref}.tsx`, `${ref}.ts`, `${ref}/index.tsx`, `${ref}/index.ts`];
-                  return !variants.some((v) => [...createdFiles].some((f) => f.toLowerCase().endsWith(v)));
+                  return !variants.some((v) => [...cumulativeCreatedFiles].some((f) => f.toLowerCase().endsWith(v)));
                 });
 
                 if (missingFiles.length >= 2) {
@@ -512,6 +538,8 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                 } satisfies ProgressAnnotation);
                 await new Promise((resolve) => setTimeout(resolve, 0));
 
+                clearTimeout(timeoutId);
+
                 return;
               }
 
@@ -556,6 +584,14 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
               role: 'user',
               content: `[Model: ${model}]\n\n[Provider: ${provider}]\n\n${CONTINUE_PROMPT}${taskTracker.getStats().total > 0 ? '\n' + taskTracker.generateContinuationContext() : ''}`,
             });
+
+            /*
+             * Create a fresh AbortController for this continuation segment
+             * (an aborted controller stays aborted forever — new streams would fail immediately)
+             */
+            streamAbortController = new AbortController();
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => streamAbortController.abort(), timeoutMs);
 
             const result = await streamText({
               messages: [...processedMessages],

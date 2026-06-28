@@ -140,6 +140,17 @@ export class ActionRunner {
       })
       .catch((error) => {
         logger.error('Action execution promise failed:', error);
+
+        // Propagate failure to action status so the UI reflects the error
+        const errorMessage = error instanceof Error ? error.message : 'Action failed unexpectedly';
+        this.#updateAction(actionId, { status: 'failed', error: errorMessage });
+
+        this.onAlert?.({
+          type: 'error',
+          title: 'Action Failed',
+          description: errorMessage,
+          content: error instanceof Error ? error.stack || errorMessage : errorMessage,
+        });
       });
 
     await this.#currentExecutionPromise;
