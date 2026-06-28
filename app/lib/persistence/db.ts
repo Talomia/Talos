@@ -223,9 +223,13 @@ export async function deleteById(db: IDBDatabase, id: string): Promise<void> {
 
 export async function getNextId(_db: IDBDatabase): Promise<string> {
   /*
-   * Use a timestamp + random suffix to generate unique IDs without reading the store.
-   * This avoids a race condition where concurrent calls could produce duplicate IDs.
+   * Use crypto.randomUUID() for strong uniqueness guarantees.
+   * Falls back to timestamp + random suffix for environments without crypto.
    */
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 }
 

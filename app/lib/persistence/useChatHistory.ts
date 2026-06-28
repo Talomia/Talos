@@ -104,6 +104,9 @@ export function useChatHistory() {
   const initialMessagesRef = useRef<Message[]>(initialMessages);
   const archivedMessagesRef = useRef<Message[]>(archivedMessages);
 
+  // Serialization guard: prevents concurrent storeMessageHistory calls from racing
+  const storeQueueRef = useRef<Promise<void>>(Promise.resolve());
+
   useEffect(() => {
     initialMessagesRef.current = initialMessages;
   }, [initialMessages]);
@@ -430,73 +433,90 @@ ${value.content}
         return;
       }
 
-      const { firstArtifact } = workbenchStore;
-      messages = messages.filter((m) => !(Array.isArray(m.annotations) && m.annotations.includes('no-store')));
+      /*
+       * Chain onto the serialization queue to prevent concurrent calls from
+       * racing to set chatId or overwriting each other's messages
+       */
+      const operation = storeQueueRef.current
+        .then(async () => {
+          if (!db || messages.length === 0) {
+            return;
+          }
 
-      let _urlId = urlId;
+          const { firstArtifact } = workbenchStore;
+          messages = messages.filter((m) => !(Array.isArray(m.annotations) && m.annotations.includes('no-store')));
 
-      if (!urlId && firstArtifact?.id) {
-        const urlId = await getUrlId(db, firstArtifact.id);
-        _urlId = urlId;
-        navigateChat(urlId);
-        setUrlId(urlId);
-      }
+          let _urlId = urlId;
 
-      let chatSummary: string | undefined = undefined;
-      const lastMessage = messages[messages.length - 1];
+          if (!urlId && firstArtifact?.id) {
+            const urlId = await getUrlId(db, firstArtifact.id);
+            _urlId = urlId;
+            navigateChat(urlId);
+            setUrlId(urlId);
+          }
 
-      if (lastMessage.role === 'assistant') {
-        const annotations = lastMessage.annotations;
-        const filteredAnnotations = (
-          Array.isArray(annotations)
-            ? annotations.filter(
-                (annotation: JSONValue) =>
-                  annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
-              )
-            : []
-        ) as { type: string; value: any } & { [key: string]: any }[];
+          let chatSummary: string | undefined = undefined;
+          const lastMessage = messages[messages.length - 1];
 
-        if (filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')) {
-          chatSummary = filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')?.summary;
-        }
-      }
+          if (lastMessage.role === 'assistant') {
+            const annotations = lastMessage.annotations;
+            const filteredAnnotations = (
+              Array.isArray(annotations)
+                ? annotations.filter(
+                    (annotation: JSONValue) =>
+                      annotation && typeof annotation === 'object' && Object.keys(annotation).includes('type'),
+                  )
+                : []
+            ) as { type: string; value: any } & { [key: string]: any }[];
 
-      takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), _urlId, chatSummary);
+            if (filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')) {
+              chatSummary = filteredAnnotations.find((annotation) => annotation.type === 'chatSummary')?.summary;
+            }
+          }
 
-      if (!description.get() && firstArtifact?.title) {
-        description.set(firstArtifact?.title);
-      }
+          takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), _urlId, chatSummary);
 
-      // Ensure chatId.get() is used here as well
-      if (initialMessagesRef.current.length === 0 && !chatId.get()) {
-        const nextId = await getNextId(db);
+          if (!description.get() && firstArtifact?.title) {
+            description.set(firstArtifact?.title);
+          }
 
-        chatId.set(nextId);
+          // Ensure chatId.get() is used here as well
+          if (initialMessagesRef.current.length === 0 && !chatId.get()) {
+            const nextId = await getNextId(db);
 
-        if (!urlId) {
-          navigateChat(nextId);
-        }
-      }
+            chatId.set(nextId);
 
-      // Ensure chatId.get() is used for the final setMessages call
-      const finalChatId = chatId.get();
+            if (!urlId) {
+              navigateChat(nextId);
+            }
+          }
 
-      if (!finalChatId) {
-        logger.error('Cannot save messages, chat ID is not set.');
-        toast.error('Failed to save chat messages: Chat ID missing.');
+          // Ensure chatId.get() is used for the final setMessages call
+          const finalChatId = chatId.get();
 
-        return;
-      }
+          if (!finalChatId) {
+            logger.error('Cannot save messages, chat ID is not set.');
+            toast.error('Failed to save chat messages: Chat ID missing.');
 
-      await setMessages(
-        db,
-        finalChatId, // Use the potentially updated chatId
-        [...archivedMessagesRef.current, ...messages],
-        _urlId,
-        description.get(),
-        undefined,
-        chatMetadata.get(),
-      );
+            return;
+          }
+
+          await setMessages(
+            db,
+            finalChatId, // Use the potentially updated chatId
+            [...archivedMessagesRef.current, ...messages],
+            _urlId,
+            description.get(),
+            undefined,
+            chatMetadata.get(),
+          );
+        })
+        .catch((error) => {
+          logger.error('storeMessageHistory failed:', error);
+        });
+
+      storeQueueRef.current = operation;
+      await operation;
     },
     duplicateCurrentChat: async (listItemId: string) => {
       if (!db || (!mixedId && !listItemId)) {
