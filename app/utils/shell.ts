@@ -78,7 +78,11 @@ export async function newShellProcess(engine: RuntimeEngine, terminal: ITerminal
 
   terminal.onData((data) => {
     if (isInteractive) {
-      input.write(data);
+      try {
+        input.write(data);
+      } catch {
+        // Process may have exited — ignore write errors
+      }
 
       // Capture terminal input for debugging
       try {
@@ -186,7 +190,11 @@ export class AppShell {
 
     terminal.onData((data) => {
       if (isInteractive) {
-        input.write(data);
+        try {
+          input.write(data);
+        } catch {
+          // Process may have exited — ignore write errors
+        }
       }
     });
 

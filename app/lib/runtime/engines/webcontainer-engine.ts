@@ -161,6 +161,7 @@ export class WebContainerEngine implements RuntimeEngine {
     this.#instance?.teardown();
     this.#instance = null;
     this.#fs = null;
+    this.#bootPromise = null;
   }
 
   async spawn(command: string, args: string[], options?: SpawnOptions): Promise<RuntimeProcess> {

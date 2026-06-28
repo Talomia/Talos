@@ -53,12 +53,20 @@ export class TerminalStore {
     const appProcess = this.#appTerminal.process;
 
     if (appProcess) {
-      appProcess.resize({ cols, rows });
+      try {
+        appProcess.resize({ cols, rows });
+      } catch {
+        // Process may have exited — ignore resize errors
+      }
     }
 
     // Resize all extra terminals
     for (const { process } of this.#terminals) {
-      process.resize({ cols, rows });
+      try {
+        process.resize({ cols, rows });
+      } catch {
+        // Process may have exited — ignore resize errors
+      }
     }
   }
 

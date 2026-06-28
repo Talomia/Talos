@@ -562,10 +562,16 @@ export class ActionRunner {
     const buildProcess = await engine.spawn('npm', ['run', 'build']);
 
     let output = '';
+    const MAX_OUTPUT_BYTES = 1024 * 1024; // 1MB cap to prevent OOM on verbose builds
     const outputPromise = buildProcess.output.pipeTo(
       new WritableStream({
         write(data) {
           output += data;
+
+          // Keep only the tail when output exceeds the cap
+          if (output.length > MAX_OUTPUT_BYTES) {
+            output = output.slice(-MAX_OUTPUT_BYTES);
+          }
         },
       }),
     );
