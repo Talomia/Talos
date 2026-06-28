@@ -169,11 +169,11 @@ export default function McpTab() {
               onChange={(e) => setMCPConfigText(e.target.value)}
               className={classNames(
                 'w-full px-3 py-2 rounded-lg text-sm font-mono h-72',
-                'bg-[#F8F8F8] dark:bg-[#1A1A1A]',
+                'bg-ui-background-depth-2',
                 'border',
-                error ? 'border-ui-icon-error' : 'border-[#E5E5E5] dark:border-[#333333]',
+                error ? 'border-ui-icon-error' : 'border-ui-borderColor',
                 'text-ui-textPrimary',
-                'focus:outline-none focus:ring-1 focus:ring-ui-focus',
+                'focus:outline-none focus:ring-1 focus:ring-ui-borderColorActive',
               )}
             />
           </div>
@@ -190,7 +190,7 @@ export default function McpTab() {
               max="10"
               value={maxLLMSteps}
               onChange={(e) => handleMaxLLMCallChange(e.target.value)}
-              className="w-full px-3 py-2 text-ui-textPrimary text-sm rounded-lg bg-white dark:bg-ui-background-depth-4 border border-ui-borderColor dark:border-ui-borderColor-dark focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 text-ui-textPrimary text-sm rounded-lg bg-ui-background-depth-1 border border-ui-borderColor focus:outline-none focus:ring-2 focus:ring-ui-borderColorActive"
             />
           </div>
           <div className="mt-2 text-sm text-ui-textSecondary">

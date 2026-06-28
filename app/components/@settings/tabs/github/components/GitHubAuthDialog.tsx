@@ -142,8 +142,8 @@ export function GitHubAuthDialog({ isOpen, onClose, onSuccess }: GitHubAuthDialo
                     disabled={isConnecting || !token.trim()}
                     className={classNames(
                       'px-4 py-2 rounded-lg text-sm flex items-center gap-2',
-                      'bg-[#303030] text-white',
-                      'hover:bg-[#5E41D0] hover:text-white',
+                      'bg-ui-button-secondary-background text-ui-button-secondary-text',
+                      'hover:bg-ui-button-primary-backgroundHover hover:text-ui-button-primary-text',
                       'disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
                     )}
                   >

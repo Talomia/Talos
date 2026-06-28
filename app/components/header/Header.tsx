@@ -17,7 +17,7 @@ function ShortcutHint() {
         onClick={() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true }))}
         aria-label="Open command palette"
       >
-        <kbd className="font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-[11px]">
+        <kbd className="font-mono px-1.5 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor text-[11px]">
           {shortcutKey}K
         </kbd>
         <span className="hidden sm:inline">Search commands and chats</span>

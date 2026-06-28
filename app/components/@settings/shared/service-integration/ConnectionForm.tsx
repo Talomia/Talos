@@ -49,7 +49,7 @@ export function ConnectionForm({
 }: ConnectionFormProps) {
   return (
     <motion.div
-      className="bg-ui-background dark:bg-ui-background border border-ui-borderColor dark:border-ui-borderColor rounded-lg"
+      className="bg-ui-background border border-ui-borderColor rounded-lg"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
@@ -58,13 +58,11 @@ export function ConnectionForm({
         {!isConnected ? (
           <div className="space-y-4">
             {environmentVariable && (
-              <div className="text-xs text-ui-textSecondary bg-ui-background-depth-1 dark:bg-ui-background-depth-1 p-3 rounded-lg mb-4">
+              <div className="text-xs text-ui-textSecondary bg-ui-background-depth-1 p-3 rounded-lg mb-4">
                 <p className="flex items-center gap-1 mb-1">
-                  <span className="i-ph:lightbulb w-3.5 h-3.5 text-ui-icon-success dark:text-ui-icon-success" />
+                  <span className="i-ph:lightbulb w-3.5 h-3.5 text-ui-icon-success" />
                   <span className="font-medium">Tip:</span> You can also set the{' '}
-                  <code className="px-1 py-0.5 bg-ui-background-depth-2 dark:bg-ui-background-depth-2 rounded">
-                    {environmentVariable}
-                  </code>{' '}
+                  <code className="px-1 py-0.5 bg-ui-background-depth-2 rounded">{environmentVariable}</code>{' '}
                   environment variable to connect automatically.
                 </p>
               </div>
@@ -73,19 +71,17 @@ export function ConnectionForm({
             <form onSubmit={onConnect} className="space-y-4">
               {tokenTypes && tokenTypes.length > 1 && onTokenTypeChange && (
                 <div>
-                  <label className="block text-sm text-ui-textSecondary dark:text-ui-textSecondary mb-2">
-                    Token Type
-                  </label>
+                  <label className="block text-sm text-ui-textSecondary mb-2">Token Type</label>
                   <select
                     value={selectedTokenType}
                     onChange={(e) => onTokenTypeChange(e.target.value)}
                     disabled={isConnecting}
                     className={classNames(
                       'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-ui-background-depth-1 dark:bg-ui-background-depth-1',
-                      'border border-ui-borderColor dark:border-ui-borderColor',
-                      'text-ui-textPrimary dark:text-ui-textPrimary',
-                      'focus:outline-none focus:ring-1 focus:ring-ui-item-contentAccent dark:focus:ring-ui-item-contentAccent',
+                      'bg-ui-background-depth-1',
+                      'border border-ui-borderColor',
+                      'text-ui-textPrimary',
+                      'focus:outline-none focus:ring-1 focus:ring-ui-item-contentAccent',
                       'disabled:opacity-50',
                     )}
                   >
@@ -146,8 +142,8 @@ export function ConnectionForm({
                 disabled={isConnecting || !token.trim()}
                 className={classNames(
                   'px-4 py-2 rounded-lg text-sm flex items-center gap-2',
-                  'bg-[#303030] text-white',
-                  'hover:bg-[#5E41D0] hover:text-white',
+                  'bg-ui-button-primary-background text-ui-button-primary-text',
+                  'hover:bg-ui-button-primary-backgroundHover',
                   'disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
                   'transform active:scale-95',
                 )}

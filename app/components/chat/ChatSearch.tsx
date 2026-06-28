@@ -128,28 +128,26 @@ export const ChatSearch = memo(({ messages, onClose }: ChatSearchProps) => {
   );
 
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800 max-w-chat mx-auto w-full">
-      <div className="i-ph:magnifying-glass text-gray-400 text-sm shrink-0" />
+    <div className="flex items-center gap-2 px-4 py-2 bg-ui-background-depth-1/90 backdrop-blur-sm border-b border-ui-borderColor max-w-chat mx-auto w-full">
+      <div className="i-ph:magnifying-glass text-ui-icon-secondary text-sm shrink-0" />
       <input
         ref={inputRef}
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={handleKeyDown}
-        className="flex-1 bg-transparent text-sm text-gray-700 dark:text-gray-300 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+        className="flex-1 bg-transparent text-sm text-ui-textPrimary placeholder-ui-textTertiary outline-none"
         placeholder="Search in conversation..."
       />
       {results.length > 0 && (
-        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
+        <span className="text-xs text-ui-textTertiary shrink-0">
           {activeResult + 1}/{results.length}
         </span>
       )}
-      {query && results.length === 0 && (
-        <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">No matches</span>
-      )}
+      {query && results.length === 0 && <span className="text-xs text-ui-textTertiary shrink-0">No matches</span>}
       <button
         onClick={onClose}
-        className="p-1 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors shrink-0"
+        className="p-1 rounded text-ui-textTertiary hover:text-ui-textSecondary transition-colors shrink-0"
         aria-label="Close search"
       >
         <div className="i-ph:x text-sm" />

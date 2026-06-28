@@ -92,7 +92,7 @@ export default function VercelConnection() {
 
   return (
     <motion.div
-      className="bg-[#FFFFFF] dark:bg-[#0A0A0A] rounded-lg border border-[#E5E5E5] dark:border-[#1A1A1A]"
+      className="bg-ui-background-depth-1 rounded-lg border border-ui-borderColor"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
@@ -123,8 +123,8 @@ export default function VercelConnection() {
                 placeholder="Enter your Vercel personal access token"
                 className={classNames(
                   'w-full px-3 py-2 rounded-lg text-sm',
-                  'bg-[#F8F8F8] dark:bg-[#1A1A1A]',
-                  'border border-[#E5E5E5] dark:border-[#333333]',
+                  'bg-ui-background-depth-2',
+                  'border border-ui-borderColor',
                   'text-ui-textPrimary placeholder-ui-textTertiary',
                   'focus:outline-none focus:ring-1 focus:ring-ui-borderColorActive',
                   'disabled:opacity-50',
@@ -151,7 +151,7 @@ export default function VercelConnection() {
                   </p>
                 </div>
                 {/* Debug info - remove this later */}
-                <div className="mt-2 text-xs text-gray-500">
+                <div className="mt-2 text-xs text-ui-textTertiary">
                   <p>Debug: Token present: {connection.token ? '✅' : '❌'}</p>
                   <p>Debug: User present: {connection.user ? '✅' : '❌'}</p>
                   <p>Debug: Env token: {import.meta.env?.VITE_VERCEL_ACCESS_TOKEN ? '✅' : '❌'}</p>
@@ -165,8 +165,8 @@ export default function VercelConnection() {
                 disabled={connecting || !connection.token}
                 className={classNames(
                   'px-4 py-2 rounded-lg text-sm flex items-center gap-2',
-                  'bg-[#303030] text-white',
-                  'hover:bg-[#5E41D0] hover:text-white',
+                  'bg-ui-button-secondary-background text-ui-button-secondary-text',
+                  'hover:bg-ui-button-primary-backgroundHover hover:text-ui-button-primary-text',
                   'disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
                   'transform active:scale-95',
                 )}
@@ -223,7 +223,7 @@ export default function VercelConnection() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 p-4 bg-[#F8F8F8] dark:bg-[#1A1A1A] rounded-lg">
+            <div className="flex items-center gap-4 p-4 bg-ui-background-depth-2 rounded-lg">
               {/* Debug output */}
               <pre className="hidden">{JSON.stringify(connection.user, null, 2)}</pre>
 
@@ -319,7 +319,7 @@ export default function VercelConnection() {
                             </div>
                           </div>
                           {project.framework && (
-                            <div className="text-xs text-ui-textSecondary px-2 py-1 rounded-md bg-[#F0F0F0] dark:bg-[#252525]">
+                            <div className="text-xs text-ui-textSecondary px-2 py-1 rounded-md bg-ui-background-depth-3">
                               <span className="flex items-center gap-1">
                                 <div className="i-ph:code w-3 h-3" />
                                 {project.framework}

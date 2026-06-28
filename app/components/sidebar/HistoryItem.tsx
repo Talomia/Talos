@@ -99,10 +99,9 @@ export const HistoryItem = memo(
     return (
       <div
         className={classNames(
-          'group rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50/80 dark:hover:bg-gray-800/30 overflow-hidden flex justify-between items-center px-3 py-2 transition-colors',
+          'group rounded-lg text-sm text-ui-textSecondary hover:text-ui-textPrimary hover:bg-ui-item-backgroundActive overflow-hidden flex justify-between items-center px-3 py-2 transition-colors',
           {
-            'text-gray-900 dark:text-white bg-gray-50/80 dark:bg-gray-800/30 border-l-2 border-l-purple-500':
-              isActiveChat,
+            'text-ui-textPrimary bg-ui-item-backgroundActive border-l-2 border-l-purple-500': isActiveChat,
           },
           { 'cursor-pointer': selectionMode },
         )}
@@ -125,7 +124,7 @@ export const HistoryItem = memo(
           <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2">
             <input
               type="text"
-              className="flex-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-md px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-800 focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+              className="flex-1 bg-ui-background-depth-1 text-ui-textPrimary rounded-md px-3 py-1.5 text-sm border border-ui-borderColor focus:outline-none focus:ring-1 focus:ring-purple-500/50"
               autoFocus
               value={currentDescription}
               onChange={handleChange}
@@ -134,7 +133,7 @@ export const HistoryItem = memo(
             />
             <button
               type="submit"
-              className="i-ph:check h-4 w-4 text-gray-500 hover:text-purple-500 transition-colors"
+              className="i-ph:check h-4 w-4 text-ui-textTertiary hover:text-purple-500 transition-colors"
               onMouseDown={handleSubmit}
               aria-label="Save chat name"
             />
@@ -152,7 +151,7 @@ export const HistoryItem = memo(
                   {isFork && <span className="i-ph:git-fork text-purple-400 text-[10px] shrink-0" />}
                   <span className="truncate">{currentDescription}</span>
                 </span>
-                <span className="block text-[11px] text-gray-400 dark:text-gray-500 font-normal">
+                <span className="block text-[11px] text-ui-textTertiary font-normal">
                   {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
                 </span>
                 {parentDescription && (
@@ -170,7 +169,7 @@ export const HistoryItem = memo(
                 'absolute right-0 top-0 bottom-0 flex items-center bg-transparent px-2 transition-colors',
               )}
             >
-              <div className="flex items-center gap-2.5 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-2.5 text-ui-textTertiary opacity-0 group-hover:opacity-100 transition-opacity">
                 <ChatActionButton
                   toolTipContent={isPinned ? 'Unpin' : 'Pin to top'}
                   icon={isPinned ? 'i-ph:push-pin-slash h-4 w-4' : 'i-ph:push-pin h-4 w-4'}
@@ -249,7 +248,7 @@ const ChatActionButton = forwardRef(
         <button
           ref={ref}
           type="button"
-          className={`text-gray-400 dark:text-gray-500 hover:text-purple-500 dark:hover:text-purple-400 transition-colors ${icon} ${className ? className : ''}`}
+          className={`text-ui-textTertiary hover:text-purple-500 transition-colors ${icon} ${className ? className : ''}`}
           onClick={onClick}
           aria-label={toolTipContent}
         />

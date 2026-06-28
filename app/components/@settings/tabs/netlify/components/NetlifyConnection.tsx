@@ -176,7 +176,7 @@ export default function NetlifyConnection() {
   };
 
   return (
-    <div className="space-y-6 bg-ui-background dark:bg-ui-background border border-ui-borderColor dark:border-ui-borderColor rounded-lg">
+    <div className="space-y-6 bg-ui-background border border-ui-borderColor rounded-lg">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -190,7 +190,7 @@ export default function NetlifyConnection() {
 
         {!connection.user ? (
           <div className="mt-4">
-            <label className="block text-sm text-ui-textSecondary dark:text-ui-textSecondary mb-2">API Token</label>
+            <label className="block text-sm text-ui-textSecondary mb-2">API Token</label>
             <input
               type="password"
               value={tokenInput}
@@ -198,8 +198,8 @@ export default function NetlifyConnection() {
               placeholder="Enter your Netlify API token"
               className={classNames(
                 'w-full px-3 py-2 rounded-lg text-sm',
-                'bg-[#F8F8F8] dark:bg-[#1A1A1A]',
-                'border border-[#E5E5E5] dark:border-[#333333]',
+                'bg-ui-background-depth-2',
+                'border border-ui-borderColor',
                 'text-ui-textPrimary placeholder-ui-textTertiary',
                 'focus:outline-none focus:ring-1 focus:ring-ui-borderColorActive',
                 'disabled:opacity-50',
@@ -222,8 +222,8 @@ export default function NetlifyConnection() {
                 disabled={isConnecting || !tokenInput}
                 className={classNames(
                   'px-4 py-2 rounded-lg text-sm flex items-center gap-2',
-                  'bg-[#303030] text-white',
-                  'hover:bg-[#5E41D0] hover:text-white',
+                  'bg-ui-button-secondary-background text-ui-button-secondary-text',
+                  'hover:bg-ui-button-primary-backgroundHover hover:text-ui-button-primary-text',
                   'disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
                   'transform active:scale-95',
                 )}
@@ -267,12 +267,10 @@ export default function NetlifyConnection() {
               <div className="mt-6">
                 <Collapsible open={isStatsOpen} onOpenChange={setIsStatsOpen}>
                   <CollapsibleTrigger asChild>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-ui-background dark:bg-ui-background-depth-2 border border-ui-borderColor dark:border-ui-borderColor hover:border-ui-borderColorActive/70 dark:hover:border-ui-borderColorActive/70 transition-all duration-200">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-ui-background border border-ui-borderColor hover:border-ui-borderColorActive/70 transition-all duration-200">
                       <div className="flex items-center gap-2">
-                        <div className="i-ph:chart-bar w-4 h-4 text-ui-item-contentAccent dark:text-ui-item-contentAccent" />
-                        <span className="text-sm font-medium text-ui-textPrimary dark:text-ui-textPrimary">
-                          Netlify Stats
-                        </span>
+                        <div className="i-ph:chart-bar w-4 h-4 text-ui-item-contentAccent" />
+                        <span className="text-sm font-medium text-ui-textPrimary">Netlify Stats</span>
                       </div>
                       <div
                         className={classNames(
@@ -285,25 +283,16 @@ export default function NetlifyConnection() {
                   <CollapsibleContent className="overflow-hidden">
                     <div className="space-y-4 mt-4">
                       <div className="flex flex-wrap items-center gap-4">
-                        <Badge
-                          variant="outline"
-                          className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
-                        >
+                        <Badge variant="outline" className="flex items-center gap-1 text-ui-textPrimary">
                           <div className="i-ph:buildings h-4 w-4 text-ui-item-contentAccent" />
                           <span>{connection.stats.totalSites} Sites</span>
                         </Badge>
-                        <Badge
-                          variant="outline"
-                          className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
-                        >
+                        <Badge variant="outline" className="flex items-center gap-1 text-ui-textPrimary">
                           <div className="i-ph:rocket h-4 w-4 text-ui-item-contentAccent" />
                           <span>{deploymentCount} Deployments</span>
                         </Badge>
                         {lastUpdated && (
-                          <Badge
-                            variant="outline"
-                            className="flex items-center gap-1 text-ui-textPrimary dark:text-ui-textPrimary"
-                          >
+                          <Badge variant="outline" className="flex items-center gap-1 text-ui-textPrimary">
                             <div className="i-ph:clock h-4 w-4 text-ui-item-contentAccent" />
                             <span>Updated {formatDistanceToNow(new Date(lastUpdated))} ago</span>
                           </Badge>

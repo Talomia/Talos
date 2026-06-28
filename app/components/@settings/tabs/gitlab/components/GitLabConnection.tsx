@@ -175,7 +175,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                 <button
                   type="button"
                   onClick={() => void 0}
-                  className="px-4 py-2 rounded-lg text-sm bg-gray-500 text-white hover:bg-gray-600"
+                  className="px-4 py-2 rounded-lg text-sm bg-ui-button-secondary-background text-ui-button-secondary-text hover:bg-ui-button-secondary-backgroundHover"
                 >
                   Test Values
                 </button>
@@ -210,7 +210,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                           'noopener,noreferrer',
                         )
                       }
-                      className="flex items-center gap-2 hover:bg-ui-item-backgroundActive/10 hover:text-ui-textPrimary dark:hover:text-ui-textPrimary transition-colors"
+                      className="flex items-center gap-2 hover:bg-ui-item-backgroundActive/10 hover:text-ui-textPrimary transition-colors"
                     >
                       <div className="i-ph:layout w-4 h-4" />
                       Dashboard
@@ -219,7 +219,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                       onClick={onTestConnection}
                       disabled={connectionTest?.status === 'testing'}
                       variant="outline"
-                      className="flex items-center gap-2 hover:bg-ui-item-backgroundActive/10 hover:text-ui-textPrimary dark:hover:text-ui-textPrimary transition-colors"
+                      className="flex items-center gap-2 hover:bg-ui-item-backgroundActive/10 hover:text-ui-textPrimary transition-colors"
                     >
                       {connectionTest?.status === 'testing' ? (
                         <>

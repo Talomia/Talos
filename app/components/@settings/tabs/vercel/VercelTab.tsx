@@ -201,7 +201,7 @@ export default function VercelTab() {
 
       {/* Main Connection Component */}
       <motion.div
-        className="bg-ui-background dark:bg-ui-background border border-ui-borderColor dark:border-ui-borderColor rounded-lg"
+        className="bg-ui-background border border-ui-borderColor rounded-lg"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -209,13 +209,11 @@ export default function VercelTab() {
         <div className="p-6 space-y-6">
           {!connection.user ? (
             <div className="space-y-4">
-              <div className="text-xs text-ui-textSecondary bg-ui-background-depth-1 dark:bg-ui-background-depth-1 p-3 rounded-lg mb-4">
+              <div className="text-xs text-ui-textSecondary bg-ui-background-depth-1 p-3 rounded-lg mb-4">
                 <p className="flex items-center gap-1 mb-1">
-                  <span className="i-ph:lightbulb w-3.5 h-3.5 text-ui-icon-success dark:text-ui-icon-success" />
+                  <span className="i-ph:lightbulb w-3.5 h-3.5 text-ui-icon-success" />
                   <span className="font-medium">Tip:</span> You can also set the{' '}
-                  <code className="px-1 py-0.5 bg-ui-background-depth-2 dark:bg-ui-background-depth-2 rounded">
-                    VITE_VERCEL_ACCESS_TOKEN
-                  </code>{' '}
+                  <code className="px-1 py-0.5 bg-ui-background-depth-2 rounded">VITE_VERCEL_ACCESS_TOKEN</code>{' '}
                   environment variable to connect automatically.
                 </p>
               </div>
@@ -230,8 +228,8 @@ export default function VercelTab() {
                   placeholder="Enter your Vercel personal access token"
                   className={classNames(
                     'w-full px-3 py-2 rounded-lg text-sm',
-                    'bg-[#F8F8F8] dark:bg-[#1A1A1A]',
-                    'border border-[#E5E5E5] dark:border-[#333333]',
+                    'bg-ui-background-depth-2',
+                    'border border-ui-borderColor',
                     'text-ui-textPrimary placeholder-ui-textTertiary',
                     'focus:outline-none focus:ring-1 focus:ring-ui-borderColorActive',
                     'disabled:opacity-50',
@@ -255,8 +253,8 @@ export default function VercelTab() {
                 disabled={connecting || !connection.token}
                 className={classNames(
                   'px-4 py-2 rounded-lg text-sm flex items-center gap-2',
-                  'bg-[#303030] text-white',
-                  'hover:bg-[#5E41D0] hover:text-white',
+                  'bg-ui-button-secondary-background text-ui-button-secondary-text',
+                  'hover:bg-ui-button-primary-backgroundHover hover:text-ui-button-primary-text',
                   'disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200',
                   'transform active:scale-95',
                 )}
@@ -307,7 +305,7 @@ export default function VercelTab() {
               ) : (
                 <Collapsible open={isProjectsExpanded} onOpenChange={setIsProjectsExpanded}>
                   <CollapsibleTrigger asChild>
-                    <div className="flex items-center justify-between p-4 rounded-lg bg-ui-background dark:bg-ui-background-depth-2 border border-ui-borderColor dark:border-ui-borderColor hover:border-ui-borderColorActive/70 dark:hover:border-ui-borderColorActive/70 transition-all duration-200 cursor-pointer">
+                    <div className="flex items-center justify-between p-4 rounded-lg bg-ui-background border border-ui-borderColor hover:border-ui-borderColorActive/70 transition-all duration-200 cursor-pointer">
                       <div className="flex items-center gap-2">
                         <div className="i-ph:buildings w-4 h-4 text-ui-item-contentAccent" />
                         <span className="text-sm font-medium text-ui-textPrimary">

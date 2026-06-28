@@ -14,6 +14,7 @@ import { cssTransition, ToastContainer } from 'react-toastify';
 import { CommandPalette } from '~/components/ui/CommandPalette';
 import { KeyboardShortcuts } from '~/components/ui/KeyboardShortcuts';
 import { QuickFileOpen } from '~/components/ui/QuickFileOpen';
+import { logStore } from '~/lib/stores/logs';
 
 import reactToastifyStyles from 'react-toastify/dist/ReactToastify.css?url';
 import toastStyles from '~/styles/toasts.css?url';
@@ -121,6 +122,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
     document.querySelector('html')?.setAttribute('data-theme', theme);
   }, [theme]);
 
+  // Enable smooth theme transitions after initial render
+  useEffect(() => {
+    const timer = requestAnimationFrame(() => {
+      document.documentElement.classList.add('theme-ready');
+    });
+
+    return () => cancelAnimationFrame(timer);
+  }, []);
+
   useEffect(() => {
     // Initialize all services in parallel (each gracefully degrades if not configured)
     let authCleanup: (() => void) | undefined;
@@ -176,26 +186,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-import { logStore } from './lib/stores/logs';
-
 export default function App() {
-  const theme = useStore(themeStore);
-
   useEffect(() => {
     logStore.logSystem('Application initialized', {
-      theme,
-      platform: navigator.platform,
-      userAgent: navigator.userAgent,
       timestamp: new Date().toISOString(),
     });
 
     // Initialize debug logging with improved error handling
     import('./utils/debugLogger')
       .then(({ debugLogger }) => {
-        /*
-         * The debug logger initializes itself and starts disabled by default
-         * It will only start capturing when enableDebugMode() is called
-         */
         const status = debugLogger.getStatus();
         logStore.logSystem('Debug logging ready', {
           initialized: status.initialized,
