@@ -52,6 +52,11 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
       if (savedConfig) {
         try {
           const settings = JSON.parse(savedConfig) as MCPSettings;
+
+          if (settings && typeof settings.maxLLMSteps === 'number') {
+            settings.maxLLMSteps = Math.min(Math.max(settings.maxLLMSteps, 1), 10);
+          }
+
           const serverTools = await updateServerConfig(settings.mcpConfig);
           set(() => ({ settings, serverTools, error: null }));
         } catch (error) {
@@ -75,6 +80,10 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
 
     try {
       set(() => ({ isUpdatingConfig: true }));
+
+      if (newSettings && typeof newSettings.maxLLMSteps === 'number') {
+        newSettings.maxLLMSteps = Math.min(Math.max(newSettings.maxLLMSteps, 1), 10);
+      }
 
       const serverTools = await updateServerConfig(newSettings.mcpConfig);
 

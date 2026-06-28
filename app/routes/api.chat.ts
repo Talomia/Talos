@@ -134,7 +134,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   }
 
   if (maxLLMSteps > 10) {
-    return json({ error: true, message: 'maxLLMSteps must be ≤ 10' }, { status: 400 });
+    maxLLMSteps = 10;
   }
 
   // Extract project-level rules from .rules file in the project

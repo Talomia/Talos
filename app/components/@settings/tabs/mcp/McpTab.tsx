@@ -67,7 +67,8 @@ export default function McpTab() {
   }, [mcpConfigText]);
 
   const handleMaxLLMCallChange = (value: string) => {
-    setMaxLLMSteps(parseInt(value, 10));
+    const val = parseInt(value, 10);
+    setMaxLLMSteps(isNaN(val) ? 1 : Math.min(Math.max(val, 1), 10));
   };
 
   const handleSave = async () => {
@@ -186,7 +187,7 @@ export default function McpTab() {
               type="number"
               placeholder="Maximum number of sequential LLM calls"
               min="1"
-              max="20"
+              max="10"
               value={maxLLMSteps}
               onChange={(e) => handleMaxLLMCallChange(e.target.value)}
               className="w-full px-3 py-2 text-ui-textPrimary text-sm rounded-lg bg-white dark:bg-ui-background-depth-4 border border-ui-borderColor dark:border-ui-borderColor-dark focus:outline-none focus:ring-2 focus:ring-blue-500"
