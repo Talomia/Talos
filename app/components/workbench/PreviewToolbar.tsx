@@ -242,7 +242,7 @@ export const PreviewToolbar = memo(
                           window.open(
                             previewUrl,
                             `preview-${previewId}`,
-                            'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes',
+                            'noopener,noreferrer,width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes',
                           );
                         }}
                       >

@@ -37,12 +37,22 @@ export function useGit() {
   const [fs, setFs] = useState<PromiseFsClient>();
   const fileData = useRef<Record<string, { data: any; encoding?: string }>>({});
   useEffect(() => {
+    let cancelled = false;
+
     runtimePromise.then((container) => {
+      if (cancelled) {
+        return;
+      }
+
       fileData.current = {};
       setEngine(container);
       setFs(getFs(container, fileData));
       setReady(true);
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const gitClone = useCallback(

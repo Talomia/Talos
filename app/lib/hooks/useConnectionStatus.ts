@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { checkConnection } from '~/lib/api/connection';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -20,33 +20,49 @@ export const useConnectionStatus = () => {
   const [hasConnectionIssues, setHasConnectionIssues] = useState(false);
   const [currentIssue, setCurrentIssue] = useState<ConnectionIssueType>(null);
   const [acknowledgedIssue, setAcknowledgedIssue] = useState<string | null>(() => getAcknowledgedIssue());
+  const isMountedRef = useRef(true);
+  const acknowledgedRef = useRef(acknowledgedIssue);
+  acknowledgedRef.current = acknowledgedIssue;
 
-  const checkStatus = async () => {
+  const checkStatus = useCallback(async () => {
     try {
       const status = await checkConnection();
       const issue = !status.connected ? 'disconnected' : status.latency > 1000 ? 'high-latency' : null;
 
+      if (!isMountedRef.current) {
+        return;
+      }
+
       setCurrentIssue(issue);
 
       // Only show issues if they're new or different from the acknowledged one
-      setHasConnectionIssues(issue !== null && issue !== acknowledgedIssue);
+      setHasConnectionIssues(issue !== null && issue !== acknowledgedRef.current);
     } catch (error) {
       logger.error('Failed to check connection:', error);
+
+      if (!isMountedRef.current) {
+        return;
+      }
 
       // Show connection issues if we can't even check the status
       setCurrentIssue('disconnected');
       setHasConnectionIssues(true);
     }
-  };
+  }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
+
     // Check immediately and then every 10 seconds
     checkStatus();
 
     const interval = setInterval(checkStatus, 10 * 1000);
 
-    return () => clearInterval(interval);
-  }, [acknowledgedIssue]);
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
+  }, [checkStatus]);
 
   const acknowledgeIssue = () => {
     setAcknowledgedIssue(currentIssue);

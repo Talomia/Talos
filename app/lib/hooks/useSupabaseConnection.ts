@@ -148,7 +148,7 @@ export function useSupabaseConnection() {
   };
 
   const handleCreateProject = async () => {
-    window.open('https://app.supabase.com/new/new-project', '_blank');
+    window.open('https://app.supabase.com/new/new-project', '_blank', 'noopener,noreferrer');
   };
 
   return {

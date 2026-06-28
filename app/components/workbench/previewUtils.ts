@@ -118,7 +118,7 @@ export function openDeviceFramePopup(options: DeviceFrameOptions): void {
     const newWindow = window.open(
       previewUrl,
       '_blank',
-      `width=${width},height=${height},menubar=no,toolbar=no,location=no,status=no`,
+      `noopener,noreferrer,width=${width},height=${height},menubar=no,toolbar=no,location=no,status=no`,
     );
 
     if (newWindow) {

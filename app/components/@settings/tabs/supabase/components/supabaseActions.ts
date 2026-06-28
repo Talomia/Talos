@@ -28,70 +28,74 @@ export const projectActions: ProjectAction[] = [
     name: 'View Dashboard',
     icon: 'i-ph:layout',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View Database',
     icon: 'i-ph:database',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/editor`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/editor`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View Auth',
     icon: 'i-ph:user-circle',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/auth/users`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/auth/users`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View Storage',
     icon: 'i-ph:folder',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/storage/buckets`, '_blank');
+      window.open(
+        `https://supabase.com/dashboard/project/${projectId}/storage/buckets`,
+        '_blank',
+        'noopener,noreferrer',
+      );
     },
   },
   {
     name: 'View Functions',
     icon: 'i-ph:code',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/functions`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/functions`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View Logs',
     icon: 'i-ph:scroll',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/logs`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/logs`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View Settings',
     icon: 'i-ph:gear',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/settings`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/settings`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View API Docs',
     icon: 'i-ph:book',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/api`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/api`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View Realtime',
     icon: 'i-ph:radio',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/realtime`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/realtime`, '_blank', 'noopener,noreferrer');
     },
   },
   {
     name: 'View Edge Functions',
     icon: 'i-ph:terminal',
     action: async (projectId: string) => {
-      window.open(`https://supabase.com/dashboard/project/${projectId}/functions`, '_blank');
+      window.open(`https://supabase.com/dashboard/project/${projectId}/functions`, '_blank', 'noopener,noreferrer');
     },
   },
 ];
