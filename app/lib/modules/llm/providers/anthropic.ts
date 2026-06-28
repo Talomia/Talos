@@ -68,6 +68,12 @@ export default class AnthropicProvider extends BaseProvider {
       },
     });
 
+    if (!response.ok) {
+      throw new Error(
+        `Anthropic API error: ${response.status} ${response.statusText}. Check your API key and try again.`,
+      );
+    }
+
     const res = (await response.json()) as {
       data: Array<{
         id: string;

@@ -146,7 +146,7 @@ export default class GithubProvider extends BaseProvider {
       throw new Error(`Missing API key for ${this.name} provider`);
     }
 
-    logger.trace(`Using API key (first 8 chars): ${apiKey.substring(0, 8)}...`);
+    logger.trace('GitHub API key configured, creating model instance');
 
     const openai = createOpenAI({
       baseURL: 'https://models.github.ai/inference',

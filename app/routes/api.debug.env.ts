@@ -9,8 +9,8 @@ import { withSecurity } from '~/lib/security';
  */
 export const loader = withSecurity(
   async ({ context }: LoaderFunctionArgs) => {
-    // Block in production — debug endpoints should never be publicly accessible
-    if (process.env.NODE_ENV === 'production') {
+    // Only allow in development mode — default to blocking if NODE_ENV is not set
+    if (process.env.NODE_ENV !== 'development') {
       return json({ error: 'Not found' }, { status: 404 });
     }
 

@@ -59,6 +59,12 @@ export default class TogetherProvider extends BaseProvider {
       },
     });
 
+    if (!response.ok) {
+      throw new Error(
+        `Together API error: ${response.status} ${response.statusText}. Check your API key and try again.`,
+      );
+    }
+
     const res = (await response.json()) as Array<{
       id: string;
       type: string;
