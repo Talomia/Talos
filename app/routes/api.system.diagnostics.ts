@@ -44,7 +44,13 @@ export const loader: LoaderFunction = withSecurity(
        * Supabase stores an array: ["access_token", "refresh_token"]
        * or a direct JWT string
        */
-      const jwtToValidate = tokenValue.startsWith('[') ? JSON.parse(tokenValue)?.[0] : tokenValue;
+      let jwtToValidate: string | undefined;
+
+      try {
+        jwtToValidate = tokenValue.startsWith('[') ? JSON.parse(tokenValue)?.[0] : tokenValue;
+      } catch {
+        return json({ error: 'Invalid authentication token' }, { status: 401 });
+      }
 
       if (!jwtToValidate || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(jwtToValidate)) {
         return json({ error: 'Invalid authentication token' }, { status: 401 });
@@ -115,10 +121,10 @@ export const loader: LoaderFunction = withSecurity(
         status: githubResponse.status,
         statusText: githubResponse.statusText,
       };
-    } catch (error) {
+    } catch {
       githubApiStatus = {
         isReachable: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: 'An internal error occurred',
       };
     }
 
@@ -136,10 +142,10 @@ export const loader: LoaderFunction = withSecurity(
         status: netlifyResponse.status,
         statusText: netlifyResponse.statusText,
       };
-    } catch (error) {
+    } catch {
       netlifyApiStatus = {
         isReachable: false,
-        error: error instanceof Error ? error.message : String(error),
+        error: 'An internal error occurred',
       };
     }
 

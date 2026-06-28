@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createCerebras } from '@ai-sdk/cerebras';
 import { createScopedLogger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('CerebrasProvider');
 
@@ -78,7 +79,8 @@ export default class CerebrasProvider extends BaseProvider {
     }
 
     try {
-      const response = await fetch('https://api.cerebras.ai/v1/models', {
+      const response = await fetchWithTimeout('https://api.cerebras.ai/v1/models', {
+        timeoutMs: 15000,
         headers: {
           Authorization: `Bearer ${apiKey}`,
         },

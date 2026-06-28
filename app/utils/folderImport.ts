@@ -42,7 +42,7 @@ export const createChatFromFolder = async (
 ${ARTIFACT_TAG_OPEN} id="imported-files" title="Imported Files" type="bundled" >
 ${fileArtifacts
   .map(
-    (file) => `${ACTION_TAG_OPEN} type="file" filePath="${file.path}">
+    (file) => `${ACTION_TAG_OPEN} type="file" filePath="${file.path.replace(/"/g, '&quot;')}">
 ${escapeXmlTags(file.content)}
 ${ACTION_TAG_CLOSE}`,
   )

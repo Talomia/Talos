@@ -18,6 +18,7 @@ import { MCPService } from '~/lib/services/mcpService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { CSS_CLASS_THOUGHT } from '~/lib/app-config';
+import { getServerEnv } from '~/utils/env';
 import { generatePlan, planToPromptContext } from '~/lib/.server/llm/planning-agent';
 import { TaskTracker } from '~/lib/.server/llm/task-tracker';
 
@@ -157,7 +158,7 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
   const cookieHeader = request.headers.get('Cookie');
 
   // Read API keys from encrypted vault, with fallback to legacy plaintext cookie
-  const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+  const env = getServerEnv(context);
   const vault = await readVault(cookieHeader, env);
   const apiKeys = vault.apiKeys;
   const providerSettings: Record<string, IProviderSetting> = getProviderSettingsFromCookie(cookieHeader);
@@ -536,7 +537,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
                   completedAt: Date.now(),
                   duration: Date.now() - stepTimers.response,
                 } satisfies ProgressAnnotation);
-                await new Promise((resolve) => setTimeout(resolve, 0));
 
                 clearTimeout(timeoutId);
 
@@ -877,21 +877,23 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
         'Content-Type': 'text/event-stream; charset=utf-8',
         Connection: 'keep-alive',
         'Cache-Control': 'no-cache',
-        'Text-Encoding': 'chunked',
+        'Transfer-Encoding': 'chunked',
       },
     });
   } catch (error: unknown) {
     logger.error(error);
 
     const errObj = error instanceof Error ? error : new Error(String(error));
-    const errMeta = error as Record<string, unknown>;
+
+    // Safe property access — error may or may not have these extra fields from provider SDKs
+    const errMeta = typeof error === 'object' && error !== null ? (error as Record<string, unknown>) : {};
 
     const errorResponse = {
       error: true,
       message: errObj.message || 'An unexpected error occurred',
-      statusCode: (errMeta.statusCode as number) || 500,
+      statusCode: typeof errMeta.statusCode === 'number' ? errMeta.statusCode : 500,
       isRetryable: errMeta.isRetryable !== false, // Default to retryable unless explicitly false
-      provider: (errMeta.provider as string) || 'unknown',
+      provider: typeof errMeta.provider === 'string' ? errMeta.provider : 'unknown',
     };
 
     if (errObj.message?.includes('API key')) {

@@ -81,7 +81,7 @@ export const loader = withSecurity(async () => {
         branch: 'error',
         commit: 'error',
         isDirty: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: 'An internal error occurred',
       },
       { status: 500 },
     );

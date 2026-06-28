@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createFireworks } from '@ai-sdk/fireworks';
 import { createScopedLogger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('FireworksProvider');
 
@@ -85,7 +86,8 @@ export default class FireworksProvider extends BaseProvider {
 
     try {
       // Try the accounts/fireworks/models endpoint which lists public models
-      const response = await fetch('https://api.fireworks.ai/v1/accounts/fireworks/models?page_size=100', {
+      const response = await fetchWithTimeout('https://api.fireworks.ai/v1/accounts/fireworks/models?page_size=100', {
+        timeoutMs: 15000,
         headers: {
           Authorization: `Bearer ${apiKey}`,
         },

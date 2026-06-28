@@ -1,6 +1,7 @@
 import { generateText, type CoreTool, type GenerateTextResult, type Message } from 'ai';
 import ignore from 'ignore';
 import type { IProviderSetting } from '~/types/model';
+import type { ModelInfo } from '~/lib/modules/llm/types';
 import { IGNORE_PATTERNS, type FileMap } from './constants';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constants';
 import { createFilesContext, extractCurrentContext, extractPropertiesFromMessage, simplifyActions } from './utils';
@@ -18,7 +19,7 @@ const logger = createScopedLogger('select-context');
  * Dynamically compute the maximum number of context files based on model capacity.
  * Larger context windows allow more files for better project understanding.
  */
-function getContextFileLimit(modelDetails: any): number {
+function getContextFileLimit(modelDetails: ModelInfo): number {
   const maxTokens = modelDetails?.maxTokenAllowed || 128000;
 
   if (maxTokens >= 1000000) {
@@ -89,7 +90,7 @@ export async function selectContext(props: {
 
       content = simplifyActions(content);
 
-      content = content.replace(new RegExp(`<div class=\\\\"${CSS_CLASS_THOUGHT}\\\\">.*?</div>`, 's'), '');
+      content = content.replace(new RegExp(`<div class=\\"(?:${CSS_CLASS_THOUGHT})\\">[\\s\\S]*?<\\/div>`, 'gs'), '');
       content = content.replace(/<think>.*?<\/think>/s, '');
 
       return { ...message, content };
@@ -119,11 +120,9 @@ export async function selectContext(props: {
     modelDetails = modelsList.find((m) => m.name === currentModel);
 
     if (!modelDetails) {
-      // Fallback to first model
-      logger.warn(
-        `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model. ${modelsList[0].name}`,
+      throw new Error(
+        `Model "${currentModel}" not found for provider "${provider.name}". Please select a valid model.`,
       );
-      modelDetails = modelsList[0];
     }
   }
 

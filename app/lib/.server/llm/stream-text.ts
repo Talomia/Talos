@@ -208,11 +208,9 @@ export async function streamText(props: {
         );
       }
 
-      // Fallback to first model with warning
-      logger.warn(
-        `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model. ${modelsList[0].name}`,
+      throw new Error(
+        `Model "${currentModel}" not found for provider "${provider.name}". Please select a valid model.`,
       );
-      modelDetails = modelsList[0];
     }
   }
 

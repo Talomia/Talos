@@ -40,7 +40,7 @@ async function authCallbackLoader({ request, context }: LoaderFunctionArgs) {
 
     if (error) {
       logger.error('Code exchange error:', error.message);
-      return redirect(`/?error=${encodeURIComponent(error.message)}`);
+      return redirect('/?error=auth_code_exchange_failed');
     }
 
     return redirect(next, { headers: responseHeaders });

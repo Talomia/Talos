@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
+import { getServerEnv } from '~/utils/env';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -10,7 +11,7 @@ async function supabaseUserLoader({ request, context }: { request: Request; cont
   try {
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get Supabase token from various sources
@@ -75,7 +76,7 @@ async function supabaseUserLoader({ request, context }: { request: Request; cont
     return json(
       {
         error: 'Failed to fetch Supabase user information',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );
@@ -94,7 +95,7 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
 
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get Supabase token from various sources
@@ -204,7 +205,7 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
     return json(
       {
         error: 'Failed to process Supabase request',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );

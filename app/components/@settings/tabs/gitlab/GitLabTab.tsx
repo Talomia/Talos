@@ -219,7 +219,7 @@ export default function GitLabTab() {
                     const parent = target.parentElement;
 
                     if (parent) {
-                      parent.innerHTML = (connection.user?.name || connection.user?.username || 'U')
+                      parent.textContent = (connection.user?.name || connection.user?.username || 'U')
                         .charAt(0)
                         .toUpperCase();
                       parent.classList.add(

@@ -1,6 +1,7 @@
 import { withSecurity } from '~/lib/security';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
+import { getServerEnv } from '~/utils/env';
 
 async function checkEnvKey(provider: string | null | undefined, context: any, request: Request): Promise<Response> {
   if (!provider) {
@@ -18,7 +19,7 @@ async function checkEnvKey(provider: string | null | undefined, context: any, re
 
   // Get API keys from vault
   const cookieHeader = request.headers.get('Cookie');
-  const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+  const env = getServerEnv(context);
   const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
   /*

@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createOllama } from 'ollama-ai-provider';
 import { logger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 interface OllamaModelDetails {
   parent_model: string;
@@ -71,7 +72,8 @@ export default class OllamaProvider extends BaseProvider {
     const baseUrl = this._resolveBaseUrl(apiKeys, settings, serverEnv);
 
     try {
-      const response = await fetch(`${baseUrl}/api/tags`, {
+      const response = await fetchWithTimeout(`${baseUrl}/api/tags`, {
+        timeoutMs: 15000,
         signal: this.createTimeoutSignal(),
       });
 

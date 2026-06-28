@@ -228,33 +228,37 @@ export function useChat(options: UseChatOptions = {}) {
     return res as any;
   }, []);
 
-  // Map UIMessage[] to Message[]
-  const messages = chat.messages.map((m) => {
-    let content = '';
+  // Map UIMessage[] to Message[] — memoized to avoid re-creating on every render
+  const messages = useMemo(
+    () =>
+      chat.messages.map((m) => {
+        let content = '';
 
-    if (Array.isArray(m.parts)) {
-      for (const part of m.parts) {
-        if (part.type === 'text') {
-          content += part.text;
-        } else if (part.type === 'reasoning') {
-          content += `<div class="__assistantThought__">\n${part.text}\n</div>\n`;
+        if (Array.isArray(m.parts)) {
+          for (const part of m.parts) {
+            if (part.type === 'text') {
+              content += part.text;
+            } else if (part.type === 'reasoning') {
+              content += `<div class="__assistantThought__">\n${part.text}\n</div>\n`;
+            }
+          }
         }
-      }
-    }
 
-    if (!content && typeof (m as any).content === 'string') {
-      content = (m as any).content;
-    }
+        if (!content && typeof (m as any).content === 'string') {
+          content = (m as any).content;
+        }
 
-    return {
-      id: m.id,
-      role: m.role,
-      content,
-      annotations: m.metadata as any,
-      parts: m.parts as any,
-      createdAt: (m as any).createdAt,
-    };
-  });
+        return {
+          id: m.id,
+          role: m.role,
+          content,
+          annotations: m.metadata as any,
+          parts: m.parts as any,
+          createdAt: (m as any).createdAt,
+        };
+      }),
+    [chat.messages],
+  );
 
   const setMessages = useCallback((value: any) => {
     if (typeof value === 'function') {

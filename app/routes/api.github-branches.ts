@@ -1,10 +1,17 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
+import { getServerEnv } from '~/utils/env';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('api.github-branches');
+
+/**
+ * Validates a GitHub owner or repo name to prevent path traversal in API URLs.
+ * GitHub names only contain alphanumeric, hyphens, underscores, and dots.
+ */
+const GITHUB_NAME_REGEX = /^[a-zA-Z0-9._-]+$/;
 
 interface GitHubBranch {
   name: string;
@@ -54,7 +61,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
 
       // Get API keys from vault (server-side only)
       const cookieHeader = request.headers.get('Cookie');
-      const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+      const env = getServerEnv(context);
       const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
       // Try to get GitHub token from various sources
@@ -70,6 +77,11 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
 
     if (!githubToken) {
       return json({ error: 'GitHub token not found' }, { status: 401 });
+    }
+
+    // Validate owner/repo format to prevent path traversal in API URLs
+    if (!GITHUB_NAME_REGEX.test(owner) || !GITHUB_NAME_REGEX.test(repo)) {
+      return json({ error: 'Invalid owner or repo name format' }, { status: 400 });
     }
 
     // First, get repository info to know the default branch

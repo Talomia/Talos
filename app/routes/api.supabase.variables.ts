@@ -50,7 +50,7 @@ async function supabaseVariablesAction({ request }: ActionFunctionArgs) {
     return json({ apiKeys: safeKeys });
   } catch (error) {
     logger.error('Error fetching project API keys:', error);
-    return json({ error: error instanceof Error ? error.message : 'Unknown error occurred' }, { status: 500 });
+    return json({ error: 'An internal error occurred' }, { status: 500 });
   }
 }
 

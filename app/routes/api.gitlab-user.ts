@@ -2,6 +2,7 @@ import { json } from '@remix-run/cloudflare';
 import { createScopedLogger } from '~/utils/logger';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
+import { getServerEnv } from '~/utils/env';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('api.gitlab-user');
@@ -59,7 +60,7 @@ async function gitlabUserLoader({ request, context }: { request: Request; contex
 
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get GitLab token from various sources
@@ -113,7 +114,7 @@ async function gitlabUserLoader({ request, context }: { request: Request; contex
     return json(
       {
         error: 'Failed to fetch GitLab user information',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );
@@ -167,7 +168,7 @@ async function gitlabUserAction({ request, context }: { request: Request; contex
 
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get GitLab token from various sources
@@ -350,7 +351,7 @@ async function gitlabUserAction({ request, context }: { request: Request; contex
     return json(
       {
         error: 'Failed to process GitLab request',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );

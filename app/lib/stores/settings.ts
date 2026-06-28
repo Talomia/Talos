@@ -204,7 +204,7 @@ const autoEnableConfiguredProviders = async () => {
 
   try {
     const configuredProviders = await fetchConfiguredProviders();
-    const currentSettings = providersStore.get();
+    const currentSettings = { ...providersStore.get() };
     const savedSettings = localStorage.getItem(PROVIDER_SETTINGS_KEY);
     const autoEnabledProviders = localStorage.getItem(AUTO_ENABLED_KEY);
 
@@ -279,12 +279,13 @@ if (isBrowser) {
 // Create a function to update provider settings that handles both store and persistence
 export const updateProviderSettings = (provider: string, settings: ProviderSetting) => {
   const currentSettings = providersStore.get();
+  const existingProvider = currentSettings[provider] ?? { settings: {} };
 
   // Create new provider config with updated settings
   const updatedProvider = {
-    ...currentSettings[provider],
+    ...existingProvider,
     settings: {
-      ...currentSettings[provider].settings,
+      ...existingProvider.settings,
       ...settings,
     },
   };
@@ -370,7 +371,9 @@ const getInitialSettings = () => {
     }
 
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+
+      return typeof parsed === 'boolean' ? parsed : defaultValue;
     } catch {
       return defaultValue;
     }

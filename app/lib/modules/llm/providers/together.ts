@@ -2,6 +2,7 @@ import { BaseProvider, getOpenAILikeModel } from '~/lib/modules/llm/base-provide
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 export default class TogetherProvider extends BaseProvider {
   name = 'Together';
@@ -53,7 +54,8 @@ export default class TogetherProvider extends BaseProvider {
       return [];
     }
 
-    const response = await fetch(`${baseUrl}/models`, {
+    const response = await fetchWithTimeout(`${baseUrl}/models`, {
+      timeoutMs: 15000,
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },

@@ -7,7 +7,10 @@ export async function fetchWithTimeout(
 ): Promise<Response> {
   const { timeoutMs = 30000, ...fetchInit } = init ?? {};
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(
+    () => controller.abort(new DOMException('Request timed out', 'TimeoutError')),
+    timeoutMs,
+  );
 
   try {
     const response = await fetch(input, {

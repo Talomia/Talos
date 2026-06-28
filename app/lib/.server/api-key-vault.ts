@@ -33,7 +33,15 @@ export async function readVault(cookieHeader: string | null, env?: Record<string
     const secret = getVaultSecret(env);
     const decrypted = await decrypt(decodeURIComponent(vaultCookie), secret);
 
-    return JSON.parse(decrypted) as VaultData;
+    const parsed = JSON.parse(decrypted);
+
+    // Structural validation: ensure apiKeys is a valid object
+    if (!parsed || typeof parsed !== 'object' || typeof parsed.apiKeys !== 'object' || parsed.apiKeys === null) {
+      logger.warn('Vault data has invalid structure, returning empty vault');
+      return empty;
+    }
+
+    return parsed as VaultData;
   } catch (error) {
     logger.error('Failed to decrypt vault:', error);
 

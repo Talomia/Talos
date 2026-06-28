@@ -3,6 +3,7 @@ import type { ModelInfo } from '~/lib/modules/llm/types';
 import type { LanguageModelV1 } from 'ai';
 import type { IProviderSetting } from '~/types/model';
 import { createAnthropic } from '@ai-sdk/anthropic';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 export default class AnthropicProvider extends BaseProvider {
   name = 'Anthropic';
@@ -61,7 +62,8 @@ export default class AnthropicProvider extends BaseProvider {
       throw new Error(`Missing Api Key configuration for ${this.name} provider`);
     }
 
-    const response = await fetch(`https://api.anthropic.com/v1/models`, {
+    const response = await fetchWithTimeout(`https://api.anthropic.com/v1/models`, {
+      timeoutMs: 15000,
       headers: {
         'x-api-key': `${apiKey}`,
         'anthropic-version': '2023-06-01',

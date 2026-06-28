@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createScopedLogger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('GithubProvider');
 
@@ -91,7 +92,8 @@ export default class GithubProvider extends BaseProvider {
 
     try {
       // Try to fetch dynamic models from GitHub API
-      const response = await fetch('https://models.github.ai/v1/models', {
+      const response = await fetchWithTimeout('https://models.github.ai/v1/models', {
+        timeoutMs: 15000,
         headers: {
           Authorization: `Bearer ${apiKey}`,
         },

@@ -3,6 +3,7 @@ import type { ModelInfo } from '~/lib/modules/llm/types';
 import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 export default class GroqProvider extends BaseProvider {
   name = 'Groq';
@@ -52,7 +53,8 @@ export default class GroqProvider extends BaseProvider {
       throw `Missing Api Key configuration for ${this.name} provider`;
     }
 
-    const response = await fetch(`https://api.groq.com/openai/v1/models`, {
+    const response = await fetchWithTimeout(`https://api.groq.com/openai/v1/models`, {
+      timeoutMs: 15000,
       headers: {
         Authorization: `Bearer ${apiKey}`,
       },

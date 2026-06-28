@@ -114,7 +114,7 @@ ${ARTIFACT_TAG_OPEN} id="${id}" title="User Updated Files">
 ${Object.keys(files)
   .map(
     (filePath) => `
-${ACTION_TAG_OPEN} type="file" filePath="${filePath}">
+${ACTION_TAG_OPEN} type="file" filePath="${filePath.replace(/"/g, '&quot;')}">
 ${files[filePath].content}
 ${ACTION_TAG_CLOSE}
 `,

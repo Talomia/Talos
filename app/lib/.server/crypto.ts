@@ -18,7 +18,7 @@ async function deriveKey(secret: string): Promise<CryptoKey> {
     {
       name: 'PBKDF2',
       salt: encoder.encode('vault-v1'),
-      iterations: 100000,
+      iterations: 600000, // OWASP 2024 recommends 600k+ for SHA-256
       hash: 'SHA-256',
     },
     keyMaterial,
@@ -44,7 +44,14 @@ export async function encrypt(plaintext: string, secret: string): Promise<string
   combined.set(iv);
   combined.set(new Uint8Array(ciphertext), iv.length);
 
-  return btoa(String.fromCharCode(...combined));
+  // Chunk-based encoding to avoid stack overflow with large payloads
+  let binaryString = '';
+
+  for (let i = 0; i < combined.length; i++) {
+    binaryString += String.fromCharCode(combined[i]);
+  }
+
+  return btoa(binaryString);
 }
 
 /**

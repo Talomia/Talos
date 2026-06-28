@@ -40,7 +40,7 @@
     "docker:engine": "docker compose --profile docker-engine up"
   },
   "engines": {
-    "node": ">=18.18.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@ai-sdk/amazon-bedrock": "1.0.6",

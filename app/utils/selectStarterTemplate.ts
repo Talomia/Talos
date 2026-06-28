@@ -203,7 +203,7 @@ ${ARTIFACT_TAG_OPEN} id="imported-files" title="${title || 'Create initial files
 ${filesToImport.files
   .map(
     (file) =>
-      `${ACTION_TAG_OPEN} type="file" filePath="${file.path}">
+      `${ACTION_TAG_OPEN} type="file" filePath="${file.path.replace(/"/g, '&quot;')}">
 ${file.content}
 ${ACTION_TAG_CLOSE}`,
   )

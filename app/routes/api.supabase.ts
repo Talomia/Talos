@@ -50,7 +50,7 @@ const supabaseAction = async ({ request }: ActionFunctionArgs): Promise<Response
     logger.error('Supabase API error:', error);
     return json(
       {
-        error: error instanceof Error ? error.message : 'Authentication failed',
+        error: 'Authentication failed',
       },
       { status: 401 },
     );

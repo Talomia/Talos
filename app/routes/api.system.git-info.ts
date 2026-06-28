@@ -261,7 +261,7 @@ export const loader: LoaderFunction = withSecurity(
         }
       } catch (error) {
         logger.error('GitHub API error:', error);
-        return json({ error: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+        return json({ error: 'An internal error occurred' }, { status: 500 });
       }
     }
 

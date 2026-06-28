@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createScopedLogger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('OpenRouterProvider');
 
@@ -56,7 +57,8 @@ export default class OpenRouterProvider extends BaseProvider {
     _serverEnv: Env = {} as Env,
   ): Promise<ModelInfo[]> {
     try {
-      const response = await fetch('https://openrouter.ai/api/v1/models', {
+      const response = await fetchWithTimeout('https://openrouter.ai/api/v1/models', {
+        timeoutMs: 15000,
         headers: {
           'Content-Type': 'application/json',
         },

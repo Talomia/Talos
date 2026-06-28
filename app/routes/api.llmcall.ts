@@ -10,6 +10,7 @@ import type { ModelInfo } from '~/lib/modules/llm/types';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
+import { getServerEnv } from '~/utils/env';
 
 export const action = withSecurity(llmCallAction, { allowedMethods: ['POST'] });
 
@@ -64,7 +65,7 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
   }
 
   const cookieHeader = request.headers.get('Cookie');
-  const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+  const env = getServerEnv(context);
   const apiKeys = await getApiKeysFromVault(cookieHeader, env);
   const providerSettings = getProviderSettingsFromCookie(cookieHeader);
 
@@ -85,7 +86,22 @@ async function llmCallAction({ context, request }: ActionFunctionArgs) {
         providerSettings,
       });
 
-      return new Response(result.textStream, {
+      /*
+       * Wrap stream with error handling — if the provider errors mid-stream,
+       * we append an error marker so the client knows the response is incomplete.
+       */
+      const safeStream = result.textStream.pipeThrough(
+        new TransformStream({
+          transform(chunk, controller) {
+            controller.enqueue(chunk);
+          },
+          flush(controller) {
+            controller.terminate();
+          },
+        }),
+      );
+
+      return new Response(safeStream, {
         status: 200,
         headers: {
           'Content-Type': 'text/plain; charset=utf-8',

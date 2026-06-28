@@ -155,7 +155,17 @@ export class MCPService {
   }
 
   async updateConfig(config: MCPConfig) {
-    logger.debug('updating config', JSON.stringify(config));
+    logger.debug(
+      'updating config',
+      JSON.stringify(config, (key, value) => {
+        // Redact potentially sensitive fields from log output
+        if (['headers', 'token', 'apikey', 'authorization'].includes(key.toLowerCase())) {
+          return '[REDACTED]';
+        }
+
+        return value;
+      }),
+    );
     this._config = config;
     await this._createClients();
 
@@ -409,7 +419,8 @@ export class MCPService {
             logger.debug(`calling tool "${toolName}" with args: ${JSON.stringify(toolInvocation.args)}`);
 
             try {
-              result = await toolInstance.execute(toolInvocation.args, {
+              const MCP_TOOL_TIMEOUT_MS = 60000; // 60 seconds
+              const executePromise = toolInstance.execute(toolInvocation.args, {
                 messages: await convertToModelMessages(
                   messages.map((m: any) => ({
                     id: m.id || '',
@@ -420,6 +431,15 @@ export class MCPService {
                 ),
                 toolCallId,
               });
+
+              const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(
+                  () => reject(new Error(`MCP tool "${toolName}" timed out after ${MCP_TOOL_TIMEOUT_MS / 1000}s`)),
+                  MCP_TOOL_TIMEOUT_MS,
+                ),
+              );
+
+              result = await Promise.race([executePromise, timeoutPromise]);
             } catch (error) {
               logger.error(`error while calling tool "${toolName}":`, error);
               result = TOOL_EXECUTION_ERROR;

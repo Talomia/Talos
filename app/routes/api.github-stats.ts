@@ -2,6 +2,7 @@ import { json } from '@remix-run/cloudflare';
 import { createScopedLogger } from '~/utils/logger';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
+import { getServerEnv } from '~/utils/env';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import type { GitHubUserResponse, GitHubStats } from '~/types/GitHub';
 
@@ -11,7 +12,7 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
   try {
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get GitHub token from various sources
@@ -200,7 +201,7 @@ async function githubStatsLoader({ request, context }: { request: Request; conte
     return json(
       {
         error: 'Failed to fetch GitHub statistics',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );

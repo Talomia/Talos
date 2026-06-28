@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createScopedLogger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('MoonshotProvider');
 
@@ -62,7 +63,8 @@ export default class MoonshotProvider extends BaseProvider {
     }
 
     try {
-      const response = await fetch('https://api.moonshot.ai/v1/models', {
+      const response = await fetchWithTimeout('https://api.moonshot.ai/v1/models', {
+        timeoutMs: 15000,
         headers: {
           Authorization: `Bearer ${apiKey}`,
         },

@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
 import { createDeepSeek } from '@ai-sdk/deepseek';
 import { createScopedLogger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('DeepseekProvider');
 
@@ -71,7 +72,8 @@ export default class DeepseekProvider extends BaseProvider {
     }
 
     try {
-      const response = await fetch('https://api.deepseek.com/models', {
+      const response = await fetchWithTimeout('https://api.deepseek.com/models', {
+        timeoutMs: 15000,
         headers: {
           Authorization: `Bearer ${apiKey}`,
         },

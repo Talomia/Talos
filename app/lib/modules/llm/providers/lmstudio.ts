@@ -4,6 +4,7 @@ import type { IProviderSetting } from '~/types/model';
 import { createOpenAI } from '@ai-sdk/openai';
 import type { LanguageModelV1 } from 'ai';
 import { logger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 export default class LMStudioProvider extends BaseProvider {
   name = 'LMStudio';
@@ -44,7 +45,8 @@ export default class LMStudioProvider extends BaseProvider {
     const baseUrl = this._resolveBaseUrl(apiKeys, settings, serverEnv);
 
     try {
-      const response = await fetch(`${baseUrl}/v1/models`, {
+      const response = await fetchWithTimeout(`${baseUrl}/v1/models`, {
+        timeoutMs: 15000,
         signal: this.createTimeoutSignal(),
       });
 

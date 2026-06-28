@@ -5,6 +5,7 @@ import type { ModelInfo } from '~/lib/modules/llm/types';
 import { createOpenAI } from '@ai-sdk/openai';
 import crypto from 'node:crypto';
 import { createScopedLogger } from '~/utils/logger';
+import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('ZaiProvider');
 
@@ -66,7 +67,8 @@ export default class ZaiProvider extends BaseProvider {
     }
 
     try {
-      const response = await fetch(`${baseUrl}/models`, {
+      const response = await fetchWithTimeout(`${baseUrl}/models`, {
+        timeoutMs: 15000,
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',

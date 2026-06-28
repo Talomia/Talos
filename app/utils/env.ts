@@ -24,3 +24,13 @@ export function hasEnvVar(key: string): boolean {
   const value = import.meta.env[key] as string | undefined;
   return value !== undefined && value !== '';
 }
+
+/**
+ * Extract environment variables from a Remix/Cloudflare context.
+ *
+ * Centralizes the `as unknown as Record<string, string>` cast that was
+ * previously duplicated across 19+ route files.
+ */
+export function getServerEnv(context?: { cloudflare?: { env?: unknown } }): Record<string, string> {
+  return (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+}

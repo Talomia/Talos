@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import { withSecurity } from '~/lib/security';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
+import { getServerEnv } from '~/utils/env';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -173,7 +174,7 @@ export const loader = withSecurity(async ({ request, context }: { request: Reque
   try {
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get GitLab token from various sources

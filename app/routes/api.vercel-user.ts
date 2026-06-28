@@ -1,6 +1,7 @@
 import { json } from '@remix-run/cloudflare';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
+import { getServerEnv } from '~/utils/env';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 import { createScopedLogger } from '~/utils/logger';
 
@@ -10,7 +11,7 @@ async function vercelUserLoader({ request, context }: { request: Request; contex
   try {
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get Vercel token from various sources
@@ -71,7 +72,7 @@ async function vercelUserLoader({ request, context }: { request: Request; contex
     return json(
       {
         error: 'Failed to fetch Vercel user information',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );
@@ -90,7 +91,7 @@ async function vercelUserAction({ request, context }: { request: Request; contex
 
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get Vercel token from various sources
@@ -156,7 +157,7 @@ async function vercelUserAction({ request, context }: { request: Request; contex
     return json(
       {
         error: 'Failed to process Vercel request',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );

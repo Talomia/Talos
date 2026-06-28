@@ -2,6 +2,7 @@ import { type ActionFunctionArgs, type LoaderFunctionArgs, json } from '@remix-r
 import { readVault, writeVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
 import { createScopedLogger } from '~/utils/logger';
+import { getServerEnv } from '~/utils/env';
 
 const FORBIDDEN_PROVIDER_NAMES = new Set([
   '__proto__',
@@ -24,7 +25,7 @@ const logger = createScopedLogger('api.keys');
 export const loader = withSecurity(async ({ request, context }: LoaderFunctionArgs) => {
   try {
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const vault = await readVault(cookieHeader, env);
 
     // Return only provider names, never the actual keys
@@ -48,7 +49,7 @@ export const loader = withSecurity(async ({ request, context }: LoaderFunctionAr
  */
 export const action = withSecurity(
   async ({ request, context }: ActionFunctionArgs) => {
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
 
     if (request.method === 'POST') {
       try {

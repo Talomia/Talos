@@ -8,6 +8,7 @@ const logger = createScopedLogger('Security');
  * For production-grade rate limiting, consider using Redis or a persistent store.
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+let rateLimitCleanupCounter = 0;
 
 // Rate limit configuration — ordered by specificity (exact matches before wildcards)
 const RATE_LIMITS: Record<string, { windowMs: number; maxRequests: number }> = {
@@ -44,24 +45,24 @@ const RATE_LIMITS: Record<string, { windowMs: number; maxRequests: number }> = {
   '/api/*': { windowMs: 15 * 60 * 1000, maxRequests: 100 }, // 100 requests/15min
 };
 
+// Pre-sorted rate limit rules by specificity (exact first, then longest wildcards)
+const sortedRules = Object.entries(RATE_LIMITS).sort(([a], [b]) => {
+  const aIsWildcard = a.includes('*');
+  const bIsWildcard = b.includes('*');
+
+  if (aIsWildcard !== bIsWildcard) {
+    return aIsWildcard ? 1 : -1;
+  }
+
+  return b.length - a.length; // longer (more specific) patterns first
+});
+
 /**
  * Rate limiting middleware
  */
 export function checkRateLimit(request: Request, endpoint: string): { allowed: boolean; resetTime?: number } {
   const clientIP = getClientIP(request);
   const key = `${clientIP}:${endpoint}`;
-
-  // Find matching rate limit rule — sort by specificity (exact first, then longest wildcards)
-  const sortedRules = Object.entries(RATE_LIMITS).sort(([a], [b]) => {
-    const aIsWildcard = a.includes('*');
-    const bIsWildcard = b.includes('*');
-
-    if (aIsWildcard !== bIsWildcard) {
-      return aIsWildcard ? 1 : -1;
-    }
-
-    return b.length - a.length; // longer (more specific) patterns first
-  });
 
   const rule = sortedRules.find(([pattern]) => {
     if (pattern.endsWith('/*')) {
@@ -83,12 +84,17 @@ export function checkRateLimit(request: Request, endpoint: string): { allowed: b
 
   const [, config] = rule;
 
-  // Clean up expired entries (resetTime is in the past)
+  // Clean up expired entries periodically (every 100th request to avoid O(n) per request)
   const now = Date.now();
+  rateLimitCleanupCounter++;
 
-  for (const [storedKey, data] of rateLimitStore.entries()) {
-    if (data.resetTime < now) {
-      rateLimitStore.delete(storedKey);
+  if (rateLimitCleanupCounter >= 100) {
+    rateLimitCleanupCounter = 0;
+
+    for (const [storedKey, data] of rateLimitStore.entries()) {
+      if (data.resetTime < now) {
+        rateLimitStore.delete(storedKey);
+      }
     }
   }
 
@@ -106,8 +112,12 @@ export function checkRateLimit(request: Request, endpoint: string): { allowed: b
     }
   }
 
-  // Get or create rate limit data
-  const rateLimitData = rateLimitStore.get(key) || { count: 0, resetTime: now + config.windowMs };
+  // Get or create rate limit data — also reset if window has expired
+  let rateLimitData = rateLimitStore.get(key);
+
+  if (!rateLimitData || rateLimitData.resetTime < now) {
+    rateLimitData = { count: 0, resetTime: now + config.windowMs };
+  }
 
   if (rateLimitData.count >= config.maxRequests) {
     return { allowed: false, resetTime: rateLimitData.resetTime };
@@ -166,22 +176,23 @@ function getClientIP(request: Request): string {
   }
 
   /*
-   * 3. No identifying headers at all — fall back to a shared anonymous bucket.
-   *    Use the client IP from x-forwarded-for or x-real-ip if available,
-   *    otherwise use a constant key so all anonymous traffic shares one bucket.
+   * 3. No identifying headers at all — fall back to a shared anonymous bucket
+   *    so all anonymous traffic shares one rate-limit pool.
    */
-  const forwardedIP = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  const realIPHeader = request.headers.get('x-real-ip')?.trim();
-  const anonymousKey = forwardedIP || realIPHeader || 'anonymous-shared';
-
-  return 'anonymous-' + anonymousKey;
+  return 'anonymous-shared';
 }
 
 /**
  * Security headers middleware
  */
+let _cachedSecurityHeaders: Record<string, string> | null = null;
+
 export function createSecurityHeaders() {
-  return {
+  if (_cachedSecurityHeaders) {
+    return _cachedSecurityHeaders;
+  }
+
+  _cachedSecurityHeaders = {
     // Prevent clickjacking
     'X-Frame-Options': 'DENY',
 
@@ -258,6 +269,8 @@ export function createSecurityHeaders() {
         }
       : {}),
   };
+
+  return _cachedSecurityHeaders;
 }
 
 /**
@@ -343,7 +356,6 @@ export function withSecurity<T extends (args: ActionFunctionArgs | LoaderFunctio
       const contentType = request.headers.get('Content-Type') || '';
 
       if (
-        contentType &&
         !contentType.includes('application/json') &&
         !contentType.includes('multipart/form-data') &&
         !contentType.includes('application/octet-stream')

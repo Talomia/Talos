@@ -96,6 +96,8 @@ export class StreamRecoveryManager {
       if (this._options.onRecovery) {
         this._options.onRecovery(this._retryCount);
       }
+
+      this._retryCount = 0; // Reset for any future stalls
     }
 
     this._resetTimeout();

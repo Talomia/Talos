@@ -233,7 +233,6 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
       {
         error: 'Proxy error',
         message: error instanceof Error ? error.message : 'Unknown error',
-        url: path ? `https://${path}` : 'Invalid URL',
       },
       { status: 500 },
     );

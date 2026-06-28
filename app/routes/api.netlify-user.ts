@@ -2,6 +2,7 @@ import { json } from '@remix-run/cloudflare';
 import { createScopedLogger } from '~/utils/logger';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { withSecurity } from '~/lib/security';
+import { getServerEnv } from '~/utils/env';
 import { fetchWithTimeout } from '~/utils/fetchWithTimeout';
 
 const logger = createScopedLogger('api.netlify-user');
@@ -10,7 +11,7 @@ async function netlifyUserLoader({ request, context }: { request: Request; conte
   try {
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get Netlify token from various sources
@@ -60,7 +61,7 @@ async function netlifyUserLoader({ request, context }: { request: Request; conte
     return json(
       {
         error: 'Failed to fetch Netlify user information',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );
@@ -79,7 +80,7 @@ async function netlifyUserAction({ request, context }: { request: Request; conte
 
     // Get API keys from vault (server-side only)
     const cookieHeader = request.headers.get('Cookie');
-    const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+    const env = getServerEnv(context);
     const apiKeys = await getApiKeysFromVault(cookieHeader, env);
 
     // Try to get Netlify token from various sources
@@ -137,7 +138,7 @@ async function netlifyUserAction({ request, context }: { request: Request; conte
     return json(
       {
         error: 'Failed to process Netlify request',
-        details: error instanceof Error ? error.message : String(error),
+        details: 'An internal error occurred',
       },
       { status: 500 },
     );

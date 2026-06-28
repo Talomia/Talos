@@ -6,10 +6,16 @@ import type { ProviderInfo } from '~/types/model';
 import { getApiKeysFromVault } from '~/lib/.server/api-key-vault';
 import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
+import { getServerEnv } from '~/utils/env';
 
 export const action = withSecurity(enhancerAction, { allowedMethods: ['POST'] });
 
 const logger = createScopedLogger('api.enhancer');
+
+/** Escape characters that could break XML/prompt tag structure */
+function escapePromptContent(text: string): string {
+  return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 async function enhancerAction({ context, request }: ActionFunctionArgs) {
   let message: string;
@@ -48,7 +54,7 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
   const { name: providerName } = provider;
 
   const cookieHeader = request.headers.get('Cookie');
-  const env = (context?.cloudflare?.env as unknown as Record<string, string>) || {};
+  const env = getServerEnv(context);
   const apiKeys = await getApiKeysFromVault(cookieHeader, env);
   const providerSettings = getProviderSettingsFromCookie(cookieHeader);
 
@@ -80,7 +86,7 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
             Write it as a natural, flowing specification — not a structured template.
 
             <original_prompt>
-              ${message}
+              ${escapePromptContent(message)}
             </original_prompt>
           `,
         },
@@ -103,8 +109,19 @@ async function enhancerAction({ context, request }: ActionFunctionArgs) {
       },
     });
 
-    // Return the text stream directly since it's already text data
-    return new Response(result.textStream, {
+    // Wrap stream with error handling for mid-stream failures
+    const safeStream = result.textStream.pipeThrough(
+      new TransformStream({
+        transform(chunk, controller) {
+          controller.enqueue(chunk);
+        },
+        flush(controller) {
+          controller.terminate();
+        },
+      }),
+    );
+
+    return new Response(safeStream, {
       status: 200,
       headers: {
         'Content-Type': 'text/event-stream',

@@ -16,6 +16,9 @@ import {
 
 const logger = createScopedLogger('MessageParser');
 
+// Pre-compiled regex for quick-action parsing (avoids re-creation on every parse)
+const QUICK_ACTION_REGEX = new RegExp(`<${QUICK_ACTION_ELEMENT}([^>]*)>([\\s\\S]*?)<\\/${QUICK_ACTION_ELEMENT}>`, 'g');
+
 export interface ArtifactCallbackData extends ArtifactData {
   messageId: string;
   artifactId?: string;
@@ -135,14 +138,12 @@ export class StreamingMessageParser {
           const actionsBlockContent = input.slice(i + quickActionsOpenLen, actionsBlockEnd);
 
           // Find all <quick-action ...>label</quick-action> inside
-          const quickActionRegex = new RegExp(
-            `<${QUICK_ACTION_ELEMENT}([^>]*)>([\s\S]*?)<\/${QUICK_ACTION_ELEMENT}>`,
-            'g',
-          );
+          QUICK_ACTION_REGEX.lastIndex = 0; // Reset regex state for reuse
+
           let match;
           const buttons = [];
 
-          while ((match = quickActionRegex.exec(actionsBlockContent)) !== null) {
+          while ((match = QUICK_ACTION_REGEX.exec(actionsBlockContent)) !== null) {
             const tagAttrs = match[1];
             const label = match[2];
             const type = this.#extractAttribute(tagAttrs, 'type');
@@ -402,7 +403,10 @@ export class StreamingMessageParser {
 
       if (!operation || !['migration', 'query'].includes(operation)) {
         logger.warn(`Invalid or missing operation for Supabase action: ${operation}`);
-        return { type: 'shell' as ActionType, content: `echo "Invalid Supabase operation: ${operation}"` };
+        return {
+          type: 'shell' as ActionType,
+          content: `echo "Invalid Supabase operation: ${operation?.replace(/["$`\\]/g, '')}"`,
+        };
       }
 
       (actionAttributes as SupabaseAction).operation = operation as 'migration' | 'query';
@@ -461,6 +465,15 @@ function camelToDashCase(input: string) {
   return input.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function createQuickActionElement(props: Record<string, string>, label: string) {
   const elementProps = [
     `class="${CSS_CLASS_QUICK_ACTION}"`,
@@ -468,7 +481,7 @@ function createQuickActionElement(props: Record<string, string>, label: string) 
     ...Object.entries(props).map(([key, value]) => `data-${camelToDashCase(key)}=${JSON.stringify(value)}`),
   ];
 
-  return `<button ${elementProps.join(' ')}>${label}</button>`;
+  return `<button ${elementProps.join(' ')}>${escapeHtml(label)}</button>`;
 }
 
 function createQuickActionGroup(buttons: string[]) {
