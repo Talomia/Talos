@@ -622,8 +622,21 @@ export class DockerEngine implements RuntimeEngine {
         await this.#connect();
         logger.info('Reconnected successfully');
 
-        // Clear stale state from previous connection before re-booting
+        // Gracefully close stale state from previous connection
+        for (const controller of this.#outputControllers.values()) {
+          try {
+            controller.close();
+          } catch {
+            // Stream may already be closed
+          }
+        }
+
         this.#outputControllers.clear();
+
+        for (const resolver of this.#exitResolvers.values()) {
+          resolver(-1); // Signal abnormal exit due to reconnection
+        }
+
         this.#exitResolvers.clear();
         this.#watchCallbacks.clear();
         this.#searchProgressCallbacks.clear();

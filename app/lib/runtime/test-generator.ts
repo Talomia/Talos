@@ -506,19 +506,40 @@ function addErrorLines(result: TestResults, output: string): TestResults {
   return result;
 }
 
+const COLLECT_TIMEOUT_MS = 120_000; // 2 minutes max
+const COLLECT_MAX_BYTES = 5 * 1024 * 1024; // 5 MB max output
+
 async function collectProcessOutput(process: RuntimeProcess): Promise<string> {
   const chunks: string[] = [];
   const reader = process.output.getReader();
+  let totalLength = 0;
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => reject(new Error('Process output collection timed out')), COLLECT_TIMEOUT_MS);
+  });
 
   try {
     while (true) {
-      const { done, value } = await reader.read();
+      const { done, value } = await Promise.race([reader.read(), timeoutPromise]);
 
       if (done) {
         break;
       }
 
+      totalLength += value.length;
+
+      if (totalLength > COLLECT_MAX_BYTES) {
+        chunks.push(value.slice(0, COLLECT_MAX_BYTES - (totalLength - value.length)));
+        chunks.push('\n[Output truncated — exceeded 5 MB limit]');
+
+        break;
+      }
+
       chunks.push(value);
+    }
+  } catch (error) {
+    if (chunks.length > 0) {
+      chunks.push(`\n[Collection stopped: ${error instanceof Error ? error.message : 'unknown error'}]`);
     }
   } finally {
     reader.releaseLock();

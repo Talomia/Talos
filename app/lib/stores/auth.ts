@@ -33,9 +33,10 @@ export const authLoading = computed(authStore, (state) => state.isLoading);
  * Call this on app initialization.
  * Returns a cleanup function that clears the session refresh interval.
  */
-export async function initAuth(): Promise<() => void> {
-  let intervalId: ReturnType<typeof setInterval> | null = null;
+/** Module-level interval reference so signOut can clear it immediately. */
+let _sessionRefreshInterval: ReturnType<typeof setInterval> | null = null;
 
+export async function initAuth(): Promise<() => void> {
   try {
     authStore.set({ ...authStore.get(), isLoading: true, error: null });
 
@@ -54,7 +55,7 @@ export async function initAuth(): Promise<() => void> {
       import('~/lib/persistence/settingsSync').then(({ enableSettingsSync }) => enableSettingsSync());
 
       // Set up periodic session refresh every 5 minutes
-      intervalId = setInterval(
+      _sessionRefreshInterval = setInterval(
         async () => {
           try {
             const refreshResponse = await fetch('/api/auth/user');
@@ -71,9 +72,9 @@ export async function initAuth(): Promise<() => void> {
               }
 
               // Clear the interval since the user is no longer authenticated
-              if (intervalId) {
-                clearInterval(intervalId);
-                intervalId = null;
+              if (_sessionRefreshInterval) {
+                clearInterval(_sessionRefreshInterval);
+                _sessionRefreshInterval = null;
               }
             }
           } catch {
@@ -89,9 +90,9 @@ export async function initAuth(): Promise<() => void> {
   }
 
   return () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
+    if (_sessionRefreshInterval) {
+      clearInterval(_sessionRefreshInterval);
+      _sessionRefreshInterval = null;
     }
   };
 }
@@ -200,6 +201,12 @@ export async function signInWithOAuth(provider: string): Promise<{ success: bool
  */
 export async function signOut(): Promise<void> {
   try {
+    // Clear session refresh interval immediately
+    if (_sessionRefreshInterval) {
+      clearInterval(_sessionRefreshInterval);
+      _sessionRefreshInterval = null;
+    }
+
     await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

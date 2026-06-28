@@ -22,6 +22,8 @@ export class PreviewsStore {
   #REFRESH_DELAY = 300;
   #MAX_TRACKED_UPDATES = 100;
   #storageListener?: (event: StorageEvent) => void;
+  #serverReadyListener?: (port: number, url: string) => void;
+  #portListener?: (port: number, type: 'open' | 'close', url: string) => void;
 
   previews = atom<PreviewInfo[]>([]);
 
@@ -91,6 +93,23 @@ export class PreviewsStore {
 
     this.#availablePreviews.clear();
     this.#lastUpdate.clear();
+
+    // Remove engine event listeners
+    this.#engine
+      .then((engine) => {
+        if (this.#serverReadyListener) {
+          engine.off('server-ready', this.#serverReadyListener);
+          this.#serverReadyListener = undefined;
+        }
+
+        if (this.#portListener) {
+          engine.off('port', this.#portListener);
+          this.#portListener = undefined;
+        }
+      })
+      .catch(() => {
+        // Engine may not be available during teardown
+      });
   }
 
   #maybeCreateChannel(name: string): BroadcastChannel | undefined {
@@ -133,16 +152,17 @@ export class PreviewsStore {
     const engine = await this.#engine;
 
     // Listen for server ready events
-    engine.on('server-ready', (port, url) => {
+    this.#serverReadyListener = (port, url) => {
       logger.trace('Server ready on port:', port, url);
       this.broadcastUpdate(url);
 
       // Refresh previews when server is ready to pick up current state
       this._refreshAllPreviews();
-    });
+    };
+    engine.on('server-ready', this.#serverReadyListener);
 
     // Listen for port events
-    engine.on('port', (port, type, url) => {
+    this.#portListener = (port, type, url) => {
       let previewInfo = this.#availablePreviews.get(port);
 
       if (type === 'close' && previewInfo) {
@@ -168,7 +188,8 @@ export class PreviewsStore {
       if (type === 'open') {
         this.broadcastUpdate(url);
       }
-    });
+    };
+    engine.on('port', this.#portListener);
   }
 
   /**

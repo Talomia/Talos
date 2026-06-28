@@ -61,10 +61,18 @@ export async function initProfile(): Promise<void> {
 }
 
 /**
+ * Monotonic counter to prevent stale rollbacks.
+ * Incremented on each updateProfile call so that a failed fetch
+ * only reverts if no newer update has been applied since.
+ */
+let _profileVersion = 0;
+
+/**
  * Update the profile both locally and on the server.
  */
 export const updateProfile = (updates: Partial<Profile>) => {
   const previousProfile = profileStore.get();
+  const updateVersion = ++_profileVersion;
 
   profileStore.set({ ...previousProfile, ...updates });
 
@@ -86,9 +94,16 @@ export const updateProfile = (updates: Partial<Profile>) => {
     }),
   }).catch(() => {
     /*
-     * Revert local state to the pre-update snapshot so the UI doesn't
-     * show data that the server never received.
+     * Only revert if no newer update has been applied since this one.
+     * Without this guard, a rapid sequence of updates could cause a
+     * failed earlier update to incorrectly revert a later success.
      */
+    if (_profileVersion !== updateVersion) {
+      logger.warn('Failed to sync profile to server — skipping revert (newer update applied)');
+
+      return;
+    }
+
     logger.warn('Failed to sync profile to server — reverting local state');
     profileStore.set(previousProfile);
 
