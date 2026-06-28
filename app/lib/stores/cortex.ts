@@ -236,7 +236,6 @@ export function commitContext(params: {
   const promise = _commitQueue.then(() => _commitContextImpl(params));
 
   // Swallow errors in queue chain so subsequent commits still run
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   _commitQueue = promise.then(
     () => undefined,
     () => undefined,
