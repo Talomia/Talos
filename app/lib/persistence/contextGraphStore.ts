@@ -55,8 +55,20 @@ export async function openContextGraphDB(): Promise<IDBDatabase | undefined> {
       logger.info('ContextGraph database initialized');
     };
 
+    request.onblocked = () => {
+      logger.warn('ContextGraph database upgrade blocked — close other tabs and reload');
+      resolve(undefined);
+    };
+
     request.onsuccess = (event: Event) => {
-      resolve((event.target as IDBOpenDBRequest).result);
+      const db = (event.target as IDBOpenDBRequest).result;
+
+      db.onversionchange = () => {
+        db.close();
+        logger.info('ContextGraph database version changed — connection closed');
+      };
+
+      resolve(db);
     };
 
     request.onerror = () => {

@@ -90,8 +90,13 @@ export abstract class BaseProvider implements ProviderInfo {
     }
 
     const apiTokenKey = this.config.apiTokenKey || defaultApiTokenKey;
+
+    /*
+     * Use ?? for the user-provided key so an empty string doesn't fall through
+     * to the server's key (which could consume the server owner's API quota)
+     */
     const apiKey =
-      apiKeys?.[this.name] || serverEnv?.[apiTokenKey] || process?.env?.[apiTokenKey] || manager.env?.[apiTokenKey];
+      apiKeys?.[this.name] ?? serverEnv?.[apiTokenKey] ?? process?.env?.[apiTokenKey] ?? manager.env?.[apiTokenKey];
 
     return {
       baseUrl,

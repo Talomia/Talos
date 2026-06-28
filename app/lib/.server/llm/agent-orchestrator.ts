@@ -376,11 +376,39 @@ Execute this task completely. Output all necessary code and changes.
 
 /**
  * Get the tasks that are ready to execute (all dependencies met).
+ * Dependencies that have failed are considered resolved — downstream tasks
+ * whose dependencies have ALL completed are still ready, but tasks with
+ * ANY failed dependency are marked as failed to prevent deadlock.
  */
 export function getReadyTasks(tasks: AgentTask[]): AgentTask[] {
   const completedIds = new Set(tasks.filter((t) => t.status === 'completed').map((t) => t.id));
+  const failedIds = new Set(tasks.filter((t) => t.status === 'failed').map((t) => t.id));
+  const resolvedIds = new Set([...completedIds, ...failedIds]);
 
-  return tasks.filter((t) => t.status === 'pending' && t.dependsOn.every((dep) => completedIds.has(dep)));
+  const readyTasks: AgentTask[] = [];
+
+  for (const task of tasks) {
+    if (task.status !== 'pending') {
+      continue;
+    }
+
+    const allDepsResolved = task.dependsOn.every((dep) => resolvedIds.has(dep));
+
+    if (!allDepsResolved) {
+      continue;
+    }
+
+    // If any dependency failed, cascade the failure
+    const hasFailedDep = task.dependsOn.some((dep) => failedIds.has(dep));
+
+    if (hasFailedDep) {
+      task.status = 'failed';
+    } else {
+      readyTasks.push(task);
+    }
+  }
+
+  return readyTasks;
 }
 
 /**

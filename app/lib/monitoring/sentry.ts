@@ -32,9 +32,52 @@ export async function initSentry(): Promise<void> {
       replaysSessionSampleRate: 0,
       replaysOnErrorSampleRate: import.meta.env.MODE === 'production' ? 0.5 : 0,
       beforeSend(event: any) {
-        // Strip API keys from error reports
+        // Strip cookies and authorization headers
         if (event.request?.cookies) {
           delete event.request.cookies;
+        }
+
+        if (event.request?.headers) {
+          const headersToScrub = ['authorization', 'cookie', 'x-api-key'];
+
+          for (const header of headersToScrub) {
+            if (event.request.headers[header]) {
+              event.request.headers[header] = '[Filtered]';
+            }
+          }
+        }
+
+        // Scrub API key patterns from error messages
+        const scrubSecrets = (str: string): string =>
+          str
+            .replace(/(?:sk-|key-|token-|Bearer\s+)[a-zA-Z0-9_-]{10,}/g, '[REDACTED]')
+            .replace(/(?:api[_-]?key|token|secret|password)\s*[:=]\s*["']?[^\s"',]{8,}/gi, '[REDACTED]');
+
+        if (event.message) {
+          event.message = scrubSecrets(event.message);
+        }
+
+        if (event.exception?.values) {
+          for (const ex of event.exception.values) {
+            if (ex.value) {
+              ex.value = scrubSecrets(ex.value);
+            }
+          }
+        }
+
+        // Strip PII from breadcrumbs
+        if (event.breadcrumbs) {
+          event.breadcrumbs = event.breadcrumbs.map((bc: any) => ({
+            ...bc,
+            data: undefined, // Breadcrumb data may contain URLs with tokens
+          }));
+        }
+
+        // Strip user PII (keep only anonymous ID)
+        if (event.user) {
+          delete event.user.email;
+          delete event.user.username;
+          delete event.user.ip_address;
         }
 
         return event;

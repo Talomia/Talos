@@ -56,8 +56,21 @@ export async function openDatabase(): Promise<IDBDatabase | undefined> {
       }
     };
 
+    request.onblocked = () => {
+      logger.warn('Database upgrade blocked — another tab may have an open connection. Close other tabs and reload.');
+      resolve(undefined);
+    };
+
     request.onsuccess = (event: Event) => {
-      resolve((event.target as IDBOpenDBRequest).result);
+      const db = (event.target as IDBOpenDBRequest).result;
+
+      // Handle version change from another tab (e.g., schema upgrade)
+      db.onversionchange = () => {
+        db.close();
+        logger.info('Database version changed in another tab — connection closed. Please reload.');
+      };
+
+      resolve(db);
     };
 
     request.onerror = (event: Event) => {
