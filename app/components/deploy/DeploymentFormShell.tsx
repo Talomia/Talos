@@ -3,6 +3,14 @@ import { motion } from 'framer-motion';
 import { classNames } from '~/utils/classNames';
 import { sanitizeRepoName } from '~/components/deploy/deployUtils';
 
+/**
+ * UnoCSS safelist — these classes are composed dynamically via `brandColor` prop.
+ * Keep them here so UnoCSS can detect them statically.
+ * @unocss-include bg-purple-500 bg-orange-500 text-purple-500 text-orange-500
+ * @unocss-include text-purple-600 text-orange-600 text-purple-400 text-orange-400
+ * @unocss-include focus:ring-purple-500 focus:ring-orange-500
+ */
+
 interface UserInfoCardProps {
   avatarUrl: string;
   displayName: string;
