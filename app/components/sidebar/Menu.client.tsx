@@ -118,6 +118,26 @@ export const Menu = () => {
     });
   }, []);
 
+  /** Remove a chat from pinned IDs (used when deleting chats). */
+  const removePinForId = useCallback((id: string) => {
+    setPinnedIds((prev) => {
+      if (!prev.has(id)) {
+        return prev;
+      }
+
+      const next = new Set(prev);
+      next.delete(id);
+
+      try {
+        localStorage.setItem(STORAGE_KEYS.pinnedChats, JSON.stringify([...next]));
+      } catch {
+        // localStorage unavailable
+      }
+
+      return next;
+    });
+  }, []);
+
   const { filteredItems: filteredList, handleSearchChange } = useSearchFilter({
     items: list,
     searchFields: ['description'],
@@ -242,22 +262,7 @@ export const Menu = () => {
           });
 
           // Clean up pinned state for deleted chat
-          setPinnedIds((prev) => {
-            if (!prev.has(item.id)) {
-              return prev;
-            }
-
-            const next = new Set(prev);
-            next.delete(item.id);
-
-            try {
-              localStorage.setItem(STORAGE_KEYS.pinnedChats, JSON.stringify([...next]));
-            } catch {
-              // localStorage unavailable
-            }
-
-            return next;
-          });
+          removePinForId(item.id);
 
           // Always refresh the list
           loadEntries();
@@ -302,22 +307,7 @@ export const Menu = () => {
           deletedCount++;
 
           // Clean up pinned state for deleted chat
-          setPinnedIds((prev) => {
-            if (!prev.has(id)) {
-              return prev;
-            }
-
-            const next = new Set(prev);
-            next.delete(id);
-
-            try {
-              localStorage.setItem(STORAGE_KEYS.pinnedChats, JSON.stringify([...next]));
-            } catch {
-              // localStorage unavailable
-            }
-
-            return next;
-          });
+          removePinForId(id);
 
           if (id === currentChatId) {
             shouldNavigate = true;
@@ -454,6 +444,41 @@ export const Menu = () => {
     setDialogContent(content);
   }, []);
 
+  const renderHistoryItem = useCallback(
+    (item: ChatHistoryItem, isPinned: boolean) => (
+      <HistoryItem
+        key={item.id}
+        item={item}
+        exportChat={exportChat}
+        onDelete={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setDialogContentWithLogging({ type: 'delete', item });
+        }}
+        onDuplicate={() => handleDuplicate(item.id)}
+        selectionMode={selectionMode}
+        isSelected={selectedItems.includes(item.id)}
+        onToggleSelection={toggleItemSelection}
+        isDeleting={deletingId === item.id}
+        isPinned={isPinned}
+        onTogglePin={togglePin}
+        isFork={branchMeta.get(item.id)?.isFork}
+        parentDescription={branchMeta.get(item.id)?.parentDescription}
+        branchCount={branchMeta.get(item.id)?.branchCount}
+      />
+    ),
+    [
+      exportChat,
+      setDialogContentWithLogging,
+      selectionMode,
+      selectedItems,
+      toggleItemSelection,
+      deletingId,
+      togglePin,
+      branchMeta,
+    ],
+  );
+
   return (
     <>
       <motion.div
@@ -585,30 +610,7 @@ export const Menu = () => {
                     Pinned
                   </div>
                   <div className="space-y-0.5 pr-1">
-                    {filteredList
-                      .filter((item) => pinnedIds.has(item.id))
-                      .map((item) => (
-                        <HistoryItem
-                          key={item.id}
-                          item={item}
-                          exportChat={exportChat}
-                          onDelete={(event) => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            setDialogContentWithLogging({ type: 'delete', item });
-                          }}
-                          onDuplicate={() => handleDuplicate(item.id)}
-                          selectionMode={selectionMode}
-                          isSelected={selectedItems.includes(item.id)}
-                          onToggleSelection={toggleItemSelection}
-                          isDeleting={deletingId === item.id}
-                          isPinned={true}
-                          onTogglePin={togglePin}
-                          isFork={branchMeta.get(item.id)?.isFork}
-                          parentDescription={branchMeta.get(item.id)?.parentDescription}
-                          branchCount={branchMeta.get(item.id)?.branchCount}
-                        />
-                      ))}
+                    {filteredList.filter((item) => pinnedIds.has(item.id)).map((item) => renderHistoryItem(item, true))}
                   </div>
                 </div>
               )}
@@ -618,30 +620,7 @@ export const Menu = () => {
                   <div className="text-xs font-medium text-ui-textTertiary sticky top-0 z-1 bg-ui-background-depth-1 px-4 py-1">
                     {category}
                   </div>
-                  <div className="space-y-0.5 pr-1">
-                    {items.map((item) => (
-                      <HistoryItem
-                        key={item.id}
-                        item={item}
-                        exportChat={exportChat}
-                        onDelete={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          setDialogContentWithLogging({ type: 'delete', item });
-                        }}
-                        onDuplicate={() => handleDuplicate(item.id)}
-                        selectionMode={selectionMode}
-                        isSelected={selectedItems.includes(item.id)}
-                        onToggleSelection={toggleItemSelection}
-                        isDeleting={deletingId === item.id}
-                        isPinned={false}
-                        onTogglePin={togglePin}
-                        isFork={branchMeta.get(item.id)?.isFork}
-                        parentDescription={branchMeta.get(item.id)?.parentDescription}
-                        branchCount={branchMeta.get(item.id)?.branchCount}
-                      />
-                    ))}
-                  </div>
+                  <div className="space-y-0.5 pr-1">{items.map((item) => renderHistoryItem(item, false))}</div>
                 </div>
               ))}
               <Dialog onBackdrop={closeDialog} onClose={closeDialog}>
