@@ -3,6 +3,7 @@ import { createScopedLogger } from '~/utils/logger';
 import { useStore } from '@nanostores/react';
 import * as RadixDialog from '@radix-ui/react-dialog';
 import { classNames } from '~/utils/classNames';
+import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 import { TabTile } from '~/components/@settings/shared/components/TabTile';
 import { useFeatures } from '~/lib/hooks/useFeatures';
 import { useNotifications } from '~/lib/hooks/useNotifications';
@@ -320,7 +321,9 @@ export const ControlPanel = ({ open, onClose }: ControlPanelProps) => {
                     )}
                   >
                     {activeTab ? (
-                      <Suspense fallback={<TabLoadingSpinner />}>{getTabComponent(activeTab)}</Suspense>
+                      <ErrorBoundary panelName={`the ${activeTab} settings`}>
+                        <Suspense fallback={<TabLoadingSpinner />}>{getTabComponent(activeTab)}</Suspense>
+                      </ErrorBoundary>
                     ) : (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
                         {visibleTabs.map((tab, index) => (

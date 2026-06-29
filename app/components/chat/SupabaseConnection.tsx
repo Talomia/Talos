@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { createScopedLogger } from '~/utils/logger';
 import { useSupabaseConnection } from '~/lib/hooks/useSupabaseConnection';
 import { classNames } from '~/utils/classNames';
@@ -313,7 +313,7 @@ export function SupabaseConnection() {
 interface ButtonProps {
   active?: boolean;
   disabled?: boolean;
-  children?: any;
+  children?: ReactNode;
   onClick?: VoidFunction;
   className?: string;
 }
