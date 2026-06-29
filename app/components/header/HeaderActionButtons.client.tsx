@@ -1,11 +1,12 @@
-import { createScopedLogger } from '~/utils/logger';
-
-const logger = createScopedLogger('HeaderActionButtons');
 import { useStore } from '@nanostores/react';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { createScopedLogger } from '~/utils/logger';
+import { Button } from '~/components/ui/Button';
 import { DeployButton } from '~/components/deploy/DeployButton';
 import { TokenUsageIndicator } from '~/components/chat/TokenUsageIndicator';
 import { CloudSyncStatus } from '~/components/chat/CloudSyncStatus';
+
+const logger = createScopedLogger('HeaderActionButtons');
 
 interface HeaderActionButtonsProps {
   chatStarted: boolean;
@@ -33,17 +34,19 @@ export function HeaderActionButtons({ chatStarted }: HeaderActionButtonsProps) {
 
       {/* Debug Tools */}
       {shouldShowButtons && (
-        <div className="flex border border-ui-borderColor rounded-md overflow-hidden text-sm">
-          <button
+        <div className="flex border border-ui-borderColor rounded-lg overflow-hidden text-sm">
+          <Button
             onClick={() => window.open('https://github.com/Talomia/Talos/issues/new', '_blank', 'noopener,noreferrer')}
-            className="rounded-l-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-ui-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-ui-button-primary-backgroundHover outline-accent-500 flex gap-1.5"
+            variant="primary"
+            size="xs"
+            className="rounded-none rounded-l-lg gap-1.5"
             title="Report Bug"
           >
             <div className="i-ph:bug" />
             <span>Report Bug</span>
-          </button>
+          </Button>
           <div className="w-px bg-ui-borderColor" />
-          <button
+          <Button
             onClick={async () => {
               try {
                 const { downloadDebugLog } = await import('~/utils/debugLogger');
@@ -52,12 +55,14 @@ export function HeaderActionButtons({ chatStarted }: HeaderActionButtonsProps) {
                 logger.error('Failed to download debug log:', error);
               }
             }}
-            className="rounded-r-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-ui-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-ui-button-primary-backgroundHover outline-accent-500 flex gap-1.5"
+            variant="primary"
+            size="xs"
+            className="rounded-none rounded-r-lg gap-1.5"
             title="Download Debug Log"
           >
             <div className="i-ph:download" />
             <span>Debug Log</span>
-          </button>
+          </Button>
         </div>
       )}
     </div>

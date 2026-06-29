@@ -39,7 +39,6 @@ export function Header() {
       <div className="flex items-center gap-2 z-logo text-ui-textPrimary cursor-pointer">
         <div className="i-ph:sidebar-simple-duotone text-xl" />
         <a href="/" className="text-2xl font-semibold text-accent flex items-center">
-          {/* <span className="i-app:logo-text?mask w-[46px] inline-block" /> */}
           <img src="/logo-light-styled.png" alt="logo" className="h-[28px] w-auto inline-block dark:hidden" />
           <img src="/logo-dark-styled.png" alt="logo" className="h-[28px] w-auto inline-block hidden dark:block" />
         </a>
@@ -51,7 +50,7 @@ export function Header() {
           </span>
           <ClientOnly>
             {() => (
-              <div className="">
+              <div>
                 <HeaderActionButtons chatStarted={chat.started} />
               </div>
             )}

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { authStore, signIn, signUp, signInWithOAuth, signOut, isAuthenticated, currentUser } from '~/lib/stores/auth';
 import { classNames } from '~/utils/classNames';
 import { toast } from 'react-toastify';
+import { Button } from '~/components/ui/Button';
 
 interface AuthDialogProps {
   isOpen: boolean;
@@ -136,30 +137,14 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
           {mode !== 'reset-password' && (
             <>
               <div className="flex flex-col gap-2 mb-4">
-                <button
-                  onClick={() => handleOAuth('github')}
-                  className={classNames(
-                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
-                    'border border-ui-borderColor',
-                    'text-ui-textPrimary text-sm font-medium',
-                    'hover:bg-ui-background-depth-2 transition-colors',
-                  )}
-                >
+                <Button onClick={() => handleOAuth('github')} variant="outline" className="w-full gap-2 py-2.5">
                   <div className="i-ph:github-logo w-5 h-5" />
                   Continue with GitHub
-                </button>
-                <button
-                  onClick={() => handleOAuth('google')}
-                  className={classNames(
-                    'flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg',
-                    'border border-ui-borderColor',
-                    'text-ui-textPrimary text-sm font-medium',
-                    'hover:bg-ui-background-depth-2 transition-colors',
-                  )}
-                >
+                </Button>
+                <Button onClick={() => handleOAuth('google')} variant="outline" className="w-full gap-2 py-2.5">
                   <div className="i-ph:google-logo w-5 h-5" />
                   Continue with Google
-                </button>
+                </Button>
               </div>
 
               {/* Divider */}
@@ -247,16 +232,7 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
               <div className="text-sm text-green-500 bg-green-500/10 rounded-lg px-3 py-2">{successMessage}</div>
             )}
 
-            <button
-              type="submit"
-              disabled={auth.isLoading}
-              className={classNames(
-                'w-full px-4 py-2.5 rounded-lg text-sm font-medium',
-                'bg-accent-500 text-white',
-                'hover:bg-accent-600 transition-colors',
-                'disabled:opacity-50 disabled:cursor-not-allowed',
-              )}
-            >
+            <Button type="submit" disabled={auth.isLoading} variant="primary" className="w-full py-2.5">
               {auth.isLoading
                 ? 'Loading...'
                 : mode === 'login'
@@ -264,7 +240,7 @@ export function AuthDialog({ isOpen, onClose }: AuthDialogProps) {
                   : mode === 'signup'
                     ? 'Create account'
                     : 'Send Reset Link'}
-            </button>
+            </Button>
           </form>
 
           {/* Toggle mode */}

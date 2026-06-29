@@ -19,21 +19,25 @@ interface DialogButtonProps {
 }
 
 export const DialogButton = memo(({ type, children, onClick, disabled }: DialogButtonProps) => {
+  const variantMap = {
+    primary: 'primary' as const,
+    secondary: 'ghost' as const,
+    danger: 'destructive' as const,
+  };
+
   return (
-    <button
+    <Button
+      variant={variantMap[type]}
       className={classNames(
-        'inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm transition-colors',
-        type === 'primary'
-          ? 'bg-accent-500 text-white hover:bg-accent-600 dark:bg-accent-500 dark:hover:bg-accent-600'
-          : type === 'secondary'
-            ? 'bg-transparent text-ui-textSecondary hover:bg-ui-background-depth-3 hover:text-ui-textPrimary'
-            : 'bg-transparent text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10',
+        'gap-2',
+        type === 'secondary' && 'text-ui-textSecondary hover:text-ui-textPrimary',
+        type === 'danger' && 'bg-transparent text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10',
       )}
       onClick={onClick}
       disabled={disabled}
     >
       {children}
-    </button>
+    </Button>
   );
 });
 

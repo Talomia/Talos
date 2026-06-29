@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Button } from '~/components/ui/Button';
 import { toast } from 'react-toastify';
 import { Octokit } from '@octokit/rest';
 import { getLocalStorage } from '~/lib/persistence/localStorage';
@@ -553,18 +554,12 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
             </div>
             <p className="text-sm text-ui-textSecondary whitespace-pre-line mb-5">{overwriteConfirmMessage}</p>
             <div className="flex justify-end gap-2">
-              <button
-                onClick={() => handleOverwriteResponse(false)}
-                className="px-4 py-2 text-sm rounded-lg border border-ui-borderColor text-ui-textSecondary hover:bg-ui-item-backgroundActive transition-colors"
-              >
+              <Button variant="outline" onClick={() => handleOverwriteResponse(false)}>
                 Cancel
-              </button>
-              <button
-                onClick={() => handleOverwriteResponse(true)}
-                className="px-4 py-2 text-sm rounded-lg bg-accent-500 text-white hover:bg-accent-600 transition-colors"
-              >
+              </Button>
+              <Button variant="primary" onClick={() => handleOverwriteResponse(true)}>
                 Update Repository
-              </button>
+              </Button>
             </div>
           </div>
         </div>

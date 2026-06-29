@@ -120,7 +120,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
               'outline-none',
               'group',
             )}
-            onClick={() => window.open('#', '_blank', 'noopener,noreferrer')}
+            onClick={() => window.open('https://github.com/Talomia/Talos/issues/new', '_blank', 'noopener,noreferrer')}
           >
             <div className="i-ph:bug w-4 h-4 text-ui-textTertiary group-hover:text-accent-500 dark:group-hover:text-accent-400 transition-colors" />
             Report Bug

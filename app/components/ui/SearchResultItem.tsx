@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { classNames } from '~/utils/classNames';
 import { Badge } from './Badge';
+import { Button } from './Button';
 
 interface SearchResultItemProps {
   title: string;
@@ -73,17 +74,18 @@ export function SearchResultItem({
         </div>
 
         {actionLabel && onAction && (
-          <motion.button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAction();
-            }}
-            className="px-4 py-2 h-9 rounded-lg bg-accent-500 text-white hover:bg-accent-600 transition-all duration-200 flex items-center gap-2 min-w-[100px] justify-center text-sm shadow-sm hover:shadow-md"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            {actionLabel}
-          </motion.button>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAction();
+              }}
+              variant="primary"
+              className="min-w-[100px] shadow-sm hover:shadow-md"
+            >
+              {actionLabel}
+            </Button>
+          </motion.div>
         )}
       </div>
 

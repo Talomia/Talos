@@ -5,6 +5,7 @@ import { useGitLabConnection } from '~/lib/hooks';
 import GitLabConnection from './components/GitLabConnection';
 import { StatsDisplay } from './components/StatsDisplay';
 import { RepositoryList } from './components/RepositoryList';
+import { LoadingState } from '~/components/@settings/shared/service-integration/LoadingState';
 
 const logger = createScopedLogger('GitLabTab');
 
@@ -77,12 +78,7 @@ export default function GitLabTab() {
           <GitLabLogo />
           <h2 className="text-lg font-medium text-ui-textPrimary">GitLab Integration</h2>
         </div>
-        <div className="flex items-center justify-center p-4">
-          <div className="flex items-center gap-2">
-            <div className="i-ph:spinner-gap-bold animate-spin w-4 h-4" />
-            <span className="text-ui-textSecondary">Loading...</span>
-          </div>
-        </div>
+        <LoadingState message="Checking GitLab connection..." />
       </div>
     );
   }

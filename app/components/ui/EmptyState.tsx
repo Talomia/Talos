@@ -116,12 +116,7 @@ export function EmptyState({
         <div className={classNames('flex items-center gap-2', styles.actions)}>
           {actionLabel && onAction && (
             <motion.div {...buttonAnimation}>
-              <Button
-                onClick={onAction}
-                variant="default"
-                size={styles.buttonSize}
-                className="bg-accent-500 hover:bg-accent-600 text-white"
-              >
+              <Button onClick={onAction} variant="primary" size={styles.buttonSize}>
                 {actionLabel}
               </Button>
             </motion.div>

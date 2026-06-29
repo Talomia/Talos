@@ -102,17 +102,7 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
   }, [input, model, provider, handleInputChange]);
 
   return (
-    <div
-      className={classNames(
-        'relative bg-ui-background-depth-2 backdrop-blur p-3 rounded-lg border border-ui-borderColor relative w-full max-w-chat mx-auto z-prompt',
-
-        /*
-         * {
-         *   'sticky bottom-2': chatStarted,
-         * },
-         */
-      )}
-    >
+    <div className="relative bg-ui-background-depth-2 backdrop-blur p-3 rounded-lg border border-ui-borderColor w-full max-w-chat mx-auto z-prompt">
       <svg className={classNames(styles.PromptEffectContainer)}>
         <defs>
           <linearGradient

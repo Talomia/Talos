@@ -496,10 +496,11 @@ export const Menu = () => {
         role="navigation"
         aria-label="Chat history"
       >
-        <div className="h-12 flex items-center justify-between px-4 border-b border-ui-borderColor bg-ui-background-depth-2 rounded-tr-2xl">
-          <div className="text-ui-textPrimary font-medium"></div>
+        <div className="h-12 flex items-center justify-end px-4 border-b border-ui-borderColor bg-ui-background-depth-2 rounded-tr-2xl">
           <div className="flex items-center gap-3">
-            <HelpButton onClick={() => window.open('#', '_blank', 'noopener,noreferrer')} />
+            <HelpButton
+              onClick={() => window.open('https://github.com/Talomia/Talos/wiki', '_blank', 'noopener,noreferrer')}
+            />
             <span className="font-medium text-sm text-ui-textPrimary truncate">
               {profile?.username || 'Guest User'}
             </span>

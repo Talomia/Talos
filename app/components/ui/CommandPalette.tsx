@@ -6,6 +6,7 @@ import { themeStore, toggleTheme } from '~/lib/stores/theme';
 import { getAll, getDb, type ChatHistoryItem } from '~/lib/persistence';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { chatStore } from '~/lib/stores/chat';
+import { isMac } from '~/utils/os';
 
 interface Command {
   id: string;
@@ -88,6 +89,8 @@ export function CommandPalette() {
     [setOpen],
   );
 
+  const modKey = isMac ? '⌘' : 'Ctrl+';
+
   // Static commands
   const commands: Command[] = useMemo(
     () => [
@@ -96,7 +99,7 @@ export function CommandPalette() {
         group: 'Navigation',
         icon: 'i-ph:plus-circle',
         label: 'New Chat',
-        shortcut: '⌘N',
+        shortcut: `${modKey}N`,
         action: () =>
           runAndClose(() => {
             window.location.href = '/';
@@ -147,7 +150,7 @@ export function CommandPalette() {
         group: 'Workbench',
         icon: 'i-ph:file-magnifying-glass',
         label: 'Quick Open File',
-        shortcut: '⌘P',
+        shortcut: `${modKey}P`,
         action: () =>
           runAndClose(() => {
             window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', metaKey: true }));
@@ -229,7 +232,7 @@ export function CommandPalette() {
         group: 'Navigation',
         icon: 'i-ph:sidebar',
         label: 'Toggle Sidebar',
-        shortcut: '⌘B',
+        shortcut: `${modKey}B`,
         action: () =>
           runAndClose(() => {
             window.dispatchEvent(new CustomEvent('talos:toggle-sidebar'));
@@ -240,7 +243,7 @@ export function CommandPalette() {
         group: 'Navigation',
         icon: 'i-ph:magnifying-glass',
         label: 'Search in Chat',
-        shortcut: '⌘F',
+        shortcut: `${modKey}F`,
         action: () =>
           runAndClose(() => {
             window.dispatchEvent(new CustomEvent('talos:toggle-chat-search'));
