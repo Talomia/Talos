@@ -1,7 +1,8 @@
-import { memo, useRef } from 'react';
+import { memo, useRef, lazy, Suspense } from 'react';
 import { IconButton } from '~/components/ui/IconButton';
 import { PortDropdown } from '~/components/workbench/PortDropdown';
-import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
+
+const ExpoQrModal = lazy(() => import('~/components/workbench/ExpoQrModal').then((m) => ({ default: m.ExpoQrModal })));
 import { createScopedLogger } from '~/utils/logger';
 import { WINDOW_SIZES, openDeviceFramePopup, type WindowSize } from '~/components/workbench/previewUtils';
 import { getFrameColor } from '~/components/workbench/previewUtils';
@@ -162,7 +163,9 @@ export const PreviewToolbar = memo(
 
           {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" />}
 
-          <ExpoQrModal open={isExpoQrModalOpen} onClose={() => setIsExpoQrModalOpen(false)} />
+          <Suspense fallback={null}>
+            <ExpoQrModal open={isExpoQrModalOpen} onClose={() => setIsExpoQrModalOpen(false)} />
+          </Suspense>
 
           {isDeviceModeOn && (
             <>

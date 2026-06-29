@@ -1,8 +1,11 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, lazy, Suspense } from 'react';
 import { Card, CardContent } from '~/components/ui/Card';
 import { useDataOperations } from '~/lib/hooks/useDataOperations';
 import { getAllChats } from '~/lib/persistence/db';
-import { DataVisualization } from '~/components/@settings/tabs/data/DataVisualization';
+
+const DataVisualization = lazy(() =>
+  import('~/components/@settings/tabs/data/DataVisualization').then((m) => ({ default: m.DataVisualization })),
+);
 import { DataActionCard } from '~/components/@settings/tabs/data/DataActionCard';
 import { DataTabDialogs } from '~/components/@settings/tabs/data/DataTabDialogs';
 import { useHistoryDB } from '~/lib/hooks/useHistoryDB';
@@ -329,7 +332,16 @@ export function DataTab() {
         <h2 className="text-xl font-semibold mb-4 text-ui-textPrimary">Data Usage</h2>
         <Card>
           <CardContent className="p-5">
-            <DataVisualization chats={availableChats} />
+            <Suspense
+              fallback={
+                <div className="h-64 flex items-center justify-center text-ui-textTertiary">
+                  <div className="i-svg-spinners:90-ring-with-bg text-xl mr-2" />
+                  Loading visualization...
+                </div>
+              }
+            >
+              <DataVisualization chats={availableChats} />
+            </Suspense>
           </CardContent>
         </Card>
       </div>
