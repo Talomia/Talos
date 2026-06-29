@@ -53,7 +53,13 @@ export const Markdown = memo(
             const elementDataAttr = node?.properties.dataElement as string;
 
             // Parse the element data if it exists
-            let elementData: any = null;
+            let elementData: {
+              tagName?: string;
+              className?: string;
+              id?: string;
+              displayText?: string;
+              [key: string]: unknown;
+            } | null = null;
 
             if (elementDataAttr) {
               try {

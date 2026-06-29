@@ -84,11 +84,13 @@ export function BranchSelector({
       }
 
       if (!response.ok) {
-        const errorData: any = await response.json().catch(() => ({ error: 'Failed to fetch branches' }));
+        const errorData = (await response.json().catch(() => ({ error: 'Failed to fetch branches' }))) as {
+          error?: string;
+        };
         throw new Error(errorData.error || `HTTP ${response.status}`);
       }
 
-      const data: any = await response.json();
+      const data = (await response.json()) as { branches?: BranchInfo[]; defaultBranch?: string };
       setBranches(data.branches || []);
 
       // Set default selected branch

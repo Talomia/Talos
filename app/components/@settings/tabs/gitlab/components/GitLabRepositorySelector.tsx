@@ -56,11 +56,13 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
       });
 
       if (!response.ok) {
-        const errorData: any = await response.json().catch(() => ({ error: 'Failed to fetch repositories' }));
+        const errorData = (await response.json().catch(() => ({ error: 'Failed to fetch repositories' }))) as {
+          error?: string;
+        };
         throw new Error(errorData.error || 'Failed to fetch repositories');
       }
 
-      const data: any = await response.json();
+      const data = (await response.json()) as { projects?: GitLabProjectInfo[] };
       setRepositories(data.projects || []);
     } catch (err) {
       logger.error('Failed to fetch GitLab repositories:', err);

@@ -32,8 +32,10 @@ export class TerminalStore {
     try {
       const wc = await this.#engine;
       await this.#appTerminal.init(wc, terminal);
-    } catch (error: any) {
-      terminal.write(coloredText.red('Failed to spawn shell\n\n') + error.message);
+    } catch (error: unknown) {
+      terminal.write(
+        coloredText.red('Failed to spawn shell\n\n') + (error instanceof Error ? error.message : String(error)),
+      );
       return;
     }
   }
@@ -47,8 +49,10 @@ export class TerminalStore {
     try {
       const shellProcess = await newShellProcess(await this.#engine, terminal);
       this.#terminals.push({ terminal, process: shellProcess });
-    } catch (error: any) {
-      terminal.write(coloredText.red('Failed to spawn shell\n\n') + error.message);
+    } catch (error: unknown) {
+      terminal.write(
+        coloredText.red('Failed to spawn shell\n\n') + (error instanceof Error ? error.message : String(error)),
+      );
       return;
     }
   }

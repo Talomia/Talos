@@ -37,7 +37,9 @@ export async function initProfile(): Promise<void> {
       return;
     }
 
-    const data = (await response.json()) as { profile: any };
+    const data = (await response.json()) as {
+      profile: { username?: string; bio?: string; avatar_url?: string } | null;
+    };
 
     if (data.profile) {
       const serverProfile: Profile = {

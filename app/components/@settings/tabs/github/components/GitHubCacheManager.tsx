@@ -11,7 +11,7 @@ interface CacheEntry {
   size: number;
   timestamp: number;
   lastAccessed: number;
-  data: any;
+  data: Record<string, unknown>;
 }
 
 interface CacheStats {
