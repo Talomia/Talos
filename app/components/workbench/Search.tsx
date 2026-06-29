@@ -16,6 +16,25 @@ interface DisplayMatch {
   matchCharEnd: number;
 }
 
+/** Shape of a range returned by the runtime text search API. */
+interface SearchMatchRange {
+  startLineNumber: number;
+  startColumn: number;
+  endColumn: number;
+}
+
+/** Shape of a preview returned by the runtime text search API. */
+interface SearchMatchPreview {
+  text: string;
+  matches: SearchMatchRange[];
+}
+
+/** Shape of a single match entry returned by the runtime text search API. */
+interface SearchApiMatch {
+  preview: SearchMatchPreview;
+  ranges: SearchMatchRange[];
+}
+
 async function performTextSearch(
   engine: RuntimeEngine,
   query: string,
@@ -49,13 +68,13 @@ async function performTextSearch(
     await engine.textSearch(
       query,
       options as any,
-      ((filePath: any, apiMatches: any[]) => {
+      ((filePath: string, apiMatches: SearchApiMatch[]) => {
         const displayMatches: DisplayMatch[] = [];
 
-        apiMatches.forEach((apiMatch: { preview: { text: string; matches: string | any[] }; ranges: any[] }) => {
+        apiMatches.forEach((apiMatch: SearchApiMatch) => {
           const previewLines = apiMatch.preview.text.split('\n');
 
-          apiMatch.ranges.forEach((range: { startLineNumber: number; startColumn: any; endColumn: any }) => {
+          apiMatch.ranges.forEach((range: SearchMatchRange) => {
             let previewLineText = '(Preview line not found)';
             let lineIndexInPreview = -1;
 

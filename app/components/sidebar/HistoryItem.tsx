@@ -101,7 +101,7 @@ export const HistoryItem = memo(
         className={classNames(
           'group rounded-lg text-sm text-ui-textSecondary hover:text-ui-textPrimary hover:bg-ui-item-backgroundActive overflow-hidden flex justify-between items-center px-3 py-2 transition-colors',
           {
-            'text-ui-textPrimary bg-ui-item-backgroundActive border-l-2 border-l-purple-500': isActiveChat,
+            'text-ui-textPrimary bg-ui-item-backgroundActive border-l-2 border-l-accent-500': isActiveChat,
           },
           { 'cursor-pointer': selectionMode },
         )}
@@ -124,7 +124,7 @@ export const HistoryItem = memo(
           <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2">
             <input
               type="text"
-              className="flex-1 bg-ui-background-depth-1 text-ui-textPrimary rounded-md px-3 py-1.5 text-sm border border-ui-borderColor focus:outline-none focus:ring-1 focus:ring-purple-500/50"
+              className="flex-1 bg-ui-background-depth-1 text-ui-textPrimary rounded-md px-3 py-1.5 text-sm border border-ui-borderColor focus:outline-none focus:ring-1 focus:ring-accent-500/50"
               autoFocus
               value={currentDescription}
               onChange={handleChange}
@@ -133,7 +133,7 @@ export const HistoryItem = memo(
             />
             <button
               type="submit"
-              className="i-ph:check h-4 w-4 text-ui-textTertiary hover:text-purple-500 transition-colors"
+              className="i-ph:check h-4 w-4 text-ui-textTertiary hover:text-accent-500 transition-colors"
               onMouseDown={handleSubmit}
               aria-label="Save chat name"
             />
@@ -147,18 +147,18 @@ export const HistoryItem = memo(
             <WithTooltip tooltip={currentDescription}>
               <div className="truncate pr-24">
                 <span className="flex items-center gap-1 truncate">
-                  {isPinned && <span className="i-ph:push-pin-fill text-purple-400 text-[10px] shrink-0" />}
-                  {isFork && <span className="i-ph:git-fork text-purple-400 text-[10px] shrink-0" />}
+                  {isPinned && <span className="i-ph:push-pin-fill text-accent-500 text-[10px] shrink-0" />}
+                  {isFork && <span className="i-ph:git-fork text-accent-500 text-[10px] shrink-0" />}
                   <span className="truncate">{currentDescription}</span>
                 </span>
                 <span className="block text-[11px] text-ui-textTertiary font-normal">
                   {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
                 </span>
                 {parentDescription && (
-                  <span className="block text-[10px] text-purple-400/70 truncate">↳ from {parentDescription}</span>
+                  <span className="block text-[10px] text-accent-500/70 truncate">↳ from {parentDescription}</span>
                 )}
                 {branchCount > 0 && (
-                  <span className="block text-[10px] text-purple-400/70">
+                  <span className="block text-[10px] text-accent-500/70">
                     {branchCount} branch{branchCount !== 1 ? 'es' : ''}
                   </span>
                 )}
@@ -248,7 +248,7 @@ const ChatActionButton = forwardRef(
         <button
           ref={ref}
           type="button"
-          className={`text-ui-textTertiary hover:text-purple-500 transition-colors ${icon} ${className ? className : ''}`}
+          className={`text-ui-textTertiary hover:text-accent-500 transition-colors ${icon} ${className ? className : ''}`}
           onClick={onClick}
           aria-label={toolTipContent}
         />

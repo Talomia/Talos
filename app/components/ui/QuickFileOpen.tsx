@@ -200,7 +200,7 @@ export function QuickFileOpen() {
                     aria-selected={index === selectedIndex}
                     className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors ${
                       index === selectedIndex
-                        ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300'
+                        ? 'bg-accent-50 dark:bg-accent-500/10 text-accent-700 dark:text-accent-300'
                         : 'text-ui-textPrimary hover:bg-ui-background-depth-2'
                     }`}
                     onClick={() => selectFile(path)}

@@ -88,7 +88,7 @@ export function ImportButtons({ importChat }: ImportButtonsProps) {
               'gap-2 bg-ui-background-depth-1',
               'text-ui-textPrimary',
               'hover:bg-ui-background-depth-2',
-              'border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]',
+              'border border-ui-borderColor',
               'h-10 px-4 py-2 min-w-[120px] justify-center',
               'transition-all duration-200 ease-in-out rounded-lg',
             )}

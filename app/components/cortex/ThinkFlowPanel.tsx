@@ -125,7 +125,7 @@ const FlowHeader = memo(() => {
         <div
           className={classNames(
             'text-lg',
-            running ? 'i-ph:brain animate-pulse text-purple-400' : 'i-ph:brain text-ui-textTertiary',
+            running ? 'i-ph:brain animate-pulse text-accent-400' : 'i-ph:brain text-ui-textTertiary',
           )}
         />
 
@@ -187,7 +187,7 @@ const CompiledResult = memo(() => {
   return (
     <div className="px-3 py-2 border-t border-ui-borderColor">
       <div className="flex items-center gap-2 mb-2">
-        <div className="i-ph:file-text text-sm text-purple-400" />
+        <div className="i-ph:file-text text-sm text-accent-400" />
         <span className="text-xs font-medium text-ui-textPrimary">Compiled Result</span>
       </div>
 

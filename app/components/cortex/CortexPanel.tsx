@@ -50,7 +50,7 @@ const PanelHeader = memo(() => {
         'transition-colors duration-150',
       )}
     >
-      <div className={classNames('i-ph:git-branch text-lg', branch ? 'text-purple-400' : 'text-ui-textTertiary')} />
+      <div className={classNames('i-ph:git-branch text-lg', branch ? 'text-accent-400' : 'text-ui-textTertiary')} />
 
       <span className="text-ui-textPrimary flex-1 text-left truncate">{branch ? branch.name : 'No branch'}</span>
 
@@ -94,7 +94,7 @@ const BranchItem = memo(({ branch, isActive, onCheckout, onDelete }: BranchItemP
         isActive && 'bg-ui-background-depth-3',
       )}
     >
-      <div className={classNames('i-ph:git-branch text-sm', isActive ? 'text-purple-400' : 'text-ui-textTertiary')} />
+      <div className={classNames('i-ph:git-branch text-sm', isActive ? 'text-accent-400' : 'text-ui-textTertiary')} />
 
       <span
         className={classNames(
@@ -112,7 +112,7 @@ const BranchItem = memo(({ branch, isActive, onCheckout, onDelete }: BranchItemP
       {!isActive && (
         <button
           onClick={() => onCheckout(branch.name)}
-          className="text-xs text-purple-400 hover:text-purple-300 transition-colors"
+          className="text-xs text-accent-400 hover:text-accent-300 transition-colors"
           title={`Switch to ${branch.name}`}
         >
           checkout
@@ -187,11 +187,11 @@ const BranchTab = memo(() => {
             onChange={(e) => setNewBranchName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreateBranch()}
             placeholder="branch-name"
-            className="flex-1 text-sm bg-transparent border border-ui-borderColor rounded px-2 py-1 text-ui-textPrimary placeholder:text-ui-textTertiary focus:outline-none focus:border-purple-400"
+            className="flex-1 text-sm bg-transparent border border-ui-borderColor rounded px-2 py-1 text-ui-textPrimary placeholder:text-ui-textTertiary focus:outline-none focus:border-accent-400"
             autoFocus
           />
 
-          <button onClick={handleCreateBranch} className="text-sm text-purple-400 hover:text-purple-300 px-2 py-1">
+          <button onClick={handleCreateBranch} className="text-sm text-accent-400 hover:text-accent-300 px-2 py-1">
             Create
           </button>
 
@@ -205,7 +205,7 @@ const BranchTab = memo(() => {
       ) : (
         <button
           onClick={() => setShowNewBranch(true)}
-          className="flex items-center gap-2 px-3 py-2 text-sm text-purple-400 hover:text-purple-300 hover:bg-ui-background-depth-3 transition-colors border-t border-ui-borderColor"
+          className="flex items-center gap-2 px-3 py-2 text-sm text-accent-400 hover:text-accent-300 hover:bg-ui-background-depth-3 transition-colors border-t border-ui-borderColor"
         >
           <div className="i-ph:plus" />
           New branch
@@ -259,7 +259,7 @@ const NodeItem = memo(({ node }: { node: ContextNode }) => {
         <div
           className={classNames(
             'w-2.5 h-2.5 rounded-full',
-            node.parents.length > 1 ? 'bg-purple-400' : 'bg-ui-textTertiary',
+            node.parents.length > 1 ? 'bg-accent-400' : 'bg-ui-textTertiary',
           )}
         />
       </div>
@@ -273,7 +273,7 @@ const NodeItem = memo(({ node }: { node: ContextNode }) => {
           </span>
           <span className="text-xs text-ui-textTertiary">·</span>
           <span className="text-xs text-ui-textTertiary">{node.changedFiles.length} files</span>
-          {node.parents.length > 1 && <span className="text-xs text-purple-400">merge</span>}
+          {node.parents.length > 1 && <span className="text-xs text-accent-400">merge</span>}
         </div>
       </div>
 
@@ -313,7 +313,7 @@ const StatsTab = memo(() => {
           key={item.label}
           className="flex items-center gap-2 p-2 rounded-lg bg-ui-background-depth-1 border border-ui-borderColor"
         >
-          <div className={classNames(item.icon, 'text-lg text-purple-400')} />
+          <div className={classNames(item.icon, 'text-lg text-accent-400')} />
 
           <div>
             <div className="text-sm font-medium text-ui-textPrimary">{item.value}</div>
@@ -364,7 +364,7 @@ export const CortexPanel = memo(() => {
                 className={classNames(
                   'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors',
                   activeTab === tab.id
-                    ? 'text-purple-400 border-b-2 border-purple-400'
+                    ? 'text-accent-400 border-b-2 border-accent-400'
                     : 'text-ui-textTertiary hover:text-ui-textSecondary',
                 )}
               >

@@ -185,15 +185,15 @@ export const Messages = memo(
             {/* Typing bubble */}
             <div className="ml-8 flex items-center gap-1.5 px-4 py-3 rounded-lg bg-ui-background-depth-3/50 w-fit">
               <span
-                className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-400"
+                className="w-2 h-2 rounded-full bg-accent-400 dark:bg-accent-400"
                 style={{ animation: 'typing-bounce 1.4s ease-in-out infinite', animationDelay: '0ms' }}
               />
               <span
-                className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-400"
+                className="w-2 h-2 rounded-full bg-accent-400 dark:bg-accent-400"
                 style={{ animation: 'typing-bounce 1.4s ease-in-out infinite', animationDelay: '200ms' }}
               />
               <span
-                className="w-2 h-2 rounded-full bg-purple-400 dark:bg-purple-400"
+                className="w-2 h-2 rounded-full bg-accent-400 dark:bg-accent-400"
                 style={{ animation: 'typing-bounce 1.4s ease-in-out infinite', animationDelay: '400ms' }}
               />
             </div>

@@ -499,7 +499,7 @@ export const Menu = () => {
         <div className="h-12 flex items-center justify-between px-4 border-b border-ui-borderColor bg-ui-background-depth-2 rounded-tr-2xl">
           <div className="text-ui-textPrimary font-medium"></div>
           <div className="flex items-center gap-3">
-            <HelpButton onClick={() => window.open('#', '_blank')} />
+            <HelpButton onClick={() => window.open('#', '_blank', 'noopener,noreferrer')} />
             <span className="font-medium text-sm text-ui-textPrimary truncate">
               {profile?.username || 'Guest User'}
             </span>
@@ -524,7 +524,7 @@ export const Menu = () => {
             <div className="flex gap-2">
               <a
                 href="/"
-                className="flex-1 flex gap-2 items-center bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-lg px-4 py-2 transition-colors"
+                className="flex-1 flex gap-2 items-center bg-ui-sidebar-buttonBackgroundDefault text-ui-sidebar-buttonText hover:bg-ui-sidebar-buttonBackgroundHover rounded-lg px-4 py-2 transition-colors"
               >
                 <span className="inline-block i-ph:plus-circle h-4 w-4" />
                 <span className="text-sm font-medium">Start new chat</span>
@@ -534,7 +534,7 @@ export const Menu = () => {
                 className={classNames(
                   'flex gap-1 items-center rounded-lg px-3 py-2 transition-colors',
                   selectionMode
-                    ? 'bg-purple-600 dark:bg-purple-500 text-white border border-purple-700 dark:border-purple-600'
+                    ? 'bg-accent-600 dark:bg-accent-500 text-white border border-accent-700 dark:border-accent-600'
                     : 'bg-ui-background-depth-3 text-ui-textSecondary hover:bg-ui-background-depth-3 border border-ui-borderColor',
                 )}
                 aria-label={selectionMode ? 'Exit selection mode' : 'Enter selection mode'}
@@ -547,7 +547,7 @@ export const Menu = () => {
                 <span className="i-ph:magnifying-glass h-4 w-4 text-ui-textTertiary" />
               </div>
               <input
-                className="w-full bg-ui-background-depth-2 relative pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-ui-textPrimary placeholder-ui-textTertiary border border-ui-borderColor"
+                className="w-full bg-ui-background-depth-2 relative pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-accent-500/50 text-sm text-ui-textPrimary placeholder-ui-textTertiary border border-ui-borderColor"
                 type="search"
                 placeholder="Search chats..."
                 onChange={handleSearchChange}
@@ -580,7 +580,7 @@ export const Menu = () => {
                 <p className="text-sm text-red-500 dark:text-red-400 mb-3">{loadError}</p>
                 <button
                   onClick={loadEntries}
-                  className="text-sm px-4 py-1.5 rounded-lg bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-500/20 transition-colors"
+                  className="text-sm px-4 py-1.5 rounded-lg bg-ui-sidebar-buttonBackgroundDefault text-ui-sidebar-buttonText hover:bg-ui-sidebar-buttonBackgroundHover transition-colors"
                 >
                   Retry
                 </button>
@@ -605,7 +605,7 @@ export const Menu = () => {
               {/* Pinned chats section */}
               {filteredList.filter((item) => pinnedIds.has(item.id)).length > 0 && (
                 <div className="mt-2 first:mt-0 space-y-1">
-                  <div className="text-xs font-medium text-purple-500 dark:text-purple-400 sticky top-0 z-1 bg-ui-background-depth-1 px-4 py-1 flex items-center gap-1">
+                  <div className="text-xs font-medium text-accent-500 sticky top-0 z-1 bg-ui-background-depth-1 px-4 py-1 flex items-center gap-1">
                     <span className="i-ph:push-pin-fill text-[10px]" />
                     Pinned
                   </div>

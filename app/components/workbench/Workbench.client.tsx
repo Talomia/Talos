@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { DiffView } from './DiffView';
 import { FileModifiedDropdown } from './FileModifiedDropdown';
 import type { FileHistory } from '~/types/actions';
+import type { IChatMetadata } from '~/lib/persistence/db';
 import {
   type OnChangeCallback as OnEditorChange,
   type OnScrollCallback as OnEditorScroll,
@@ -31,6 +32,7 @@ import { ExportChatButton } from '~/components/chat/chatExportAndImport/ExportCh
 import { useChatHistory } from '~/lib/persistence';
 import { streamingState } from '~/lib/stores/streaming';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { ErrorBoundary } from '~/components/ui/ErrorBoundary';
 
 interface WorkspaceProps {
   chatStarted?: boolean;
@@ -38,7 +40,7 @@ interface WorkspaceProps {
   metadata?: {
     gitUrl?: string;
   };
-  updateChatMetadata?: (metadata: any) => void;
+  updateChatMetadata?: (metadata: IChatMetadata) => void;
   setSelectedElement?: (element: ElementInfo | null) => void;
 }
 
@@ -287,28 +289,34 @@ export const Workbench = memo(
                 </div>
                 <div className="relative flex-1 overflow-hidden">
                   <View initial={{ x: '0%' }} animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}>
-                    <EditorPanel
-                      editorDocument={currentDocument}
-                      isStreaming={isStreaming}
-                      selectedFile={selectedFile}
-                      files={files}
-                      unsavedFiles={unsavedFiles}
-                      fileHistory={fileHistory}
-                      onFileSelect={onFileSelect}
-                      onEditorScroll={onEditorScroll}
-                      onEditorChange={onEditorChange}
-                      onFileSave={onFileSave}
-                      onFileReset={onFileReset}
-                    />
+                    <ErrorBoundary panelName="the code editor">
+                      <EditorPanel
+                        editorDocument={currentDocument}
+                        isStreaming={isStreaming}
+                        selectedFile={selectedFile}
+                        files={files}
+                        unsavedFiles={unsavedFiles}
+                        fileHistory={fileHistory}
+                        onFileSelect={onFileSelect}
+                        onEditorScroll={onEditorScroll}
+                        onEditorChange={onEditorChange}
+                        onFileSave={onFileSave}
+                        onFileReset={onFileReset}
+                      />
+                    </ErrorBoundary>
                   </View>
                   <View
                     initial={{ x: '100%' }}
                     animate={{ x: selectedView === 'diff' ? '0%' : selectedView === 'code' ? '100%' : '-100%' }}
                   >
-                    <DiffView fileHistory={fileHistory} setFileHistory={setFileHistory} />
+                    <ErrorBoundary panelName="the diff view">
+                      <DiffView fileHistory={fileHistory} setFileHistory={setFileHistory} />
+                    </ErrorBoundary>
                   </View>
                   <View initial={{ x: '100%' }} animate={{ x: selectedView === 'preview' ? '0%' : '100%' }}>
-                    <Preview setSelectedElement={setSelectedElement} />
+                    <ErrorBoundary panelName="the preview">
+                      <Preview setSelectedElement={setSelectedElement} />
+                    </ErrorBoundary>
                   </View>
                 </div>
                 <EditorStatusBar />

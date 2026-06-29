@@ -405,7 +405,7 @@ export function CommandPalette() {
                           data-selected={selectedIndex === idx}
                           className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors cursor-pointer ${
                             selectedIndex === idx
-                              ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300'
+                              ? 'bg-accent-50 dark:bg-accent-500/10 text-accent-700 dark:text-accent-300'
                               : 'text-ui-textSecondary hover:bg-ui-item-backgroundActive'
                           }`}
                           onClick={() => executeItem(idx)}
@@ -443,7 +443,7 @@ export function CommandPalette() {
                           data-selected={selectedIndex === idx}
                           className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors cursor-pointer ${
                             selectedIndex === idx
-                              ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300'
+                              ? 'bg-accent-50 dark:bg-accent-500/10 text-accent-700 dark:text-accent-300'
                               : 'text-ui-textSecondary hover:bg-ui-item-backgroundActive'
                           }`}
                           onClick={() => executeItem(idx)}

@@ -53,11 +53,11 @@ export const ChatHeader = memo(({ messageCount, isStreaming, messages }: ChatHea
     <>
       <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2 bg-ui-background-depth-1/80 backdrop-blur-sm border-b border-ui-borderColor max-w-chat mx-auto w-full">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="i-ph:chat-circle-text text-purple-500 text-sm shrink-0" />
+          <div className="i-ph:chat-circle-text text-accent-500 text-sm shrink-0" />
           <span className="text-sm font-medium text-ui-textSecondary truncate">{chatTitle || 'New Chat'}</span>
           {isStreaming && (
-            <span className="flex items-center gap-1 text-xs text-purple-500 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+            <span className="flex items-center gap-1 text-xs text-accent-500 shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-500 animate-pulse" />
               Responding…
             </span>
           )}
@@ -74,8 +74,8 @@ export const ChatHeader = memo(({ messageCount, isStreaming, messages }: ChatHea
               onClick={toggleSearch}
               className={`p-1 rounded transition-colors ${
                 isSearchOpen
-                  ? 'text-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                  : 'text-ui-textTertiary hover:text-purple-500 hover:bg-ui-background-depth-3'
+                  ? 'text-accent-500 bg-accent-50 dark:bg-accent-500/10'
+                  : 'text-ui-textTertiary hover:text-accent-500 hover:bg-ui-background-depth-3'
               }`}
               aria-label="Search in chat"
             >
@@ -91,7 +91,7 @@ export const ChatHeader = memo(({ messageCount, isStreaming, messages }: ChatHea
                   scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
                 }
               }}
-              className="p-1 rounded text-ui-textTertiary hover:text-purple-500 hover:bg-ui-background-depth-3 transition-colors"
+              className="p-1 rounded text-ui-textTertiary hover:text-accent-500 hover:bg-ui-background-depth-3 transition-colors"
               aria-label="Scroll to top"
             >
               <div className="i-ph:arrow-up text-sm" />

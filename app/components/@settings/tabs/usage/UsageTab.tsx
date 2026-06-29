@@ -90,7 +90,7 @@ export const UsageTab = memo(() => {
               setBudgetInput(budget.monthlyLimitUsd > 0 ? budget.monthlyLimitUsd.toString() : '');
               setEditingBudget(!editingBudget);
             }}
-            className="text-xs text-purple-500 hover:text-purple-400 transition-colors"
+            className="text-xs text-accent-500 hover:text-accent-400 transition-colors"
           >
             {editingBudget ? 'Cancel' : 'Edit'}
           </button>
@@ -107,12 +107,12 @@ export const UsageTab = memo(() => {
                 placeholder="0.00"
                 min="0"
                 step="0.01"
-                className="w-full pl-6 pr-3 py-1.5 text-sm bg-ui-background-depth-3 border border-ui-borderColor rounded text-ui-textPrimary focus:outline-none focus:border-purple-400"
+                className="w-full pl-6 pr-3 py-1.5 text-sm bg-ui-background-depth-3 border border-ui-borderColor rounded text-ui-textPrimary focus:outline-none focus:border-accent-400"
               />
             </div>
             <button
               onClick={handleSaveBudget}
-              className="px-3 py-1.5 text-xs font-medium bg-purple-600 text-white rounded hover:bg-purple-500 transition-colors"
+              className="px-3 py-1.5 text-xs font-medium bg-accent-600 text-white rounded hover:bg-accent-500 transition-colors"
             >
               Save
             </button>
@@ -172,7 +172,7 @@ export const UsageTab = memo(() => {
                     <span className="text-xs text-ui-textSecondary w-24 truncate shrink-0">{provider}</span>
                     <div className="flex-1 h-4 rounded bg-ui-background-depth-3 overflow-hidden">
                       <div
-                        className="h-full rounded bg-purple-500/70 transition-all duration-300"
+                        className="h-full rounded bg-accent-500/70 transition-all duration-300"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -227,7 +227,7 @@ export const UsageTab = memo(() => {
                 >
                   <div className="w-full flex items-end justify-center" style={{ height: '80px' }}>
                     <div
-                      className="w-full max-w-[14px] rounded-t bg-purple-500/60 group-hover:bg-purple-500 transition-colors"
+                      className="w-full max-w-[14px] rounded-t bg-accent-500/60 group-hover:bg-accent-500 transition-colors"
                       style={{ height: `${Math.max(1, heightPct)}%` }}
                     />
                   </div>
@@ -280,7 +280,7 @@ function SummaryCard({
   const bgColor: Record<string, string> = {
     green: 'bg-green-500/10 text-green-500',
     blue: 'bg-blue-500/10 text-blue-500',
-    purple: 'bg-purple-500/10 text-purple-500',
+    purple: 'bg-accent-500/10 text-accent-500',
     cyan: 'bg-cyan-500/10 text-cyan-500',
     red: 'bg-red-500/10 text-red-500',
     amber: 'bg-amber-500/10 text-amber-500',

@@ -196,7 +196,7 @@ export function EventLogsTab() {
                 'text-sm text-ui-textPrimary',
                 'bg-ui-background-depth-2',
                 'border border-ui-borderColor',
-                'hover:bg-purple-500/10 dark:hover:bg-purple-500/20',
+                'hover:bg-accent-500/10 dark:hover:bg-accent-500/20',
                 'transition-all duration-200',
               )}
             >
@@ -219,16 +219,16 @@ export function EventLogsTab() {
               {logLevelOptions.map((option) => (
                 <DropdownMenu.Item
                   key={option.value}
-                  className="group flex items-center px-4 py-2.5 text-sm text-ui-textSecondary hover:bg-purple-500/10 dark:hover:bg-purple-500/20 cursor-pointer transition-colors"
+                  className="group flex items-center px-4 py-2.5 text-sm text-ui-textSecondary hover:bg-accent-500/10 dark:hover:bg-accent-500/20 cursor-pointer transition-colors"
                   onClick={() => handleLevelFilterChange(option.value)}
                 >
                   <div className="mr-3 flex h-5 w-5 items-center justify-center">
                     <div
-                      className={classNames(option.icon, 'text-lg group-hover:text-purple-500 transition-colors')}
+                      className={classNames(option.icon, 'text-lg group-hover:text-accent-500 transition-colors')}
                       style={{ color: option.color }}
                     />
                   </div>
-                  <span className="group-hover:text-purple-500 transition-colors">{option.label}</span>
+                  <span className="group-hover:text-accent-500 transition-colors">{option.label}</span>
                 </DropdownMenu.Item>
               ))}
             </DropdownMenu.Content>
@@ -240,7 +240,7 @@ export function EventLogsTab() {
             <Switch
               checked={showTimestamps}
               onCheckedChange={(value) => handlePreferenceChange('timestamps', value)}
-              className="data-[state=checked]:bg-purple-500"
+              className="data-[state=checked]:bg-accent-500"
             />
             <span className="text-sm text-ui-textTertiary">Show Timestamps</span>
           </div>
@@ -249,7 +249,7 @@ export function EventLogsTab() {
             <Switch
               checked={use24Hour}
               onCheckedChange={(value) => handlePreferenceChange('24hour', value)}
-              className="data-[state=checked]:bg-purple-500"
+              className="data-[state=checked]:bg-accent-500"
             />
             <span className="text-sm text-ui-textTertiary">24h Time</span>
           </div>
@@ -258,7 +258,7 @@ export function EventLogsTab() {
             <Switch
               checked={autoExpand}
               onCheckedChange={(value) => handlePreferenceChange('autoExpand', value)}
-              className="data-[state=checked]:bg-purple-500"
+              className="data-[state=checked]:bg-accent-500"
             />
             <span className="text-sm text-ui-textTertiary">Auto Expand</span>
           </div>
@@ -273,12 +273,12 @@ export function EventLogsTab() {
               'text-sm text-ui-textPrimary',
               'bg-ui-background-depth-2',
               'border border-ui-borderColor',
-              'hover:bg-purple-500/10 dark:hover:bg-purple-500/20',
+              'hover:bg-accent-500/10 dark:hover:bg-accent-500/20',
               'transition-all duration-200',
               { 'animate-spin': isRefreshing },
             )}
           >
-            <span className="i-ph:arrows-clockwise text-lg text-ui-textTertiary group-hover:text-purple-500 transition-colors" />
+            <span className="i-ph:arrows-clockwise text-lg text-ui-textTertiary group-hover:text-accent-500 transition-colors" />
             Refresh
           </button>
 
@@ -298,7 +298,7 @@ export function EventLogsTab() {
               'bg-ui-background-depth-2',
               'border border-ui-borderColor',
               'text-ui-textPrimary placeholder-ui-textTertiary',
-              'focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500',
+              'focus:outline-none focus:ring-2 focus:ring-accent-500/20 focus:border-accent-500',
               'transition-all duration-200',
             )}
           />

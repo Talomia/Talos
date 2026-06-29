@@ -307,8 +307,8 @@ export default function LocalProvidersTab() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center ring-1 ring-purple-500/30">
-              <div className="i-ph:cpu w-6 h-6 text-purple-500" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center ring-1 ring-accent-500/30">
+              <div className="i-ph:cpu w-6 h-6 text-accent-500" />
             </div>
             <div>
               <h2 className="text-2xl font-semibold text-ui-textPrimary">Local AI Providers</h2>
@@ -329,7 +329,7 @@ export default function LocalProvidersTab() {
                 variant="outline"
                 size="sm"
                 onClick={() => setViewMode('guide')}
-                className="bg-ui-background-depth-2 hover:bg-ui-background-depth-3 border-ui-borderColor hover:border-purple-500/30 transition-all duration-200 gap-2"
+                className="bg-ui-background-depth-2 hover:bg-ui-background-depth-3 border-ui-borderColor hover:border-accent-500/30 transition-all duration-200 gap-2"
               >
                 <div className="i-ph:book-open w-4 h-4" />
                 Setup Guide
@@ -338,7 +338,7 @@ export default function LocalProvidersTab() {
                 variant="outline"
                 size="sm"
                 onClick={() => setViewMode('status')}
-                className="bg-ui-background-depth-2 hover:bg-ui-background-depth-3 border-ui-borderColor hover:border-purple-500/30 transition-all duration-200 gap-2"
+                className="bg-ui-background-depth-2 hover:bg-ui-background-depth-3 border-ui-borderColor hover:border-accent-500/30 transition-all duration-200 gap-2"
               >
                 <div className="i-ph:activity w-4 h-4" />
                 Status
@@ -366,7 +366,7 @@ export default function LocalProvidersTab() {
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <div className="i-ph:package w-5 h-5 text-purple-500" />
+                        <div className="i-ph:package w-5 h-5 text-accent-500" />
                         <h3 className="text-lg font-semibold text-ui-textPrimary">Installed Models</h3>
                       </div>
                       <Button
@@ -402,7 +402,7 @@ export default function LocalProvidersTab() {
                             href="https://ollama.com/library"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-purple-500 hover:underline inline-flex items-center gap-1"
+                            className="text-accent-500 hover:underline inline-flex items-center gap-1"
                           >
                             ollama.com/library
                             <div className="i-ph:arrow-square-out w-3 h-3" />

@@ -178,7 +178,7 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
               <>
                 <button
                   onClick={() => setLocalExpanded(!localExpanded)}
-                  className="text-xs text-ui-textTertiary hover:text-purple-500 dark:hover:text-purple-400 transition-colors"
+                  className="text-xs text-ui-textTertiary hover:text-accent-500 dark:hover:text-accent-400 transition-colors"
                 >
                   {localExpanded ? 'Hide' : 'Show'} Details
                 </button>

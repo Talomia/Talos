@@ -3,6 +3,7 @@ import { useStore } from '@nanostores/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { authStore, signIn, signUp, signInWithOAuth, signOut, isAuthenticated, currentUser } from '~/lib/stores/auth';
 import { classNames } from '~/utils/classNames';
+import { toast } from 'react-toastify';
 
 interface AuthDialogProps {
   isOpen: boolean;
@@ -337,8 +338,12 @@ export function AuthButton() {
               </div>
               <button
                 onClick={async () => {
-                  await signOut();
-                  setShowDropdown(false);
+                  try {
+                    await signOut();
+                    setShowDropdown(false);
+                  } catch (error) {
+                    toast.error('Failed to sign out. Please try again.');
+                  }
                 }}
                 className="w-full text-left px-3 py-2 text-sm text-ui-textSecondary hover:bg-ui-background-depth-2 flex items-center gap-2"
               >

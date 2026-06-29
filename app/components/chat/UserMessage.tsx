@@ -75,7 +75,7 @@ export function UserMessage({ content, parts, messageId, onFork, onRewind }: Use
         {messageId && onFork && (
           <button
             onClick={() => onFork(messageId)}
-            className="opacity-0 group-hover/user:opacity-100 transition-opacity text-ui-textTertiary hover:text-purple-500 p-1 rounded"
+            className="opacity-0 group-hover/user:opacity-100 transition-opacity text-ui-textTertiary hover:text-accent-500 p-1 rounded"
             aria-label="Fork from this message"
           >
             <span className="i-ph:git-fork text-sm" />

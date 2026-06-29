@@ -146,7 +146,7 @@ export const Markdown = memo(
                 data-href={href}
                 onClick={() => {
                   if (type === 'file') {
-                    openArtifactInWorkbench(path);
+                    openArtifactInWorkbench(path as string);
                   } else if (type === 'message' && append) {
                     append({
                       id: `quick-action-message-${Date.now()}`,

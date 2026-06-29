@@ -187,12 +187,16 @@ export default function VercelConnection() {
               {/* Debug button - remove this later */}
               <button
                 onClick={async () => {
-                  const result = await autoConnectVercel();
+                  try {
+                    const result = await autoConnectVercel();
 
-                  if (result.success) {
-                    toast.success('Manual auto-connect successful');
-                  } else {
-                    toast.error(`Manual auto-connect failed: ${result.error}`);
+                    if (result.success) {
+                      toast.success('Manual auto-connect successful');
+                    } else {
+                      toast.error(`Manual auto-connect failed: ${result.error}`);
+                    }
+                  } catch (error) {
+                    toast.error('Auto-connect failed unexpectedly');
                   }
                 }}
                 className="px-3 py-2 rounded-lg text-xs bg-blue-500 text-white hover:bg-blue-600"

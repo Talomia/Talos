@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader } from '~/components/ui/Card';
 // Performance Optimization
 function PerformanceCard() {
   return (
-    <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 shadow-sm">
+    <Card className="bg-gradient-to-r from-accent-500/10 to-pink-500/10 border border-accent-500/20 shadow-sm">
       <CardHeader className="pb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
-            <div className="i-ph:activity w-5 h-5 text-purple-500" />
+          <div className="w-10 h-10 rounded-lg bg-accent-500/20 flex items-center justify-center">
+            <div className="i-ph:activity w-5 h-5 text-accent-500" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-ui-textPrimary">Performance Optimization</h3>

@@ -251,7 +251,7 @@ export const AssistantMessage = memo(
           {collapsed && (
             <button
               onClick={() => setCollapsed(false)}
-              className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-600 mt-1 transition-colors"
+              className="flex items-center gap-1 text-xs text-accent-500 hover:text-accent-600 mt-1 transition-colors"
             >
               <span className="i-ph:caret-down text-sm" />
               Show full response

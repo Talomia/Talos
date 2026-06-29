@@ -63,13 +63,13 @@ export function BranchIndicator() {
   }
 
   return (
-    <div className="flex items-center gap-2 px-4 py-1.5 bg-purple-500/5 border-b border-purple-500/10 max-w-chat mx-auto w-full">
-      <span className="i-ph:git-fork text-purple-400 text-xs" />
-      <span className="text-xs text-purple-400/80">
+    <div className="flex items-center gap-2 px-4 py-1.5 bg-accent-500/5 border-b border-accent-500/10 max-w-chat mx-auto w-full">
+      <span className="i-ph:git-fork text-accent-400 text-xs" />
+      <span className="text-xs text-accent-400/80">
         Forked from{' '}
         <button
           onClick={() => navigate(`/chat/${branch.parentChatId}`)}
-          className="text-purple-400 hover:text-purple-300 underline underline-offset-2"
+          className="text-accent-400 hover:text-accent-300 underline underline-offset-2"
         >
           {parentName}
         </button>{' '}
