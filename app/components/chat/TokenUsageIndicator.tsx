@@ -45,7 +45,7 @@ export const TokenUsageIndicator = memo(() => {
     warning:
       'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50',
     exceeded: 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/50',
-    unlimited: 'bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700',
+    unlimited: 'bg-ui-background-depth-2 text-ui-textSecondary border-ui-borderColor',
   };
 
   const topModels = Object.entries(summary.costByModel)
@@ -71,35 +71,31 @@ export const TokenUsageIndicator = memo(() => {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1.5 w-64 z-50 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-lg overflow-hidden">
+        <div className="absolute right-0 top-full mt-1.5 w-64 z-50 rounded-lg border border-ui-borderColor bg-ui-background-depth-1 shadow-lg overflow-hidden">
           {/* Header */}
-          <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-800">
-            <div className="text-xs font-semibold text-gray-700 dark:text-gray-300">Token Usage</div>
+          <div className="px-3 py-2 border-b border-ui-borderColor">
+            <div className="text-xs font-semibold text-ui-textSecondary">Token Usage</div>
           </div>
 
           <div className="px-3 py-2 space-y-2.5">
             {/* Cost summary */}
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
-                <div className="text-gray-400 dark:text-gray-500">Today</div>
-                <div className="font-medium text-gray-700 dark:text-gray-300">
-                  {formatCostFull(summary.dailyTotalUsd)}
-                </div>
+                <div className="text-ui-textTertiary">Today</div>
+                <div className="font-medium text-ui-textSecondary">{formatCostFull(summary.dailyTotalUsd)}</div>
               </div>
               <div>
-                <div className="text-gray-400 dark:text-gray-500">This Month</div>
-                <div className="font-medium text-gray-700 dark:text-gray-300">
-                  {formatCostFull(summary.monthlyTotalUsd)}
-                </div>
+                <div className="text-ui-textTertiary">This Month</div>
+                <div className="font-medium text-ui-textSecondary">{formatCostFull(summary.monthlyTotalUsd)}</div>
               </div>
             </div>
 
             {/* Token counts */}
             <div className="text-xs">
-              <div className="text-gray-400 dark:text-gray-500">Tokens this month</div>
-              <div className="font-medium text-gray-700 dark:text-gray-300">
+              <div className="text-ui-textTertiary">Tokens this month</div>
+              <div className="font-medium text-ui-textSecondary">
                 {formatTokenCount(totalTokens)}
-                <span className="text-gray-400 dark:text-gray-500 font-normal ml-1">
+                <span className="text-ui-textTertiary font-normal ml-1">
                   ({formatTokenCount(summary.monthlyInputTokens)} in / {formatTokenCount(summary.monthlyOutputTokens)}{' '}
                   out)
                 </span>
@@ -109,14 +105,12 @@ export const TokenUsageIndicator = memo(() => {
             {/* Top models */}
             {topModels.length > 0 && (
               <div className="text-xs">
-                <div className="text-gray-400 dark:text-gray-500 mb-1">Top models by cost</div>
+                <div className="text-ui-textTertiary mb-1">Top models by cost</div>
                 <div className="space-y-0.5">
                   {topModels.map(([model, cost]) => (
                     <div key={model} className="flex items-center justify-between">
-                      <span className="text-gray-600 dark:text-gray-400 truncate mr-2">{model}</span>
-                      <span className="text-gray-700 dark:text-gray-300 font-medium shrink-0">
-                        {formatCostFull(cost)}
-                      </span>
+                      <span className="text-ui-textSecondary truncate mr-2">{model}</span>
+                      <span className="text-ui-textPrimary font-medium shrink-0">{formatCostFull(cost)}</span>
                     </div>
                   ))}
                 </div>
@@ -127,12 +121,12 @@ export const TokenUsageIndicator = memo(() => {
             {budget.monthlyLimitUsd > 0 && (
               <div className="text-xs">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-gray-400 dark:text-gray-500">Budget</span>
-                  <span className="text-gray-600 dark:text-gray-400">
+                  <span className="text-ui-textTertiary">Budget</span>
+                  <span className="text-ui-textSecondary">
                     {formatCostFull(summary.monthlyTotalUsd)} / ${budget.monthlyLimitUsd.toFixed(2)}
                   </span>
                 </div>
-                <div className="w-full h-1.5 rounded-full bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                <div className="w-full h-1.5 rounded-full bg-ui-background-depth-3 overflow-hidden">
                   <div
                     className={classNames('h-full rounded-full transition-all', {
                       'bg-green-500': summary.budgetStatus === 'ok',

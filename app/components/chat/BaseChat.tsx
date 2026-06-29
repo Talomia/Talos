@@ -34,10 +34,9 @@ import { StickToBottom, useStickToBottomContext } from '~/lib/hooks';
 import { ChatBox } from './ChatBox';
 import LlmErrorAlert from './LlmErrorAlert';
 import { useChatContext } from '~/lib/contexts/ChatContext';
+import { MAX_IMAGE_SIZE_BYTES, MAX_IMAGE_SIZE_LABEL, TEXTAREA_MIN_HEIGHT, formatFileSize } from './constants';
 
 const logger = createScopedLogger('BaseChat');
-
-const TEXTAREA_MIN_HEIGHT = 76;
 
 export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
   const {
@@ -283,10 +282,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
 
       if (file) {
         // Validate file size (5MB max)
-        const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
-        if (file.size > MAX_IMAGE_SIZE) {
-          toast.error(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 5MB.`);
+        if (file.size > MAX_IMAGE_SIZE_BYTES) {
+          toast.error(`Image too large (${formatFileSize(file.size)}). Maximum size is ${MAX_IMAGE_SIZE_LABEL}.`);
           cleanup();
 
           return;
@@ -344,10 +342,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement>((_, ref) => {
 
         if (file) {
           // Validate file size (5MB max)
-          const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
-          if (file.size > MAX_IMAGE_SIZE) {
-            toast.error(`Pasted image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum size is 5MB.`);
+          if (file.size > MAX_IMAGE_SIZE_BYTES) {
+            toast.error(
+              `Pasted image too large (${formatFileSize(file.size)}). Maximum size is ${MAX_IMAGE_SIZE_LABEL}.`,
+            );
             break;
           }
 

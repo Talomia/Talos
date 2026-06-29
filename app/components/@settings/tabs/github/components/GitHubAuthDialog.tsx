@@ -55,7 +55,11 @@ export function GitHubAuthDialog({ isOpen, onClose, onSuccess }: GitHubAuthDialo
             <div className="p-6 space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-ui-textPrimary">Connect to GitHub</h2>
-                <button onClick={handleClose} className="p-1 rounded-md hover:bg-ui-item-backgroundActive/10">
+                <button
+                  onClick={handleClose}
+                  className="p-1 rounded-md hover:bg-ui-item-backgroundActive/10"
+                  aria-label="Close dialog"
+                >
                   <div className="i-ph:x w-4 h-4 text-ui-textSecondary" />
                 </button>
               </div>

@@ -194,7 +194,7 @@ ${ARTIFACT_TAG_CLOSE}`,
       {/* Provider Selection Dialog */}
       {isDialogOpen && !selectedProvider && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-ui-borderColor dark:border-ui-borderColor max-w-md w-full">
+          <div className="bg-ui-background-depth-1 rounded-xl shadow-xl border border-ui-borderColor dark:border-ui-borderColor max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-ui-textPrimary dark:text-ui-textPrimary">
@@ -251,7 +251,7 @@ ${ARTIFACT_TAG_CLOSE}`,
       {/* GitHub Repository Selection */}
       {isDialogOpen && selectedProvider === 'github' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-ui-borderColor dark:border-ui-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <div className="bg-ui-background-depth-1 rounded-xl shadow-xl border border-ui-borderColor dark:border-ui-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
             <div className="p-6 border-b border-ui-borderColor dark:border-ui-borderColor flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
@@ -287,7 +287,7 @@ ${ARTIFACT_TAG_CLOSE}`,
       {/* GitLab Repository Selection */}
       {isDialogOpen && selectedProvider === 'gitlab' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-ui-borderColor dark:border-ui-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <div className="bg-ui-background-depth-1 rounded-xl shadow-xl border border-ui-borderColor dark:border-ui-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
             <div className="p-6 border-b border-ui-borderColor dark:border-ui-borderColor flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">

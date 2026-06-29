@@ -67,7 +67,7 @@ export const EditorStatusBar = memo(() => {
   }
 
   return (
-    <div className="flex items-center justify-between px-3 py-1 text-[11px] text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/80 border-t border-gray-200 dark:border-gray-800 select-none shrink-0">
+    <div className="flex items-center justify-between px-3 py-1 text-[11px] text-ui-textTertiary bg-gray-50 dark:bg-gray-900/80 border-t border-ui-borderColor select-none shrink-0">
       {/* Left: file path */}
       <div className="flex items-center gap-3 truncate">
         <span className="flex items-center gap-1.5 truncate">

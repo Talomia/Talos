@@ -179,7 +179,11 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
             <code className="bg-accent-500 rounded-4px px-1.5 py-1 mr-0.5 text-white">{selectedElement?.tagName}</code>
             selected for inspection
           </div>
-          <button className="bg-transparent text-accent-500 pointer-auto" onClick={() => setSelectedElement(null)}>
+          <button
+            className="bg-transparent text-accent-500 pointer-auto"
+            onClick={() => setSelectedElement(null)}
+            aria-label="Clear element selection"
+          >
             Clear
           </button>
         </div>
@@ -195,11 +199,11 @@ export const ChatBox: React.FC<ChatBoxProps> = React.memo((props) => {
           aria-label="Chat message input"
           onDragEnter={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
+            e.currentTarget.style.border = '2px solid var(--ui-focus)';
           }}
           onDragOver={(e) => {
             e.preventDefault();
-            e.currentTarget.style.border = '2px solid #1488fc';
+            e.currentTarget.style.border = '2px solid var(--ui-focus)';
           }}
           onDragLeave={(e) => {
             e.preventDefault();

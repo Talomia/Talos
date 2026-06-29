@@ -163,8 +163,8 @@ export const LogEntryItem = ({ log, isExpanded: forceExpanded, use24Hour, showTi
       className={classNames(
         'flex flex-col gap-2',
         'rounded-lg p-4',
-        'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-        'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+        'bg-ui-background-depth-2',
+        'border border-ui-borderColor',
         style.bg,
         'transition-all duration-200',
       )}

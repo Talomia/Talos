@@ -224,6 +224,28 @@ export function CommandPalette() {
             window.dispatchEvent(new CustomEvent('talos:export-json'));
           }),
       },
+      {
+        id: 'toggle-sidebar',
+        group: 'Navigation',
+        icon: 'i-ph:sidebar',
+        label: 'Toggle Sidebar',
+        shortcut: '⌘B',
+        action: () =>
+          runAndClose(() => {
+            window.dispatchEvent(new CustomEvent('talos:toggle-sidebar'));
+          }),
+      },
+      {
+        id: 'search-chat',
+        group: 'Navigation',
+        icon: 'i-ph:magnifying-glass',
+        label: 'Search in Chat',
+        shortcut: '⌘F',
+        action: () =>
+          runAndClose(() => {
+            window.dispatchEvent(new CustomEvent('talos:toggle-chat-search'));
+          }),
+      },
     ],
     [theme, navigate, runAndClose],
   );
@@ -333,12 +355,12 @@ export function CommandPalette() {
       <RadixDialog.Portal>
         <RadixDialog.Overlay className="fixed inset-0 z-max bg-black/50 backdrop-blur-sm animate-fade-in" />
         <RadixDialog.Content
-          className="fixed top-[20vh] left-1/2 -translate-x-1/2 z-max w-full max-w-[520px] bg-white dark:bg-gray-950 rounded-xl border border-gray-200 dark:border-gray-800 shadow-2xl overflow-hidden animate-scale-in"
+          className="fixed top-[20vh] left-1/2 -translate-x-1/2 z-max w-full max-w-[520px] bg-ui-background-depth-1 rounded-xl border border-ui-borderColor shadow-2xl overflow-hidden animate-scale-in"
           onKeyDown={handleKeyDown}
         >
           {/* Search Input */}
-          <div className="flex items-center gap-3 px-4 border-b border-gray-100 dark:border-gray-800">
-            <span className="i-ph:magnifying-glass text-gray-400 dark:text-gray-500 text-lg flex-shrink-0" />
+          <div className="flex items-center gap-3 px-4 border-b border-ui-borderColor">
+            <span className="i-ph:magnifying-glass text-ui-textTertiary text-lg flex-shrink-0" />
             <RadixDialog.Title className="sr-only">Command Palette</RadixDialog.Title>
             <RadixDialog.Description className="sr-only">
               Search commands and chats. Use arrow keys to navigate, Enter to select.
@@ -346,13 +368,13 @@ export function CommandPalette() {
             <input
               ref={inputRef}
               type="text"
-              className="flex-1 py-3.5 bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 outline-none"
+              className="flex-1 py-3.5 bg-transparent text-sm text-ui-textPrimary placeholder-ui-textTertiary outline-none"
               placeholder="Search commands and chats..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoFocus
             />
-            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium text-ui-textTertiary bg-ui-background-depth-3 border border-ui-borderColor">
               ESC
             </kbd>
           </div>
@@ -360,7 +382,7 @@ export function CommandPalette() {
           {/* Results */}
           <div ref={listRef} className="max-h-[340px] overflow-y-auto py-2" role="listbox">
             {allItems.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400 dark:text-gray-500">
+              <div className="px-4 py-8 text-center text-sm text-ui-textTertiary">
                 <span className="i-ph:magnifying-glass text-2xl mb-2 block mx-auto opacity-50" />
                 No results found
               </div>
@@ -369,7 +391,7 @@ export function CommandPalette() {
                 {/* Command Groups */}
                 {Object.entries(commandGroups).map(([group, cmds]) => (
                   <div key={group}>
-                    <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                    <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ui-textTertiary">
                       {group}
                     </div>
                     {cmds.map((cmd) => {
@@ -384,7 +406,7 @@ export function CommandPalette() {
                           className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors cursor-pointer ${
                             selectedIndex === idx
                               ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                              : 'text-ui-textSecondary hover:bg-ui-item-backgroundActive'
                           }`}
                           onClick={() => executeItem(idx)}
                           onMouseEnter={() => setSelectedIndex(idx)}
@@ -394,7 +416,7 @@ export function CommandPalette() {
                           <span className={`${cmd.icon} text-lg flex-shrink-0`} />
                           <span className="flex-1 truncate">{cmd.label}</span>
                           {cmd.shortcut && (
-                            <kbd className="text-[10px] font-medium text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded border border-gray-200 dark:border-gray-700">
+                            <kbd className="text-[10px] font-medium text-ui-textTertiary bg-ui-background-depth-3 px-1.5 py-0.5 rounded border border-ui-borderColor">
                               {cmd.shortcut}
                             </kbd>
                           )}
@@ -407,7 +429,7 @@ export function CommandPalette() {
                 {/* Chat Results */}
                 {filteredChats.length > 0 && (
                   <div>
-                    <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mt-1">
+                    <div className="px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ui-textTertiary mt-1">
                       Recent Chats
                     </div>
                     {filteredChats.map((chat) => {
@@ -422,7 +444,7 @@ export function CommandPalette() {
                           className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors cursor-pointer ${
                             selectedIndex === idx
                               ? 'bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-300'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                              : 'text-ui-textSecondary hover:bg-ui-item-backgroundActive'
                           }`}
                           onClick={() => executeItem(idx)}
                           onMouseEnter={() => setSelectedIndex(idx)}
@@ -441,21 +463,21 @@ export function CommandPalette() {
           </div>
 
           {/* Footer */}
-          <div className="flex items-center gap-4 px-4 py-2 border-t border-gray-100 dark:border-gray-800 text-[10px] text-gray-400 dark:text-gray-500">
+          <div className="flex items-center gap-4 px-4 py-2 border-t border-ui-borderColor text-[10px] text-ui-textTertiary">
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-medium">
+              <kbd className="px-1 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor font-medium">
                 ↑↓
               </kbd>
               navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-medium">
+              <kbd className="px-1 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor font-medium">
                 ↵
               </kbd>
               select
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 font-medium">
+              <kbd className="px-1 py-0.5 rounded bg-ui-background-depth-3 border border-ui-borderColor font-medium">
                 esc
               </kbd>
               close

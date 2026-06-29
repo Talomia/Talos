@@ -32,14 +32,14 @@ export const ExportButton = ({ exportFormats }: ExportButtonProps) => {
         className={classNames(
           'group flex items-center gap-2',
           'rounded-lg px-3 py-1.5',
-          'text-sm text-gray-900 dark:text-white',
-          'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-          'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+          'text-sm text-ui-textPrimary',
+          'bg-ui-background-depth-2',
+          'border border-ui-borderColor',
           'hover:bg-purple-500/10 dark:hover:bg-purple-500/20',
           'transition-all duration-200',
         )}
       >
-        <span className="i-ph:download text-lg text-gray-500 dark:text-gray-400 group-hover:text-purple-500 transition-colors" />
+        <span className="i-ph:download text-lg text-ui-textTertiary group-hover:text-purple-500 transition-colors" />
         Export
       </button>
 
@@ -58,7 +58,7 @@ export const ExportButton = ({ exportFormats }: ExportButtonProps) => {
                 className={classNames(
                   'flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-colors w-full text-left',
                   'bg-white dark:bg-[#0A0A0A]',
-                  'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+                  'border border-ui-borderColor',
                   'hover:bg-purple-50 dark:hover:bg-[#1a1a1a]',
                   'hover:border-purple-200 dark:hover:border-purple-900/30',
                   'text-ui-textPrimary',

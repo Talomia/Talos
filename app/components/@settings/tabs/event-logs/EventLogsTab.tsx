@@ -193,9 +193,9 @@ export function EventLogsTab() {
               className={classNames(
                 'flex items-center gap-2',
                 'rounded-lg px-3 py-1.5',
-                'text-sm text-gray-900 dark:text-white',
-                'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-                'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+                'text-sm text-ui-textPrimary',
+                'bg-ui-background-depth-2',
+                'border border-ui-borderColor',
                 'hover:bg-purple-500/10 dark:hover:bg-purple-500/20',
                 'transition-all duration-200',
               )}
@@ -205,13 +205,13 @@ export function EventLogsTab() {
                 style={{ color: selectedLevelOption?.color }}
               />
               {selectedLevelOption?.label || 'All Types'}
-              <span className="i-ph:caret-down text-lg text-gray-500 dark:text-gray-400" />
+              <span className="i-ph:caret-down text-lg text-ui-textTertiary" />
             </button>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Portal>
             <DropdownMenu.Content
-              className="min-w-[200px] bg-white dark:bg-[#0A0A0A] rounded-lg shadow-lg py-1 z-[250] animate-in fade-in-0 zoom-in-95 border border-[#E5E5E5] dark:border-[#1A1A1A]"
+              className="min-w-[200px] bg-ui-background-depth-1 rounded-lg shadow-lg py-1 z-[250] animate-in fade-in-0 zoom-in-95 border border-ui-borderColor"
               sideOffset={5}
               align="start"
               side="bottom"
@@ -219,7 +219,7 @@ export function EventLogsTab() {
               {logLevelOptions.map((option) => (
                 <DropdownMenu.Item
                   key={option.value}
-                  className="group flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-purple-500/10 dark:hover:bg-purple-500/20 cursor-pointer transition-colors"
+                  className="group flex items-center px-4 py-2.5 text-sm text-ui-textSecondary hover:bg-purple-500/10 dark:hover:bg-purple-500/20 cursor-pointer transition-colors"
                   onClick={() => handleLevelFilterChange(option.value)}
                 >
                   <div className="mr-3 flex h-5 w-5 items-center justify-center">
@@ -242,7 +242,7 @@ export function EventLogsTab() {
               onCheckedChange={(value) => handlePreferenceChange('timestamps', value)}
               className="data-[state=checked]:bg-purple-500"
             />
-            <span className="text-sm text-gray-500 dark:text-gray-400">Show Timestamps</span>
+            <span className="text-sm text-ui-textTertiary">Show Timestamps</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -251,7 +251,7 @@ export function EventLogsTab() {
               onCheckedChange={(value) => handlePreferenceChange('24hour', value)}
               className="data-[state=checked]:bg-purple-500"
             />
-            <span className="text-sm text-gray-500 dark:text-gray-400">24h Time</span>
+            <span className="text-sm text-ui-textTertiary">24h Time</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -260,25 +260,25 @@ export function EventLogsTab() {
               onCheckedChange={(value) => handlePreferenceChange('autoExpand', value)}
               className="data-[state=checked]:bg-purple-500"
             />
-            <span className="text-sm text-gray-500 dark:text-gray-400">Auto Expand</span>
+            <span className="text-sm text-ui-textTertiary">Auto Expand</span>
           </div>
 
-          <div className="w-px h-4 bg-gray-200 dark:bg-gray-700" />
+          <div className="w-px h-4 bg-ui-borderColor" />
 
           <button
             onClick={handleRefresh}
             className={classNames(
               'group flex items-center gap-2',
               'rounded-lg px-3 py-1.5',
-              'text-sm text-gray-900 dark:text-white',
-              'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-              'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+              'text-sm text-ui-textPrimary',
+              'bg-ui-background-depth-2',
+              'border border-ui-borderColor',
               'hover:bg-purple-500/10 dark:hover:bg-purple-500/20',
               'transition-all duration-200',
               { 'animate-spin': isRefreshing },
             )}
           >
-            <span className="i-ph:arrows-clockwise text-lg text-gray-500 dark:text-gray-400 group-hover:text-purple-500 transition-colors" />
+            <span className="i-ph:arrows-clockwise text-lg text-ui-textTertiary group-hover:text-purple-500 transition-colors" />
             Refresh
           </button>
 
@@ -295,15 +295,15 @@ export function EventLogsTab() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className={classNames(
               'w-full px-4 py-2 pl-10 rounded-lg',
-              'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-              'border border-[#E5E5E5] dark:border-[#1A1A1A]',
-              'text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400',
+              'bg-ui-background-depth-2',
+              'border border-ui-borderColor',
+              'text-ui-textPrimary placeholder-ui-textTertiary',
               'focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500',
               'transition-all duration-200',
             )}
           />
           <div className="absolute left-3 top-1/2 -translate-y-1/2">
-            <div className="i-ph:magnifying-glass text-lg text-gray-500 dark:text-gray-400" />
+            <div className="i-ph:magnifying-glass text-lg text-ui-textTertiary" />
           </div>
         </div>
 
@@ -314,14 +314,14 @@ export function EventLogsTab() {
             className={classNames(
               'flex flex-col items-center justify-center gap-4',
               'rounded-lg p-8 text-center',
-              'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-              'border border-[#E5E5E5] dark:border-[#1A1A1A]',
+              'bg-ui-background-depth-2',
+              'border border-ui-borderColor',
             )}
           >
             <span className="i-ph:clipboard-text text-4xl text-gray-400 dark:text-gray-600" />
             <div className="flex flex-col gap-1">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">No Logs Found</h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Try adjusting your search or filters</p>
+              <h3 className="text-sm font-medium text-ui-textPrimary">No Logs Found</h3>
+              <p className="text-sm text-ui-textTertiary">Try adjusting your search or filters</p>
             </div>
           </motion.div>
         ) : (

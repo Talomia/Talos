@@ -20,7 +20,7 @@ export const CloudSyncStatus = memo(() => {
   const config: Record<typeof status, { icon: string; color: string; label: string }> = {
     idle: {
       icon: 'i-ph:cloud text-sm',
-      color: 'text-gray-400 dark:text-gray-500',
+      color: 'text-ui-textTertiary',
       label: 'Cloud sync idle',
     },
     syncing: {

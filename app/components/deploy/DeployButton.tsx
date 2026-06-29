@@ -6,13 +6,14 @@ import { isGitLabConnected } from '~/lib/stores/gitlabConnection';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { streamingState } from '~/lib/stores/streaming';
 import { classNames } from '~/utils/classNames';
-import { useState, lazy, Suspense } from 'react';
+import { useState, useCallback, lazy, Suspense } from 'react';
 import { NetlifyDeploymentLink } from '~/components/chat/NetlifyDeploymentLink.client';
 import { VercelDeploymentLink } from '~/components/chat/VercelDeploymentLink.client';
 import { useVercelDeploy } from '~/components/deploy/VercelDeploy.client';
 import { useNetlifyDeploy } from '~/components/deploy/NetlifyDeploy.client';
 import { useGitHubDeploy } from '~/components/deploy/GitHubDeploy.client';
 import { useGitLabDeploy } from '~/components/deploy/GitLabDeploy.client';
+import { ServiceIcon } from '~/components/ui/ServiceIcon';
 
 const GitHubDeploymentDialog = lazy(() =>
   import('~/components/deploy/GitHubDeploymentDialog').then((m) => ({ default: m.GitHubDeploymentDialog })),
@@ -22,12 +23,19 @@ const GitLabDeploymentDialog = lazy(() =>
 );
 import type { FileContent } from '~/utils/deployUtils';
 
+type DeployTarget = 'netlify' | 'vercel' | 'github' | 'gitlab';
+
 interface DeployButtonProps {
   onVercelDeploy?: () => Promise<void>;
   onNetlifyDeploy?: () => Promise<void>;
   onGitHubDeploy?: () => Promise<void>;
   onGitLabDeploy?: () => Promise<void>;
 }
+
+/* Shared class for dropdown menu items. */
+const ITEM_CLASS =
+  'cursor-pointer flex items-center w-full px-4 py-2 text-sm text-ui-textPrimary hover:bg-ui-item-backgroundActive gap-2 rounded-md group relative';
+const DISABLED_CLASS = 'opacity-60 cursor-not-allowed';
 
 export const DeployButton = ({
   onVercelDeploy,
@@ -41,7 +49,7 @@ export const DeployButton = ({
   const previews = useStore(workbenchStore.previews);
   const activePreview = previews[0];
   const [isDeploying, setIsDeploying] = useState(false);
-  const [deployingTo, setDeployingTo] = useState<'netlify' | 'vercel' | 'github' | 'gitlab' | null>(null);
+  const [deployingTo, setDeployingTo] = useState<DeployTarget | null>(null);
   const isStreaming = useStore(streamingState);
   const { handleVercelDeploy } = useVercelDeploy();
   const { handleNetlifyDeploy } = useNetlifyDeploy();
@@ -54,81 +62,68 @@ export const DeployButton = ({
   const [githubProjectName, setGithubProjectName] = useState('');
   const [gitlabProjectName, setGitlabProjectName] = useState('');
 
-  const handleVercelDeployClick = async () => {
-    setIsDeploying(true);
-    setDeployingTo('vercel');
+  /**
+   * Wraps any deploy handler with loading state management.
+   * Eliminates the duplicated try/finally pattern across 4 handlers.
+   */
+  const wrapDeploy = useCallback(
+    (target: DeployTarget, handler: () => Promise<void>) => async () => {
+      setIsDeploying(true);
+      setDeployingTo(target);
 
-    try {
-      if (onVercelDeploy) {
-        await onVercelDeploy();
-      } else {
-        await handleVercelDeploy();
+      try {
+        await handler();
+      } finally {
+        setIsDeploying(false);
+        setDeployingTo(null);
       }
-    } finally {
-      setIsDeploying(false);
-      setDeployingTo(null);
+    },
+    [],
+  );
+
+  const handleVercelDeployClick = wrapDeploy('vercel', async () => {
+    if (onVercelDeploy) {
+      await onVercelDeploy();
+    } else {
+      await handleVercelDeploy();
     }
-  };
+  });
 
-  const handleNetlifyDeployClick = async () => {
-    setIsDeploying(true);
-    setDeployingTo('netlify');
+  const handleNetlifyDeployClick = wrapDeploy('netlify', async () => {
+    if (onNetlifyDeploy) {
+      await onNetlifyDeploy();
+    } else {
+      await handleNetlifyDeploy();
+    }
+  });
 
-    try {
-      if (onNetlifyDeploy) {
-        await onNetlifyDeploy();
-      } else {
-        await handleNetlifyDeploy();
+  const handleGitHubDeployClick = wrapDeploy('github', async () => {
+    if (onGitHubDeploy) {
+      await onGitHubDeploy();
+    } else {
+      const result = await handleGitHubDeploy();
+
+      if (result && result.success && result.files) {
+        setGithubDeploymentFiles(result.files);
+        setGithubProjectName(result.projectName);
+        setShowGitHubDeploymentDialog(true);
       }
-    } finally {
-      setIsDeploying(false);
-      setDeployingTo(null);
     }
-  };
+  });
 
-  const handleGitHubDeployClick = async () => {
-    setIsDeploying(true);
-    setDeployingTo('github');
+  const handleGitLabDeployClick = wrapDeploy('gitlab', async () => {
+    if (onGitLabDeploy) {
+      await onGitLabDeploy();
+    } else {
+      const result = await handleGitLabDeploy();
 
-    try {
-      if (onGitHubDeploy) {
-        await onGitHubDeploy();
-      } else {
-        const result = await handleGitHubDeploy();
-
-        if (result && result.success && result.files) {
-          setGithubDeploymentFiles(result.files);
-          setGithubProjectName(result.projectName);
-          setShowGitHubDeploymentDialog(true);
-        }
+      if (result && result.success && result.files) {
+        setGitlabDeploymentFiles(result.files);
+        setGitlabProjectName(result.projectName);
+        setShowGitLabDeploymentDialog(true);
       }
-    } finally {
-      setIsDeploying(false);
-      setDeployingTo(null);
     }
-  };
-
-  const handleGitLabDeployClick = async () => {
-    setIsDeploying(true);
-    setDeployingTo('gitlab');
-
-    try {
-      if (onGitLabDeploy) {
-        await onGitLabDeploy();
-      } else {
-        const result = await handleGitLabDeploy();
-
-        if (result && result.success && result.files) {
-          setGitlabDeploymentFiles(result.files);
-          setGitlabProjectName(result.projectName);
-          setShowGitLabDeploymentDialog(true);
-        }
-      }
-    } finally {
-      setIsDeploying(false);
-      setDeployingTo(null);
-    }
-  };
+  });
 
   return (
     <>
@@ -138,180 +133,91 @@ export const DeployButton = ({
             disabled={isDeploying || !activePreview || isStreaming}
             className="rounded-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs bg-accent-500 text-white hover:text-ui-item-contentAccent [&:not(:disabled,.disabled)]:hover:bg-ui-button-primary-backgroundHover outline-accent-500 flex gap-1.7"
           >
-            {isDeploying ? `Deploying to ${deployingTo}...` : 'Deploy'}
-            <span className={classNames('i-ph:caret-down transition-transform')} />
+            {isDeploying ? (
+              <>
+                <div className="i-svg-spinners:90-ring-with-bg text-lg animate-spin" />
+                Deploying to {deployingTo}...
+              </>
+            ) : (
+              <>
+                <div className="i-ph:cloud-arrow-up text-lg" />
+                Deploy
+              </>
+            )}
           </DropdownMenu.Trigger>
           <DropdownMenu.Content
             className={classNames(
-              'z-[250]',
-              'bg-ui-background-depth-2',
-              'rounded-lg shadow-lg',
-              'border border-ui-borderColor',
+              'z-[250] min-w-[280px]',
+              'bg-ui-background-depth-1 border border-ui-borderColor rounded-lg shadow-lg',
               'animate-in fade-in-0 zoom-in-95',
               'py-1',
             )}
             sideOffset={5}
             align="end"
           >
+            {/* Netlify */}
             <DropdownMenu.Item
-              className={classNames(
-                'cursor-pointer flex items-center w-full px-4 py-2 text-sm text-ui-textPrimary hover:bg-ui-item-backgroundActive gap-2 rounded-md group relative',
-                {
-                  'opacity-60 cursor-not-allowed': isDeploying || !activePreview || !netlifyConn.user,
-                },
-              )}
+              className={classNames(ITEM_CLASS, {
+                [DISABLED_CLASS]: isDeploying || !activePreview || !netlifyConn.user,
+              })}
               disabled={isDeploying || !activePreview || !netlifyConn.user}
               onClick={handleNetlifyDeployClick}
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/netlify"
-                alt="netlify"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-
-                  const fallback = e.currentTarget.nextElementSibling;
-
-                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
-                    fallback.style.display = 'flex';
-                  }
-                }}
-              />
-              <div
-                className="icon-fallback w-5 h-5 i-ph:globe-simple text-ui-textSecondary"
-                style={{ display: 'none' }}
-              />
+              <ServiceIcon src="https://cdn.simpleicons.org/netlify" alt="netlify" fallbackIcon="i-ph:globe-simple" />
               <span className="mx-auto">
                 {!netlifyConn.user ? 'No Netlify Account Connected' : 'Deploy to Netlify'}
               </span>
               {netlifyConn.user && <NetlifyDeploymentLink />}
             </DropdownMenu.Item>
 
+            {/* Vercel */}
             <DropdownMenu.Item
-              className={classNames(
-                'cursor-pointer flex items-center w-full px-4 py-2 text-sm text-ui-textPrimary hover:bg-ui-item-backgroundActive gap-2 rounded-md group relative',
-                {
-                  'opacity-60 cursor-not-allowed': isDeploying || !activePreview || !vercelConn.user,
-                },
-              )}
+              className={classNames(ITEM_CLASS, {
+                [DISABLED_CLASS]: isDeploying || !activePreview || !vercelConn.user,
+              })}
               disabled={isDeploying || !activePreview || !vercelConn.user}
               onClick={handleVercelDeployClick}
             >
-              <img
-                className="w-5 h-5 bg-black p-1 rounded"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
+              <ServiceIcon
                 src="https://cdn.simpleicons.org/vercel/white"
                 alt="vercel"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-
-                  const fallback = e.currentTarget.nextElementSibling;
-
-                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
-                    fallback.style.display = 'flex';
-                  }
-                }}
+                fallbackIcon="i-ph:triangle"
+                className="w-5 h-5 bg-black p-1 rounded"
               />
-              <div className="icon-fallback w-5 h-5 i-ph:triangle text-ui-textSecondary" style={{ display: 'none' }} />
               <span className="mx-auto">{!vercelConn.user ? 'No Vercel Account Connected' : 'Deploy to Vercel'}</span>
               {vercelConn.user && <VercelDeploymentLink />}
             </DropdownMenu.Item>
 
+            {/* GitHub */}
             <DropdownMenu.Item
-              className={classNames(
-                'cursor-pointer flex items-center w-full px-4 py-2 text-sm text-ui-textPrimary hover:bg-ui-item-backgroundActive gap-2 rounded-md group relative',
-                {
-                  'opacity-60 cursor-not-allowed': isDeploying || !activePreview,
-                },
-              )}
+              className={classNames(ITEM_CLASS, {
+                [DISABLED_CLASS]: isDeploying || !activePreview,
+              })}
               disabled={isDeploying || !activePreview}
               onClick={handleGitHubDeployClick}
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/github"
-                alt="github"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-
-                  const fallback = e.currentTarget.nextElementSibling;
-
-                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
-                    fallback.style.display = 'flex';
-                  }
-                }}
-              />
-              <div
-                className="icon-fallback w-5 h-5 i-ph:github-logo text-ui-textSecondary"
-                style={{ display: 'none' }}
-              />
+              <ServiceIcon src="https://cdn.simpleicons.org/github" alt="github" fallbackIcon="i-ph:github-logo" />
               <span className="mx-auto">Deploy to GitHub</span>
             </DropdownMenu.Item>
 
+            {/* GitLab */}
             <DropdownMenu.Item
-              className={classNames(
-                'cursor-pointer flex items-center w-full px-4 py-2 text-sm text-ui-textPrimary hover:bg-ui-item-backgroundActive gap-2 rounded-md group relative',
-                {
-                  'opacity-60 cursor-not-allowed': isDeploying || !activePreview || !gitlabIsConnected,
-                },
-              )}
+              className={classNames(ITEM_CLASS, {
+                [DISABLED_CLASS]: isDeploying || !activePreview || !gitlabIsConnected,
+              })}
               disabled={isDeploying || !activePreview || !gitlabIsConnected}
               onClick={handleGitLabDeployClick}
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/gitlab"
-                alt="gitlab"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-
-                  const fallback = e.currentTarget.nextElementSibling;
-
-                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
-                    fallback.style.display = 'flex';
-                  }
-                }}
-              />
-              <div
-                className="icon-fallback w-5 h-5 i-ph:gitlab-logo text-ui-textSecondary"
-                style={{ display: 'none' }}
-              />
+              <ServiceIcon src="https://cdn.simpleicons.org/gitlab" alt="gitlab" fallbackIcon="i-ph:gitlab-logo" />
               <span className="mx-auto">{!gitlabIsConnected ? 'No GitLab Account Connected' : 'Deploy to GitLab'}</span>
             </DropdownMenu.Item>
 
+            {/* Cloudflare (Coming Soon) */}
             <DropdownMenu.Item
               disabled
               className="flex items-center w-full rounded-md px-4 py-2 text-sm text-ui-textTertiary gap-2 opacity-60 cursor-not-allowed"
             >
-              <img
-                className="w-5 h-5"
-                height="24"
-                width="24"
-                crossOrigin="anonymous"
-                src="https://cdn.simpleicons.org/cloudflare"
-                alt="cloudflare"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-
-                  const fallback = e.currentTarget.nextElementSibling;
-
-                  if (fallback instanceof HTMLElement && fallback.classList.contains('icon-fallback')) {
-                    fallback.style.display = 'flex';
-                  }
-                }}
-              />
-              <div className="icon-fallback w-5 h-5 i-ph:cloud text-ui-textSecondary" style={{ display: 'none' }} />
+              <ServiceIcon src="https://cdn.simpleicons.org/cloudflare" alt="cloudflare" fallbackIcon="i-ph:cloud" />
               <span className="mx-auto">Deploy to Cloudflare (Coming Soon)</span>
             </DropdownMenu.Item>
           </DropdownMenu.Content>

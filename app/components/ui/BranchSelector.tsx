@@ -138,7 +138,7 @@ export function BranchSelector({
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
           className={classNames(
-            'bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-ui-borderColor max-w-md w-full max-h-[80vh] flex flex-col',
+            'bg-ui-background-depth-1 rounded-xl shadow-xl border border-ui-borderColor max-w-md w-full max-h-[80vh] flex flex-col',
             className,
           )}
         >
