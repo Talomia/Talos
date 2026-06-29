@@ -195,7 +195,7 @@ export default function VercelConnection() {
                     } else {
                       toast.error(`Manual auto-connect failed: ${result.error}`);
                     }
-                  } catch (error) {
+                  } catch {
                     toast.error('Auto-connect failed unexpectedly');
                   }
                 }}

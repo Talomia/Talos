@@ -341,7 +341,7 @@ export function AuthButton() {
                   try {
                     await signOut();
                     setShowDropdown(false);
-                  } catch (error) {
+                  } catch {
                     toast.error('Failed to sign out. Please try again.');
                   }
                 }}

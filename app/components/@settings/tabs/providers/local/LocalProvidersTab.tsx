@@ -412,7 +412,7 @@ export default function LocalProvidersTab() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="bg-gradient-to-r from-purple-500/8 to-purple-600/8 hover:from-purple-500/15 hover:to-purple-600/15 border-purple-500/25 hover:border-purple-500/40 transition-all duration-300 gap-2 group shadow-sm hover:shadow-md font-medium"
+                          className="bg-gradient-to-r from-accent-500/8 to-accent-600/8 hover:from-accent-500/15 hover:to-accent-600/15 border-accent-500/25 hover:border-accent-500/40 transition-all duration-300 gap-2 group shadow-sm hover:shadow-md font-medium"
                           _asChild
                         >
                           <a
