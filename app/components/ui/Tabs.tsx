@@ -11,7 +11,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={classNames(
-      'inline-flex h-10 items-center justify-center rounded-md bg-ui-background-depth-1 dark:bg-ui-background-depth-3-dark p-1 text-ui-textSecondary dark:text-ui-textSecondary-dark border border-ui-borderColor dark:border-ui-borderColor-dark',
+      'inline-flex h-10 items-center justify-center rounded-md bg-ui-background-depth-1 p-1 text-ui-textSecondary border border-ui-borderColor',
       className,
     )}
     {...props}
@@ -26,7 +26,7 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={classNames(
-      'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-ui-background dark:ring-offset-ui-background-dark transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ui-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-ui-background-depth-0 dark:data-[state=active]:bg-ui-background-depth-2-dark data-[state=active]:text-ui-textPrimary dark:data-[state=active]:text-ui-textPrimary-dark data-[state=active]:shadow-sm',
+      'inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-ui-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ui-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-ui-background-depth-0 data-[state=active]:text-ui-textPrimary data-[state=active]:shadow-sm',
       className,
     )}
     {...props}

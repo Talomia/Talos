@@ -39,9 +39,7 @@ export function Breadcrumbs({
         {item.icon && <span className={classNames(item.icon, 'w-3.5 h-3.5')} />}
         <span
           className={classNames(
-            isLast
-              ? 'font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark'
-              : 'text-ui-textSecondary dark:text-ui-textSecondary-dark hover:text-ui-textPrimary dark:hover:text-ui-textPrimary-dark',
+            isLast ? 'font-medium text-ui-textPrimary' : 'text-ui-textSecondary hover:text-ui-textPrimary',
             item.onClick || item.href ? 'cursor-pointer' : '',
           )}
         >
@@ -84,11 +82,7 @@ export function Breadcrumbs({
           return (
             <li key={index} className="flex items-center">
               {renderItem ? renderItem(item, index, isLast) : defaultRenderItem(item, index, isLast)}
-              {!isLast && (
-                <span
-                  className={classNames(separator, 'w-3 h-3 mx-1 text-ui-textTertiary dark:text-ui-textTertiary-dark')}
-                />
-              )}
+              {!isLast && <span className={classNames(separator, 'w-3 h-3 mx-1 text-ui-textTertiary')} />}
             </li>
           );
         })}

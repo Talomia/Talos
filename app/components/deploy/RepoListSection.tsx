@@ -37,16 +37,14 @@ function RepoCard<T extends RepoListItem>({
       key={repoKey}
       type="button"
       onClick={() => onSelect(repo.name)}
-      className={`w-full p-3 text-left rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 transition-colors group border border-ui-borderColor dark:border-ui-borderColor-dark hover:border-${brandColor}-500/30`}
+      className={`w-full p-3 text-left rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 transition-colors group border border-ui-borderColor hover:border-${brandColor}-500/30`}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`i-ph:git-branch w-4 h-4 text-${brandColor}-500`} />
-          <span
-            className={`text-sm font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark group-hover:text-${brandColor}-500`}
-          >
+          <span className={`text-sm font-medium text-ui-textPrimary group-hover:text-${brandColor}-500`}>
             {repo.name}
           </span>
         </div>
@@ -56,11 +54,7 @@ function RepoCard<T extends RepoListItem>({
           </Badge>
         )}
       </div>
-      {repo.description && (
-        <p className="mt-1 text-xs text-ui-textSecondary dark:text-ui-textSecondary-dark line-clamp-2">
-          {repo.description}
-        </p>
-      )}
+      {repo.description && <p className="mt-1 text-xs text-ui-textSecondary line-clamp-2">{repo.description}</p>}
       {renderBadges && <div className="mt-2 flex items-center gap-2 flex-wrap">{renderBadges(repo)}</div>}
     </motion.button>
   );
@@ -108,8 +102,8 @@ export function RepoListSection<T extends RepoListItem>({
     <>
       <div className="space-y-2">
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark">Recent Repositories</label>
-          <span className="text-xs text-ui-textTertiary dark:text-ui-textTertiary-dark">
+          <label className="text-sm text-ui-textSecondary">Recent Repositories</label>
+          <span className="text-xs text-ui-textTertiary">
             {filteredRepos.length} of {recentRepos.length}
           </span>
         </div>
@@ -120,7 +114,7 @@ export function RepoListSection<T extends RepoListItem>({
             value={repoSearchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             onClear={onSearchClear}
-            className="bg-ui-background-depth-2 dark:bg-ui-background-depth-3 border border-ui-borderColor dark:border-ui-borderColor-dark text-sm"
+            className="bg-ui-background-depth-2 dark:bg-ui-background-depth-3 border border-ui-borderColor text-sm"
           />
         </div>
 

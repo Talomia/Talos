@@ -50,12 +50,10 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
             className="w-[90vw] md:w-[500px]"
           >
             <Dialog.Content
-              className="bg-white dark:bg-ui-background-depth-1 rounded-lg p-6 border border-ui-borderColor dark:border-ui-borderColor-dark shadow-xl"
+              className="bg-white dark:bg-ui-background-depth-1 rounded-lg p-6 border border-ui-borderColor shadow-xl"
               aria-describedby="gitlab-auth-description"
             >
-              <Dialog.Title className="text-lg font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark mb-4">
-                Connect to GitLab
-              </Dialog.Title>
+              <Dialog.Title className="text-lg font-medium text-ui-textPrimary mb-4">Connect to GitLab</Dialog.Title>
 
               <div className="flex items-center gap-3 mb-6">
                 <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
@@ -67,13 +65,8 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-base font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark">
-                    GitLab Connection
-                  </h3>
-                  <p
-                    id="gitlab-auth-description"
-                    className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark"
-                  >
+                  <h3 className="text-base font-medium text-ui-textPrimary">GitLab Connection</h3>
+                  <p id="gitlab-auth-description" className="text-sm text-ui-textSecondary">
                     Connect your GitLab account to deploy your projects
                   </p>
                 </div>
@@ -81,9 +74,7 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
 
               <form onSubmit={handleConnect} className="space-y-4">
                 <div>
-                  <label className="block text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark mb-2">
-                    GitLab URL
-                  </label>
+                  <label className="block text-sm text-ui-textSecondary mb-2">GitLab URL</label>
                   <input
                     type="url"
                     value={gitlabUrl}
@@ -93,9 +84,9 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                     className={classNames(
                       'w-full px-3 py-2 rounded-lg text-sm',
                       'bg-ui-background-depth-2 dark:bg-ui-background-depth-3',
-                      'border border-ui-borderColor dark:border-ui-borderColor-dark',
-                      'text-ui-textPrimary dark:text-ui-textPrimary-dark',
-                      'placeholder-ui-textTertiary dark:placeholder-ui-textTertiary-dark',
+                      'border border-ui-borderColor',
+                      'text-ui-textPrimary',
+                      'placeholder-ui-textTertiary',
                       'focus:outline-none focus:ring-2 focus:ring-orange-500',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
                     )}
@@ -103,9 +94,7 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark mb-2">
-                    Access Token
-                  </label>
+                  <label className="block text-sm text-ui-textSecondary mb-2">Access Token</label>
                   <input
                     type="password"
                     value={token}
@@ -115,15 +104,15 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                     className={classNames(
                       'w-full px-3 py-2 rounded-lg text-sm',
                       'bg-ui-background-depth-2 dark:bg-ui-background-depth-3',
-                      'border border-ui-borderColor dark:border-ui-borderColor-dark',
-                      'text-ui-textPrimary dark:text-ui-textPrimary-dark',
-                      'placeholder-ui-textTertiary dark:placeholder-ui-textTertiary-dark',
+                      'border border-ui-borderColor',
+                      'text-ui-textPrimary',
+                      'placeholder-ui-textTertiary',
                       'focus:outline-none focus:ring-2 focus:ring-orange-500',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
                     )}
                     required
                   />
-                  <div className="mt-2 text-xs text-ui-textSecondary dark:text-ui-textSecondary-dark">
+                  <div className="mt-2 text-xs text-ui-textSecondary">
                     <a
                       href={`${gitlabUrl}/-/user_settings/personal_access_tokens`}
                       target="_blank"
@@ -148,7 +137,7 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                   <motion.button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary dark:text-ui-textSecondary-dark hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 text-sm border border-ui-borderColor dark:border-ui-borderColor-dark"
+                    className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 text-sm border border-ui-borderColor"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     disabled={isConnecting}

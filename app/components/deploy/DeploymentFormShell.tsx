@@ -24,7 +24,7 @@ interface UserInfoCardProps {
 
 function UserInfoCard({ avatarUrl, displayName, username, brandColor, providerIcon, renderAvatar }: UserInfoCardProps) {
   return (
-    <div className="flex items-center gap-3 mb-6 p-4 bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg border border-ui-borderColor dark:border-ui-borderColor-dark">
+    <div className="flex items-center gap-3 mb-6 p-4 bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg border border-ui-borderColor">
       <div className="relative">
         {renderAvatar ? renderAvatar() : <img src={avatarUrl} alt={username} className="w-10 h-10 rounded-full" />}
         <div
@@ -34,8 +34,8 @@ function UserInfoCard({ avatarUrl, displayName, username, brandColor, providerIc
         </div>
       </div>
       <div>
-        <p className="text-sm font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark">{displayName}</p>
-        <p className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark">@{username}</p>
+        <p className="text-sm font-medium text-ui-textPrimary">{displayName}</p>
+        <p className="text-sm text-ui-textSecondary">@{username}</p>
       </div>
     </div>
   );
@@ -62,11 +62,11 @@ function RepoNameInput({
 }: RepoNameInputProps) {
   return (
     <div className="space-y-2">
-      <label htmlFor="repoName" className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark">
+      <label htmlFor="repoName" className="text-sm text-ui-textSecondary">
         Repository Name
       </label>
       <div className="relative">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-ui-textTertiary dark:text-ui-textTertiary-dark">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-ui-textTertiary">
           <span className="i-ph:git-branch w-4 h-4" />
         </div>
         <input
@@ -75,7 +75,7 @@ function RepoNameInput({
           value={repoName}
           onChange={(e) => onChange(e.target.value)}
           placeholder="my-awesome-project"
-          className={`w-full pl-10 px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 border border-ui-borderColor dark:border-ui-borderColor-dark text-ui-textPrimary dark:text-ui-textPrimary-dark placeholder-ui-textTertiary dark:placeholder-ui-textTertiary-dark focus:outline-none focus:ring-2 focus:ring-${brandColor}-500`}
+          className={`w-full pl-10 px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 border border-ui-borderColor text-ui-textPrimary placeholder-ui-textTertiary focus:outline-none focus:ring-2 focus:ring-${brandColor}-500`}
           required
           maxLength={maxLength}
           pattern={maxLength ? '[a-zA-Z0-9\\-_\\s]+' : undefined}
@@ -85,7 +85,7 @@ function RepoNameInput({
         />
       </div>
       {showSanitizedPreview && repoName && sanitizeRepoName(repoName) !== repoName && (
-        <p className="text-xs text-ui-textSecondary dark:text-ui-textSecondary-dark mt-1">
+        <p className="text-xs text-ui-textSecondary mt-1">
           Will be created as:{' '}
           <span className={`font-mono text-${brandColor}-600 dark:text-${brandColor}-400`}>
             {sanitizeRepoName(repoName)}
@@ -104,20 +104,20 @@ interface PrivateRepoCheckboxProps {
 
 function PrivateRepoCheckbox({ isPrivate, brandColor, onChange }: PrivateRepoCheckboxProps) {
   return (
-    <div className="p-3 bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg border border-ui-borderColor dark:border-ui-borderColor-dark">
+    <div className="p-3 bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg border border-ui-borderColor">
       <div className="flex items-center gap-2">
         <input
           type="checkbox"
           id="private"
           checked={isPrivate}
           onChange={(e) => onChange(e.target.checked)}
-          className={`rounded border-ui-borderColor dark:border-ui-borderColor-dark text-${brandColor}-500 focus:ring-${brandColor}-500 dark:bg-ui-background-depth-3`}
+          className={`rounded border-ui-borderColor text-${brandColor}-500 focus:ring-${brandColor}-500 dark:bg-ui-background-depth-3`}
         />
-        <label htmlFor="private" className="text-sm text-ui-textPrimary dark:text-ui-textPrimary-dark">
+        <label htmlFor="private" className="text-sm text-ui-textPrimary">
           Make repository private
         </label>
       </div>
-      <p className="text-xs text-ui-textTertiary dark:text-ui-textTertiary-dark mt-2 ml-6">
+      <p className="text-xs text-ui-textTertiary mt-2 ml-6">
         Private repositories are only visible to you and people you share them with
       </p>
     </div>
@@ -199,7 +199,7 @@ export function DeploymentFormShell({
             className="w-[90vw] md:w-[500px]"
           >
             <Dialog.Content
-              className="bg-white dark:bg-ui-background-depth-1 rounded-lg border border-ui-borderColor dark:border-ui-borderColor-dark shadow-xl"
+              className="bg-white dark:bg-ui-background-depth-1 rounded-lg border border-ui-borderColor shadow-xl"
               aria-describedby="push-dialog-description"
             >
               <div className="p-6">
@@ -214,20 +214,17 @@ export function DeploymentFormShell({
                     <div className={`${providerIcon} w-5 h-5`} />
                   </motion.div>
                   <div>
-                    <Dialog.Title className="text-lg font-medium text-ui-textPrimary dark:text-ui-textPrimary-dark">
+                    <Dialog.Title className="text-lg font-medium text-ui-textPrimary">
                       Deploy to {providerName}
                     </Dialog.Title>
-                    <p
-                      id="push-dialog-description"
-                      className="text-sm text-ui-textSecondary dark:text-ui-textSecondary-dark"
-                    >
+                    <p id="push-dialog-description" className="text-sm text-ui-textSecondary">
                       Deploy your code to a new or existing {providerName} repository
                     </p>
                   </div>
                   <Dialog.Close asChild>
                     <button
                       onClick={onClose}
-                      className="ml-auto p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-ui-textTertiary hover:text-ui-textPrimary dark:text-ui-textTertiary-dark dark:hover:text-ui-textPrimary-dark hover:bg-ui-background-depth-2 dark:hover:bg-ui-background-depth-3 focus:outline-none focus:ring-2 focus:ring-ui-borderColor dark:focus:ring-ui-borderColor-dark"
+                      className="ml-auto p-2 rounded-lg transition-all duration-200 ease-in-out bg-transparent text-ui-textTertiary hover:text-ui-textPrimary hover:bg-ui-background-depth-2 dark:hover:bg-ui-background-depth-3 focus:outline-none focus:ring-2 focus:ring-ui-borderColor"
                     >
                       <span className="i-ph:x block w-5 h-5" aria-hidden="true" />
                       <span className="sr-only">Close dialog</span>
@@ -265,7 +262,7 @@ export function DeploymentFormShell({
                     <motion.button
                       type="button"
                       onClick={onClose}
-                      className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary dark:text-ui-textSecondary-dark hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 text-sm border border-ui-borderColor dark:border-ui-borderColor-dark"
+                      className="px-4 py-2 rounded-lg bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 text-sm border border-ui-borderColor"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >

@@ -87,7 +87,7 @@ export function EmptyState({
     <div
       className={classNames(
         'flex flex-col items-center justify-center',
-        'text-ui-textSecondary dark:text-ui-textSecondary-dark',
+        'text-ui-textSecondary',
         'bg-ui-background-depth-2 dark:bg-ui-background-depth-3 rounded-lg',
         styles.container,
         className,
@@ -100,7 +100,7 @@ export function EmptyState({
           styles.icon.container,
         )}
       >
-        <span className={classNames(icon, styles.icon.size, 'text-ui-textTertiary dark:text-ui-textTertiary-dark')} />
+        <span className={classNames(icon, styles.icon.size, 'text-ui-textTertiary')} />
       </div>
 
       {/* Title */}
@@ -108,14 +108,7 @@ export function EmptyState({
 
       {/* Description */}
       {description && (
-        <p
-          className={classNames(
-            'text-ui-textTertiary dark:text-ui-textTertiary-dark text-center max-w-xs',
-            styles.description,
-          )}
-        >
-          {description}
-        </p>
+        <p className={classNames('text-ui-textTertiary text-center max-w-xs', styles.description)}>{description}</p>
       )}
 
       {/* Action buttons */}

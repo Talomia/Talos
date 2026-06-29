@@ -57,7 +57,7 @@ export function ImportButtons({ importChat }: ImportButtonsProps) {
             }
             e.target.value = ''; // Reset file input
           } else {
-            toast.error('Something went wrong');
+            toast.error(file ? 'Chat import is not available' : 'No file selected');
           }
         }}
       />

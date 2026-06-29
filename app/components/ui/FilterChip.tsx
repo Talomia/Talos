@@ -46,7 +46,7 @@ export function FilterChip({ label, value, onRemove, active = false, icon, class
         'inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all',
         active
           ? 'bg-accent-500/15 text-accent-600 dark:text-accent-400 border border-accent-500/30'
-          : 'bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary dark:text-ui-textSecondary-dark border border-ui-borderColor dark:border-ui-borderColor-dark',
+          : 'bg-ui-background-depth-2 dark:bg-ui-background-depth-3 text-ui-textSecondary border border-ui-borderColor',
         onRemove && 'pr-1',
         className,
       )}
@@ -59,13 +59,7 @@ export function FilterChip({ label, value, onRemove, active = false, icon, class
         {label}
         {value !== undefined && ': '}
         {value !== undefined && (
-          <span
-            className={
-              active
-                ? 'text-accent-700 dark:text-accent-300 font-semibold'
-                : 'text-ui-textPrimary dark:text-ui-textPrimary-dark'
-            }
-          >
+          <span className={active ? 'text-accent-700 dark:text-accent-300 font-semibold' : 'text-ui-textPrimary'}>
             {value}
           </span>
         )}
@@ -78,7 +72,7 @@ export function FilterChip({ label, value, onRemove, active = false, icon, class
           onClick={onRemove}
           className={classNames(
             'ml-1 p-0.5 rounded-full hover:bg-ui-background-depth-3 dark:hover:bg-ui-background-depth-4 transition-colors',
-            active ? 'text-accent-600 dark:text-accent-400' : 'text-ui-textTertiary dark:text-ui-textTertiary-dark',
+            active ? 'text-accent-600 dark:text-accent-400' : 'text-ui-textTertiary',
           )}
           aria-label={`Remove ${label} filter`}
         >
